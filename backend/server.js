@@ -9,7 +9,9 @@ if (process.pkg) {
   require('./src/lib/windows-installer').installIfNeeded();
 }
 
-if (fs.existsSync(path.resolve(process.cwd(), '.env'))) {
+if (fs.existsSync(path.resolve(__dirname, '.env'))) {
+  require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+} else if (fs.existsSync(path.resolve(process.cwd(), '.env'))) {
   require('dotenv').config();
 } else if (fs.existsSync(path.resolve(__dirname, '../.env'))) {
   require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
