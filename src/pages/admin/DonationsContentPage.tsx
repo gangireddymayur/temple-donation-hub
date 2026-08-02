@@ -1,0 +1,499 @@
+import { useEffect, useState } from "react";
+import { AdminLayout } from "@/components/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Download, ClipboardList, Settings, HeartHandshake, IndianRupee, HelpCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+interface DonationRecord {
+  id: string;
+  donor_name: string;
+  donor_phone: string;
+  donor_email: string;
+  donor_address: string;
+  donor_city: string;
+  donor_state: string;
+  donor_pincode: string;
+  donor_gotra: string;
+  donor_nakshatra: string;
+  special_prayer: string;
+  kiosk_name: string;
+  amount: number;
+  purpose: string;
+  payment_status: 'pending' | 'success' | 'failed';
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  created_at: string;
+}
+
+interface FormFieldConfig {
+  enabled: boolean;
+  required: boolean;
+}
+
+interface CustomerInfoConfig {
+  popupEnabled: boolean;
+  fields: {
+    name: FormFieldConfig;
+    phone: FormFieldConfig;
+    email: FormFieldConfig;
+    address: FormFieldConfig;
+    city: FormFieldConfig;
+    state: FormFieldConfig;
+    pincode: FormFieldConfig;
+    gotra: FormFieldConfig;
+    nakshatra: FormFieldConfig;
+    purpose: FormFieldConfig;
+    prayer: FormFieldConfig;
+  };
+}
+
+const DEFAULT_FORM_CONFIG: CustomerInfoConfig = {
+  popupEnabled: true,
+  fields: {
+    name: { enabled: true, required: true },
+    phone: { enabled: true, required: true },
+    email: { enabled: true, required: false },
+    address: { enabled: false, required: false },
+    city: { enabled: false, required: false },
+    state: { enabled: false, required: false },
+    pincode: { enabled: false, required: false },
+    gotra: { enabled: true, required: false },
+    nakshatra: { enabled: true, required: false },
+    purpose: { enabled: true, required: false },
+    prayer: { enabled: true, required: false },
+  }
+};
+
+export default function DonationsContentPage() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+
+  // Donations logs list
+  const [donations, setDonations] = useState<DonationRecord[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Customer Info form configuration
+  const [formConfig, setFormConfig] = useState<CustomerInfoConfig>(DEFAULT_FORM_CONFIG);
+  const [savingForm, setSavingForm] = useState(false);
+
+  // Stats
+  const [totalCollected, setTotalCollected] = useState(0);
+  const [successCount, setSuccessCount] = useState(0);
+
+  const fetchLogs = async (cid: string) => {
+    try {
+      const { data, error } = await supabase.from("donations").select("*").eq("company_id", cid).order("created_at", { ascending: false });
+      if (data && !error) {
+        const records = data as DonationRecord[];
+        setDonations(records);
+        
+        // Stats calculations
+        const successRows = records.filter(r => r.payment_status === "success");
+        setTotalCollected(successRows.reduce((sum, r) => sum + Number(r.amount), 0));
+        setSuccessCount(successRows.length);
+      }
+    } catch (e) {
+      console.error("Failed to load logs:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    const init = async () => {
+      try {
+        const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single();
+        if (profile?.company_id) {
+          setCompanyId(profile.company_id);
+          
+          // Load company config
+          const { data: company } = await supabase.from("companies").select("customer_info_config").eq("id", profile.company_id).single();
+          if (company && company.customer_info_config) {
+            try {
+              const parsed = typeof company.customer_info_config === "string" 
+                ? JSON.parse(company.customer_info_config) 
+                : company.customer_info_config;
+              setFormConfig(parsed);
+            } catch (err) {
+              console.warn("Using default form config:", err);
+            }
+          }
+
+          await fetchLogs(profile.company_id);
+        }
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [user]);
+
+  const handleSaveFormConfig = async () => {
+    if (!companyId) return;
+    setSavingForm(true);
+    try {
+      const { error } = await supabase.from("companies").update({
+        customer_info_config: JSON.stringify(formConfig)
+      } as any).eq("id", companyId);
+
+      if (error) throw error;
+      toast.success("Default devotee form configurations updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update devotee form configuration");
+    } finally {
+      setSavingForm(false);
+    }
+  };
+
+  const updateField = (field: keyof CustomerInfoConfig["fields"], key: "enabled" | "required", value: boolean) => {
+    setFormConfig(prev => {
+      const updatedFields = { ...prev.fields };
+      updatedFields[field] = { ...updatedFields[field], [key]: value };
+      
+      // If we disable a field, force it to be not required as well
+      if (key === "enabled" && !value) {
+        updatedFields[field].required = false;
+      }
+      // If we make a field required, force it to be enabled
+      if (key === "required" && value) {
+        updatedFields[field].enabled = true;
+      }
+
+      return {
+        ...prev,
+        fields: updatedFields
+      };
+    });
+  };
+
+  // Filters and searches
+  const filtered = donations.filter(d => {
+    const matchesSearch = 
+      (d.donor_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.donor_phone || "").includes(search) ||
+      (d.donor_email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.purpose || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.kiosk_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.razorpay_payment_id || "").toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || d.payment_status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Export CSV
+  const handleExportCSV = () => {
+    if (filtered.length === 0) {
+      toast.error("No transactions to export");
+      return;
+    }
+
+    const headers = [
+      "Date/Time", "Devotee Name", "Phone", "Email", "Address", "City", "State", "Pincode",
+      "Gotra", "Nakshatra", "Purpose", "Amount", "Kiosk Name", "Order ID", "Payment ID", "Status"
+    ];
+
+    const rows = filtered.map(d => [
+      new Date(d.created_at).toLocaleString("en-IN"),
+      d.donor_name || "Anonymous",
+      d.donor_phone || "",
+      d.donor_email || "",
+      d.donor_address || "",
+      d.donor_city || "",
+      d.donor_state || "",
+      d.donor_pincode || "",
+      d.donor_gotra || "",
+      d.donor_nakshatra || "",
+      d.purpose,
+      d.amount,
+      d.kiosk_name || "",
+      d.razorpay_order_id || "",
+      d.razorpay_payment_id || "",
+      d.payment_status
+    ]);
+
+    const csvContent = "\uFEFF" // UTF-8 BOM for Excel formatting support
+      + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `temple_donations_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("CSV export downloaded successfully!");
+  };
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Donation Content</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage devotee information fields and view consolidated transaction history.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => companyId && fetchLogs(companyId)} className="h-9">
+              Refresh Logs
+            </Button>
+            <Button size="sm" onClick={handleExportCSV} className="h-9 gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold">
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 border-amber-500/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Total Daan Collections</CardTitle>
+              <IndianRupee className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-black">₹{totalCollected.toLocaleString("en-IN")}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Devotee Checkout Scans</CardTitle>
+              <HeartHandshake className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-black">{successCount} successful</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Initiated Scans</CardTitle>
+              <ClipboardList className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-black">{donations.length} total</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-20 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin mr-3 text-amber-500" />
+            <span>Loading donation settings & logs...</span>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Form Fields Default Setup */}
+            <Card className="border border-border/80 shadow-md">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-amber-500" />
+                  <CardTitle className="text-base font-bold">Default Devotee Form Configuration</CardTitle>
+                </div>
+                <CardDescription>
+                  Configure which fields devotees must fill on the kiosk popup before the payment QR code is displayed. This setting applies globally across all templates unless overridden in layout properties.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3.5 bg-muted/20 border rounded-xl mb-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-bold text-slate-200">Enable Devotee Information Popup</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      When enabled, tapping any offering card launches a popup form before generating the QR code.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formConfig.popupEnabled}
+                    onCheckedChange={(checked) => setFormConfig(prev => ({ ...prev, popupEnabled: checked }))}
+                  />
+                </div>
+
+                {formConfig.popupEnabled && (
+                  <div className="border border-border/60 rounded-xl overflow-hidden">
+                    <div className="grid grid-cols-3 gap-2 bg-muted/40 p-2.5 text-xs font-bold border-b">
+                      <span>Devotee Field</span>
+                      <span className="text-center">Collect Field</span>
+                      <span className="text-center">Mark Required</span>
+                    </div>
+
+                    <div className="divide-y divide-border/40">
+                      {(Object.keys(formConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
+                        const config = formConfig.fields[field];
+                        const label = field.charAt(0).toUpperCase() + field.slice(1);
+                        return (
+                          <div key={field} className="grid grid-cols-3 gap-2 p-2.5 items-center text-xs">
+                            <span className="font-semibold text-slate-300 capitalize">{label}</span>
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={config.enabled}
+                                onCheckedChange={(val) => updateField(field, "enabled", val)}
+                              />
+                            </div>
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={config.required}
+                                disabled={!config.enabled}
+                                onCheckedChange={(val) => updateField(field, "required", val)}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-2">
+                  <Button onClick={handleSaveFormConfig} disabled={savingForm} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5">
+                    {savingForm ? "Saving Fields..." : "Save Default Form Settings"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Donation Logs */}
+            <Card className="border border-border/80 shadow-md">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-base font-bold">Consolidated Devotee Offerings</CardTitle>
+                  <CardDescription>Consolidated real-time transaction ledger including devotee details and kiosk device origins.</CardDescription>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative w-full sm:w-60">
+                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search name, phone, email, purpose..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-8 h-8 text-xs bg-slate-950/40 border-border/60"
+                    />
+                  </div>
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-8 w-full sm:w-32 bg-slate-950/40 border-border/60 text-xs">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-xl border overflow-x-auto">
+                  <Table className="min-w-[1200px]">
+                    <TableHeader className="bg-muted/30">
+                      <TableRow>
+                        <TableHead className="w-[140px]">Date / Time</TableHead>
+                        <TableHead>Devotee</TableHead>
+                        <TableHead>Contact Info</TableHead>
+                        <TableHead>Gotra & Nakshatra</TableHead>
+                        <TableHead>Devotee Address</TableHead>
+                        <TableHead>Offering Purpose</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Kiosk Name</TableHead>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((d) => (
+                        <TableRow key={d.id} className="hover:bg-muted/10">
+                          <TableCell className="text-[11px] font-mono whitespace-nowrap">
+                            {new Date(d.created_at).toLocaleString("en-IN")}
+                          </TableCell>
+                          <TableCell className="font-semibold text-xs text-slate-200">
+                            {d.donor_name || "Anonymous Devotee"}
+                            {d.special_prayer && (
+                              <p className="text-[10px] text-amber-500 font-normal italic mt-0.5">
+                                Prayer: "{d.special_prayer}"
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-[11px] space-y-0.5">
+                            <p className="font-mono text-muted-foreground">{d.donor_phone || "—"}</p>
+                            {d.donor_email && <p className="text-slate-500 truncate max-w-[150px]">{d.donor_email}</p>}
+                          </TableCell>
+                          <TableCell className="text-[11px]">
+                            {d.donor_gotra || d.donor_nakshatra ? (
+                              <div className="space-y-0.5">
+                                {d.donor_gotra && <p className="text-slate-300">Gotra: {d.donor_gotra}</p>}
+                                {d.donor_nakshatra && <p className="text-slate-400">Star: {d.donor_nakshatra}</p>}
+                              </div>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell className="text-[11px] text-slate-400 max-w-[150px] truncate">
+                            {d.donor_address || d.donor_city ? (
+                              <span>
+                                {d.donor_address}
+                                {d.donor_city && `, ${d.donor_city}`}
+                                {d.donor_state && ` (${d.donor_state})`}
+                                {d.donor_pincode && ` - ${d.donor_pincode}`}
+                              </span>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <span className="bg-muted px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400">
+                              {d.purpose}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-black font-mono text-amber-500">
+                            ₹{Number(d.amount).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-xs text-slate-400">{d.kiosk_name || "—"}</TableCell>
+                          <TableCell className="text-[11px] font-mono text-slate-500 max-w-[120px] truncate" title={d.razorpay_payment_id || d.razorpay_order_id}>
+                            {d.razorpay_payment_id || d.razorpay_order_id || "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {d.payment_status === 'success' && (
+                              <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                                Success
+                              </span>
+                            )}
+                            {d.payment_status === 'pending' && (
+                              <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                                Pending
+                              </span>
+                            )}
+                            {d.payment_status === 'failed' && (
+                              <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                                Failed
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filtered.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center py-10 text-xs text-muted-foreground">
+                            No donations found matching criteria
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  );
+}

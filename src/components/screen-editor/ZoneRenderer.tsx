@@ -128,6 +128,7 @@ interface ZoneRendererProps {
   selectedZoneId: string | null;
   depth?: number;
   previewMode?: boolean;
+  customerInfoConfig?: CustomerInfoConfig;
 }
 
 /* ── Transition CSS for slideshow ── */
@@ -278,19 +279,29 @@ export function SquareOfferingCard({
   config,
   interactive,
   isSelected = false,
-  onSelect
+  onSelect,
+  customerInfoConfig
 }: {
   config: DonationButtonConfig;
   interactive: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  customerInfoConfig?: CustomerInfoConfig;
 }) {
   const [activeDonation, setActiveDonation] = useState<any>(null);
   
-  // Form states
+  // Devotee details states
   const [donorName, setDonorName] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
+  const [donorAddress, setDonorAddress] = useState("");
+  const [donorCity, setDonorCity] = useState("");
+  const [donorState, setDonorState] = useState("");
+  const [donorPincode, setDonorPincode] = useState("");
+  const [donorGotra, setDonorGotra] = useState("");
+  const [donorNakshatra, setDonorNakshatra] = useState("");
+  const [specialPrayer, setSpecialPrayer] = useState("");
+
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [loading, setLoading] = useState(false);
   
@@ -303,6 +314,23 @@ export function SquareOfferingCard({
   const label = config.label || "Offering";
   const description = config.description || "";
 
+  const defaultFields = {
+    name: { enabled: true, required: true },
+    phone: { enabled: true, required: true },
+    email: { enabled: true, required: false },
+    address: { enabled: false, required: false },
+    city: { enabled: false, required: false },
+    state: { enabled: false, required: false },
+    pincode: { enabled: false, required: false },
+    gotra: { enabled: false, required: false },
+    nakshatra: { enabled: false, required: false },
+    purpose: { enabled: true, required: false },
+    prayer: { enabled: false, required: false },
+  };
+
+  const fields = customerInfoConfig?.fields || defaultFields;
+  const popupEnabled = customerInfoConfig ? customerInfoConfig.popupEnabled : true;
+
   // Polling logic
   useEffect(() => {
     if (step !== 'payment' || !donationId) return;
@@ -314,7 +342,7 @@ export function SquareOfferingCard({
         const res = await fetch(`${API}/donations/public/status/${donationId}?t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.status === 'success') {
+          if (data.payment_status === 'success') {
             setStep('success');
             setTimeout(() => {
               handleClose();
@@ -341,13 +369,40 @@ export function SquareOfferingCard({
     setDonorName("");
     setDonorPhone("");
     setDonorEmail("");
+    setDonorAddress("");
+    setDonorCity("");
+    setDonorState("");
+    setDonorPincode("");
+    setDonorGotra("");
+    setDonorNakshatra("");
+    setSpecialPrayer("");
     setStep('form');
     setDonationId(null);
     setUpiString(null);
     setQrCodeUrl("");
   };
 
-  const handleInitiate = async (amt: number, purposeText: string) => {
+  const handleInitiate = async (amt: number, purposeText: string, bypassVal = false) => {
+    if (!bypassVal) {
+      // Validate required inputs
+      const errors: string[] = [];
+      if (fields.name.enabled && fields.name.required && !donorName.trim()) errors.push("Full Name is required");
+      if (fields.phone.enabled && fields.phone.required && !donorPhone.trim()) errors.push("Phone number is required");
+      if (fields.email.enabled && fields.email.required && !donorEmail.trim()) errors.push("Email address is required");
+      if (fields.address.enabled && fields.address.required && !donorAddress.trim()) errors.push("Address is required");
+      if (fields.city.enabled && fields.city.required && !donorCity.trim()) errors.push("City is required");
+      if (fields.state.enabled && fields.state.required && !donorState.trim()) errors.push("State is required");
+      if (fields.pincode.enabled && fields.pincode.required && !donorPincode.trim()) errors.push("Pincode is required");
+      if (fields.gotra.enabled && fields.gotra.required && !donorGotra.trim()) errors.push("Gotra is required");
+      if (fields.nakshatra.enabled && fields.nakshatra.required && !donorNakshatra.trim()) errors.push("Nakshatra is required");
+      if (fields.prayer.enabled && fields.prayer.required && !specialPrayer.trim()) errors.push("Prayer request text is required");
+
+      if (errors.length > 0) {
+        alert(errors.join("\n"));
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const pathParts = window.location.pathname.split('/');
@@ -361,8 +416,15 @@ export function SquareOfferingCard({
           amount: amt,
           purpose: purposeText,
           donorName: donorName || "Devotee",
-          donorPhone: donorPhone || "",
-          donorEmail: donorEmail || ""
+          donorPhone: donorPhone || null,
+          donorEmail: donorEmail || null,
+          donorAddress: donorAddress || null,
+          donorCity: donorCity || null,
+          donorState: donorState || null,
+          donorPincode: donorPincode || null,
+          donorGotra: donorGotra || null,
+          donorNakshatra: donorNakshatra || null,
+          specialPrayer: specialPrayer || null
         })
       });
       
@@ -382,6 +444,21 @@ export function SquareOfferingCard({
       alert(e.message || "Could not connect to payment server");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (!interactive) {
+      if (onSelect) onSelect();
+      return;
+    }
+
+    setActiveDonation({ amount, label });
+    if (popupEnabled) {
+      setStep('form');
+    } else {
+      setStep('payment');
+      handleInitiate(amount, label, true);
     }
   };
 
@@ -437,13 +514,7 @@ export function SquareOfferingCard({
   return (
     <>
       <button
-        onClick={() => {
-          if (interactive) {
-            setActiveDonation({ amount, label });
-          } else if (onSelect) {
-            onSelect();
-          }
-        }}
+        onClick={handleCardClick}
         className={cn(
           "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-md select-none group overflow-hidden border",
           !config.backgroundColor && !config.backgroundUrl ? "bg-gradient-to-br from-slate-900 to-slate-900 border-white/5" : "",
@@ -512,26 +583,160 @@ export function SquareOfferingCard({
                   <div className="text-xs text-slate-400 mt-1">{activeDonation.label}</div>
                 </div>
 
-                <div className="space-y-3.5 pt-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Devotee Name (Optional)</label>
-                    <input
-                      type="text"
-                      value={donorName}
-                      onChange={(e) => setDonorName(e.target.value)}
-                      placeholder="Enter full name"
-                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                    />
+                <div className="space-y-3.5 pt-2 max-h-[300px] overflow-y-auto px-1 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800">
+                  {fields.name.enabled && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                        Full Name {fields.name.required && <span className="text-red-500">*</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={donorName}
+                        onChange={(e) => setDonorName(e.target.value)}
+                        placeholder="Enter full name"
+                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {fields.phone.enabled && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                        Phone Number {fields.phone.required && <span className="text-red-500">*</span>}
+                      </label>
+                      <input
+                        type="tel"
+                        value={donorPhone}
+                        onChange={(e) => setDonorPhone(e.target.value)}
+                        placeholder="10-digit mobile number"
+                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {fields.email.enabled && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                        Email Address {fields.email.required && <span className="text-red-500">*</span>}
+                      </label>
+                      <input
+                        type="email"
+                        value={donorEmail}
+                        onChange={(e) => setDonorEmail(e.target.value)}
+                        placeholder="email@example.com"
+                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {fields.address.enabled && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                        Address {fields.address.required && <span className="text-red-500">*</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={donorAddress}
+                        onChange={(e) => setDonorAddress(e.target.value)}
+                        placeholder="Street address"
+                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {fields.city.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          City {fields.city.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorCity}
+                          onChange={(e) => setDonorCity(e.target.value)}
+                          placeholder="City"
+                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.state.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          State {fields.state.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorState}
+                          onChange={(e) => setDonorState(e.target.value)}
+                          placeholder="State"
+                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Phone Number (Optional)</label>
-                    <input
-                      type="tel"
-                      value={donorPhone}
-                      onChange={(e) => setDonorPhone(e.target.value)}
-                      placeholder="10-digit mobile number"
-                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                    />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {fields.pincode.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Pincode {fields.pincode.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorPincode}
+                          onChange={(e) => setDonorPincode(e.target.value)}
+                          placeholder="Pincode"
+                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.gotra.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Gotra {fields.gotra.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorGotra}
+                          onChange={(e) => setDonorGotra(e.target.value)}
+                          placeholder="Gotra / गोत्र"
+                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2">
+                    {fields.nakshatra.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Nakshatra {fields.nakshatra.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorNakshatra}
+                          onChange={(e) => setDonorNakshatra(e.target.value)}
+                          placeholder="Nakshatra / नक्षत्र"
+                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.prayer.enabled && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Special Prayer Message {fields.prayer.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <textarea
+                          value={specialPrayer}
+                          onChange={(e) => setSpecialPrayer(e.target.value)}
+                          placeholder="Family details, special prayer requests..."
+                          className="w-full min-h-[70px] bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -618,7 +823,7 @@ export function SquareOfferingCard({
 }
 
 /* ── Standard Widget Preview ── */
-function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget; previewMode?: boolean }) {
+function WidgetPreview({ widget, previewMode = false, customerInfoConfig }: { widget: ContentWidget; previewMode?: boolean; customerInfoConfig?: CustomerInfoConfig }) {
   if (widget.type === 'donation_button' || widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') {
     const config: DonationButtonConfig = {
       id: widget.id,
@@ -644,7 +849,7 @@ function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget;
     };
     return (
       <div className="w-full h-full flex items-center justify-center p-2 bg-transparent">
-        <SquareOfferingCard config={config} interactive={previewMode} />
+        <SquareOfferingCard config={config} interactive={previewMode} customerInfoConfig={customerInfoConfig} />
       </div>
     );
   }
@@ -652,7 +857,7 @@ function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget;
     return <LinksWidget widget={widget} interactive={previewMode} />;
   }
   if (widget.type === 'donation') {
-    return <DonationWidget widget={widget} interactive={previewMode} />;
+    return <DonationWidget widget={widget} interactive={previewMode} customerInfoConfig={customerInfoConfig} />;
   }
   if (widget.type === 'slideshow') {
     return <SlideshowPreview widget={widget} />;
@@ -828,7 +1033,7 @@ function ClockWidget({ fontSize, color, fontWeight }: { fontSize?: number; color
   );
 }
 
-function DonationWidget({ widget, interactive }: { widget: ContentWidget; interactive: boolean }) {
+function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: ContentWidget; interactive: boolean; customerInfoConfig?: CustomerInfoConfig }) {
   const buttons = widget.donationButtons || [];
   const [selectedBtnId, setSelectedBtnId] = useState<string | null>(null);
   
@@ -934,6 +1139,7 @@ function DonationWidget({ widget, interactive }: { widget: ContentWidget; intera
                 interactive={interactive}
                 isSelected={btn.id === selectedBtnId}
                 onSelect={() => handleSelectBtn(btn.id)}
+                customerInfoConfig={customerInfoConfig}
               />
             ))}
             {visibleButtons.length === 0 && (
@@ -1013,6 +1219,7 @@ function DonationWidget({ widget, interactive }: { widget: ContentWidget; intera
                   interactive={interactive}
                   isSelected={btn.id === selectedBtnId}
                   onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
                 />
               );
             })}
@@ -1082,6 +1289,7 @@ function DonationWidget({ widget, interactive }: { widget: ContentWidget; intera
                 interactive={interactive}
                 isSelected={btn.id === selectedBtnId}
                 onSelect={() => handleSelectBtn(btn.id)}
+                customerInfoConfig={customerInfoConfig}
               />
             );
           })}
@@ -1197,7 +1405,7 @@ function PlaylistPlayer({
 
 
 /* ── Zone Renderer ── */
-export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, depth = 0, previewMode = false }: ZoneRendererProps) {
+export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, depth = 0, previewMode = false, customerInfoConfig }: ZoneRendererProps) {
   const isSelected = zone.id === selectedZoneId;
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -1243,6 +1451,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
             selectedZoneId={selectedZoneId}
             depth={depth + 1}
             previewMode={previewMode}
+            customerInfoConfig={customerInfoConfig}
           />
         </div>
         {!previewMode && (
@@ -1283,6 +1492,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
             selectedZoneId={selectedZoneId}
             depth={depth + 1}
             previewMode={previewMode}
+            customerInfoConfig={customerInfoConfig}
           />
         </div>
       </div>
@@ -1292,7 +1502,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
   if (previewMode) {
     return (
       <div className="relative w-full h-full">
-        {zone.content ? <WidgetPreview widget={zone.content} previewMode /> : null}
+        {zone.content ? <WidgetPreview widget={zone.content} previewMode customerInfoConfig={customerInfoConfig} /> : null}
       </div>
     );
   }
@@ -1314,7 +1524,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
       onDragLeave={() => setIsDragOver(false)}
     >
       {zone.content ? (
-        <WidgetPreview widget={zone.content} />
+        <WidgetPreview widget={zone.content} customerInfoConfig={customerInfoConfig} />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground/50">
           <p className="text-xs">Drop content here</p>

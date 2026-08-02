@@ -49,15 +49,38 @@ function callRazorpay(method, path, body, keyId, keySecret) {
 // Initiate a donation and generate payment string/order
 router.post('/public/initiate', async (req, res) => {
   try {
-    const { deviceId, companyId, amount, purpose, donorName, donorPhone, donorEmail } = req.body;
+    const {
+      deviceId,
+      companyId,
+      amount,
+      purpose,
+      donorName,
+      donorPhone,
+      donorEmail,
+      donorAddress,
+      donorCity,
+      donorState,
+      donorPincode,
+      donorGotra,
+      donorNakshatra,
+      specialPrayer,
+      kioskName
+    } = req.body;
     
     let resolvedCompanyId = companyId;
-    if (!resolvedCompanyId && deviceId) {
+    let resolvedKioskName = kioskName;
+    const db = require('../lib/db');
+
+    if (deviceId) {
       const [devices] = await db.query(
-        'SELECT company_id FROM devices WHERE id = :id AND is_paired = 1 LIMIT 1',
+        'SELECT name, company_id FROM devices WHERE id = :id LIMIT 1',
         { id: deviceId }
       );
-      if (devices[0]) resolvedCompanyId = devices[0].company_id;
+      const device = devices[0];
+      if (device) {
+        if (!resolvedCompanyId) resolvedCompanyId = device.company_id;
+        if (!resolvedKioskName) resolvedKioskName = device.name;
+      }
     }
 
     if (!resolvedCompanyId) {
@@ -81,8 +104,15 @@ router.post('/public/initiate', async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO donations (id, company_id, device_id, donor_name, donor_phone, donor_email, amount, purpose, payment_status)
-       VALUES (:id, :company_id, :device_id, :donor_name, :donor_phone, :donor_email, :amount, :purpose, 'pending')`,
+      `INSERT INTO donations (
+        id, company_id, device_id, donor_name, donor_phone, donor_email,
+        donor_address, donor_city, donor_state, donor_pincode, donor_gotra, donor_nakshatra,
+        special_prayer, kiosk_name, amount, purpose, payment_status
+      ) VALUES (
+        :id, :company_id, :device_id, :donor_name, :donor_phone, :donor_email,
+        :donor_address, :donor_city, :donor_state, :donor_pincode, :donor_gotra, :donor_nakshatra,
+        :special_prayer, :kiosk_name, :amount, :purpose, 'pending'
+      )`,
       {
         id: donationId,
         company_id: resolvedCompanyId,
@@ -90,6 +120,14 @@ router.post('/public/initiate', async (req, res) => {
         donor_name: donorName || 'Devotee',
         donor_phone: donorPhone || null,
         donor_email: donorEmail || null,
+        donor_address: donorAddress || null,
+        donor_city: donorCity || null,
+        donor_state: donorState || null,
+        donor_pincode: donorPincode || null,
+        donor_gotra: donorGotra || null,
+        donor_nakshatra: donorNakshatra || null,
+        special_prayer: specialPrayer || null,
+        kiosk_name: resolvedKioskName || 'Kiosk Player',
         amount: finalAmount,
         purpose: purpose || 'General Daan'
       }
@@ -235,16 +273,92 @@ router.post('/public/razorpay-webhook', async (req, res) => {
 // Admin-triggered simulation endpoint (helpful for local/testing without actual payment)
 router.post('/public/simulate-success', async (req, res) => {
   try {
-    if (process.env.IS_OFFLINE !== 'true') {
-      return res.status(403).json({ error: 'Simulation only allowed in offline development mode' });
-    }
     const { donationId } = req.body;
+    const db = require('../lib/db');
     await db.query(
       'UPDATE donations SET payment_status = \'success\' WHERE id = :id',
       { id: donationId }
     );
     res.json({ ok: true, status: 'success' });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Test connection endpoint to generate a test QR code for ₹1 using typed credentials
+router.post('/public/test-connection', async (req, res) => {
+  try {
+    const { companyId, upiId, razorpayKeyId, razorpayKeySecret } = req.body;
+    const db = require('../lib/db');
+    
+    const donationId = `test-${Date.now()}`;
+    const amount = 1.00;
+    const purpose = "Connection Test (₹1)";
+    
+    // Insert pending test donation row
+    await db.query(
+      `INSERT INTO donations (
+        id, company_id, donor_name, donor_phone, amount, purpose, payment_status, kiosk_name
+      ) VALUES (
+        :id, :company_id, 'Test Admin', '9999999999', :amount, :purpose, 'pending', 'Admin Settings Panel'
+      )`,
+      {
+        id: donationId,
+        company_id: companyId || '00000000-0000-0000-0000-000000000000',
+        amount,
+        purpose
+      }
+    );
+
+    // If Razorpay credentials are typed, use them to verify integration
+    if (razorpayKeyId && razorpayKeySecret) {
+      try {
+        const order = await callRazorpay(
+          'POST',
+          '/orders',
+          {
+            amount: 100, // 100 paise = 1 INR
+            currency: 'INR',
+            receipt: donationId,
+            notes: { donationId }
+          },
+          razorpayKeyId,
+          razorpayKeySecret
+        );
+
+        await db.query(
+          'UPDATE donations SET razorpay_order_id = :order_id WHERE id = :id',
+          { order_id: order.id, id: donationId }
+        );
+
+        return res.json({
+          donationId,
+          amount,
+          orderId: order.id,
+          upiString: null,
+          useRazorpay: true,
+          razorpayKeyId
+        });
+      } catch (err) {
+        return res.status(400).json({ error: `Razorpay Order Error: ${err.message}` });
+      }
+    }
+
+    // Otherwise fallback to direct UPI if provided
+    if (upiId) {
+      const upiString = `upi://pay?pa=${upiId}&pn=Test%20Merchant&am=1.00&tr=${donationId}&cu=INR&tn=${encodeURIComponent(purpose)}`;
+      return res.json({
+        donationId,
+        amount,
+        orderId: null,
+        upiString,
+        useRazorpay: false
+      });
+    }
+
+    return res.status(400).json({ error: 'Please configure at least a Merchant UPI ID or Razorpay keys to test' });
+  } catch (err) {
+    console.error('TEST_CONNECTION_ERROR:', err);
     res.status(500).json({ error: err.message });
   }
 });

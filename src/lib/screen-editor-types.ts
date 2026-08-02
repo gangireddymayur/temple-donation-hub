@@ -174,6 +174,28 @@ export interface ScreenZone {
   children: [ScreenZone, ScreenZone] | null;
 }
 
+export interface FormFieldConfig {
+  enabled: boolean;
+  required: boolean;
+}
+
+export interface CustomerInfoConfig {
+  popupEnabled: boolean;
+  fields: {
+    name: FormFieldConfig;
+    phone: FormFieldConfig;
+    email: FormFieldConfig;
+    address: FormFieldConfig;
+    city: FormFieldConfig;
+    state: FormFieldConfig;
+    pincode: FormFieldConfig;
+    gotra: FormFieldConfig;
+    nakshatra: FormFieldConfig;
+    purpose: FormFieldConfig;
+    prayer: FormFieldConfig;
+  };
+}
+
 export interface ScreenLayout {
   id: string;
   name: string;
@@ -181,6 +203,7 @@ export interface ScreenLayout {
   resolution: { width: number; height: number };
   backgroundColor: string;
   rootZone: ScreenZone;
+  customerInfoConfig?: CustomerInfoConfig;
 }
 
 export function createZone(id?: string): ScreenZone {

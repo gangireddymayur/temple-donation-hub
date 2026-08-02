@@ -22,6 +22,8 @@ import AdminSchedulePage from "./pages/admin/AdminSchedulePage";
 import AdminLayoutsPage from "./pages/admin/AdminLayoutsPage";
 import AdminLayoutEditorPage from "./pages/admin/AdminLayoutEditorPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminPaymentSettingsPage from "./pages/admin/AdminPaymentSettingsPage";
+import DonationsContentPage from "./pages/admin/DonationsContentPage";
 import PlayerPage from "./pages/PlayerPage";
 
 const queryClient = new QueryClient();
@@ -54,6 +56,8 @@ const App = () => {
                 <Route path="/admin/layouts" element={<ProtectedRoute requiredRole="admin"><AdminLayoutsPage /></ProtectedRoute>} />
                 <Route path="/admin/layouts/:layoutId" element={<ProtectedRoute requiredRole="admin"><AdminLayoutEditorPage /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettingsPage /></ProtectedRoute>} />
+                <Route path="/admin/settings/payments" element={<ProtectedRoute requiredRole="admin"><AdminPaymentSettingsPage /></ProtectedRoute>} />
+                <Route path="/admin/settings/donations" element={<ProtectedRoute requiredRole="admin"><DonationsContentPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>

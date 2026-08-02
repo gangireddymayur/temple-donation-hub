@@ -267,6 +267,35 @@ class SqlitePool {
         this.db.run("ALTER TABLE companies ADD COLUMN razorpay_key_secret TEXT;");
       } catch (e) {}
 
+      try {
+        this.db.run("ALTER TABLE companies ADD COLUMN razorpay_webhook_secret TEXT;");
+      } catch (e) {}
+
+      try {
+        this.db.run("ALTER TABLE companies ADD COLUMN razorpay_mode TEXT DEFAULT 'test';");
+      } catch (e) {}
+
+      try {
+        this.db.run("ALTER TABLE companies ADD COLUMN customer_info_config TEXT;");
+      } catch (e) {}
+
+      // Donations table dynamic migrations
+      const newDonationCols = [
+        "donor_address",
+        "donor_city",
+        "donor_state",
+        "donor_pincode",
+        "donor_gotra",
+        "donor_nakshatra",
+        "special_prayer",
+        "kiosk_name"
+      ];
+      for (const col of newDonationCols) {
+        try {
+          this.db.run(`ALTER TABLE donations ADD COLUMN ${col} TEXT;`);
+        } catch (e) {}
+      }
+
       // Seed default company if database is empty
       const compCheck = this.db.prepare("SELECT id FROM companies LIMIT 1");
       let hasCompany = false;

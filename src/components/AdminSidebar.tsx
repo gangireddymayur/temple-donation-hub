@@ -7,6 +7,8 @@ import {
   Settings,
   Tv,
   LogOut,
+  CreditCard,
+  HeartHandshake,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -33,6 +35,8 @@ const adminNav = [
   { title: "Layouts", url: "/admin/layouts", icon: LayoutGrid },
   { title: "Schedule", url: "/admin/schedule", icon: CalendarClock },
   { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Payment Settings", url: "/admin/settings/payments", icon: CreditCard },
+  { title: "Donation Content", url: "/admin/settings/donations", icon: HeartHandshake },
 ];
 
 export function AdminSidebar() {

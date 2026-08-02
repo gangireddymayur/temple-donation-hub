@@ -195,6 +195,7 @@ export default function PlayerPage() {
           onSelectZone={() => {}}
           selectedZoneId={null}
           previewMode
+          customerInfoConfig={layout?.layout_data?.customerInfoConfig || company?.customer_info_config}
         />
       </div>
 

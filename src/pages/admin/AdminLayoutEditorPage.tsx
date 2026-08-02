@@ -12,6 +12,7 @@ import {
   ScreenZone,
   ContentWidget,
   createZone,
+  CustomerInfoConfig
 } from "@/lib/screen-editor-types";
 import {
   ArrowLeft,
@@ -21,8 +22,10 @@ import {
   Undo2,
   Redo2,
   LayoutGrid,
+  ClipboardList
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
@@ -63,7 +66,7 @@ function normalizeZoneForSave(zone: ScreenZone): ScreenZone {
   };
 }
 
-type EditorSnapshot = { rootZone: ScreenZone; backgroundColor: string };
+type EditorSnapshot = { rootZone: ScreenZone; backgroundColor: string; customerInfoConfig?: CustomerInfoConfig };
 
 export default function AdminLayoutEditorPage() {
   const { layoutId } = useParams<{ layoutId: string }>();
@@ -74,6 +77,7 @@ export default function AdminLayoutEditorPage() {
   const [resWidth, setResWidth] = useState(1920);
   const [resHeight, setResHeight] = useState(1080);
   const [rootZone, setRootZone] = useState<ScreenZone>(() => createZone("root"));
+  const [customerInfoConfig, setCustomerInfoConfig] = useState<CustomerInfoConfig | null>(null);
   const snapshotRef = useRef<EditorSnapshot>({ rootZone: createZone("root"), backgroundColor: "#1a1a2e" });
   const [history, setHistory] = useState<{ past: EditorSnapshot[]; future: EditorSnapshot[] }>({ past: [], future: [] });
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
@@ -103,17 +107,26 @@ export default function AdminLayoutEditorPage() {
       setBackgroundColor(data.background_color);
       setResWidth(data.resolution_width);
       setResHeight(data.resolution_height);
+
+      const parsedLayout = data.layout_data 
+        ? (typeof data.layout_data === "string" ? JSON.parse(data.layout_data) : data.layout_data) 
+        : null;
+
       const nextSnapshot: EditorSnapshot = {
         rootZone: createZone("root"),
         backgroundColor: data.background_color,
+        customerInfoConfig: parsedLayout?.customerInfoConfig || null
       };
-      if (data.layout_data && typeof data.layout_data === "object" && (data.layout_data as any).id) {
-        nextSnapshot.rootZone = data.layout_data as unknown as ScreenZone;
+
+      if (parsedLayout && parsedLayout.id) {
+        nextSnapshot.rootZone = parsedLayout as unknown as ScreenZone;
       } else {
         nextSnapshot.rootZone = createZone("root");
       }
+
       snapshotRef.current = nextSnapshot;
       setRootZone(nextSnapshot.rootZone);
+      setCustomerInfoConfig(nextSnapshot.customerInfoConfig || null);
       setHistory({ past: [], future: [] });
 
       // Fetch content items for this company
@@ -184,7 +197,10 @@ export default function AdminLayoutEditorPage() {
   const handleSave = async () => {
     if (!layoutId) return;
     setSaving(true);
-    const layoutData = normalizeZoneForSave(rootZone);
+    const layoutData = {
+      ...normalizeZoneForSave(rootZone),
+      customerInfoConfig
+    };
     const { error } = await supabase.from("layouts").update({
       layout_data: layoutData as any,
       background_color: backgroundColor,
@@ -204,8 +220,17 @@ export default function AdminLayoutEditorPage() {
         return;
       }
 
-      snapshotRef.current = { rootZone: saved.layout_data as ScreenZone, backgroundColor: saved.background_color };
-      setRootZone(saved.layout_data as ScreenZone);
+      const parsedVerify = typeof saved.layout_data === "string" 
+        ? JSON.parse(saved.layout_data) 
+        : saved.layout_data;
+
+      snapshotRef.current = { 
+        rootZone: parsedVerify as ScreenZone, 
+        backgroundColor: saved.background_color,
+        customerInfoConfig: parsedVerify.customerInfoConfig || null
+      };
+      setRootZone(parsedVerify as ScreenZone);
+      setCustomerInfoConfig(parsedVerify.customerInfoConfig || null);
       setBackgroundColor(saved.background_color);
     }
 
@@ -238,6 +263,7 @@ export default function AdminLayoutEditorPage() {
             onSelectZone={() => {}}
             selectedZoneId={null}
             previewMode
+            customerInfoConfig={customerInfoConfig || undefined}
           />
         </div>
         <div className="absolute top-4 right-4">
@@ -317,6 +343,110 @@ export default function AdminLayoutEditorPage() {
                     </div>
                   </div>
                 </div>
+
+                <Separator />
+
+                <div className="space-y-3 pt-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+                    <ClipboardList className="h-3.5 w-3.5 text-amber-500" /> Customer Info
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Set devotee checkout fields to collect. Inherited by all donation buttons.
+                  </p>
+
+                  <div className="flex items-center justify-between p-2 bg-muted/20 border border-border/40 rounded-lg">
+                    <span className="text-[11px] font-bold text-slate-200">Enable Popup</span>
+                    <Switch
+                      checked={customerInfoConfig?.popupEnabled ?? false}
+                      onCheckedChange={(popupEnabled) => {
+                        setCustomerInfoConfig(prev => {
+                          const base = prev || {
+                            popupEnabled: false,
+                            fields: {
+                              name: { enabled: true, required: true },
+                              phone: { enabled: true, required: true },
+                              email: { enabled: true, required: false },
+                              address: { enabled: false, required: false },
+                              city: { enabled: false, required: false },
+                              state: { enabled: false, required: false },
+                              pincode: { enabled: false, required: false },
+                              gotra: { enabled: false, required: false },
+                              nakshatra: { enabled: false, required: false },
+                              purpose: { enabled: true, required: false },
+                              prayer: { enabled: false, required: false },
+                            }
+                          };
+                          return { ...base, popupEnabled };
+                        });
+                      }}
+                      className="scale-90"
+                    />
+                  </div>
+
+                  {customerInfoConfig?.popupEnabled && (
+                    <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 border border-border/30 p-2 rounded-lg bg-slate-950/20">
+                      {(["name", "phone", "email", "address", "city", "state", "pincode", "gotra", "nakshatra", "purpose", "prayer"] as const).map((field) => {
+                        const defaultFields = {
+                          name: { enabled: true, required: true },
+                          phone: { enabled: true, required: true },
+                          email: { enabled: true, required: false },
+                          address: { enabled: false, required: false },
+                          city: { enabled: false, required: false },
+                          state: { enabled: false, required: false },
+                          pincode: { enabled: false, required: false },
+                          gotra: { enabled: false, required: false },
+                          nakshatra: { enabled: false, required: false },
+                          purpose: { enabled: true, required: false },
+                          prayer: { enabled: false, required: false },
+                        };
+                        const fieldConf = customerInfoConfig.fields?.[field] || defaultFields[field];
+                        const label = field.charAt(0).toUpperCase() + field.slice(1);
+                        return (
+                          <div key={field} className="space-y-1.5 p-1.5 bg-muted/10 rounded border border-border/20">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-slate-300 capitalize">{label}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[8px] text-muted-foreground">Collect</span>
+                                <Switch
+                                  checked={fieldConf.enabled}
+                                  onCheckedChange={(enabled) => {
+                                    setCustomerInfoConfig(prev => {
+                                      const next = prev ? { ...prev } : { popupEnabled: true, fields: defaultFields };
+                                      const fields = { ...next.fields };
+                                      fields[field] = { ...fields[field], enabled };
+                                      if (!enabled) fields[field].required = false;
+                                      next.fields = fields;
+                                      return next;
+                                    });
+                                  }}
+                                  className="scale-75 origin-right"
+                                />
+                              </div>
+                            </div>
+                            {fieldConf.enabled && (
+                              <div className="flex items-center justify-between border-t border-border/10 pt-1">
+                                <span className="text-[9px] text-slate-400">Required</span>
+                                <Switch
+                                  checked={fieldConf.required}
+                                  onCheckedChange={(required) => {
+                                    setCustomerInfoConfig(prev => {
+                                      const next = prev ? { ...prev } : { popupEnabled: true, fields: defaultFields };
+                                      const fields = { ...next.fields };
+                                      fields[field] = { ...fields[field], required };
+                                      next.fields = fields;
+                                      return next;
+                                    });
+                                  }}
+                                  className="scale-75 origin-right"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </ScrollArea>
           </div>
@@ -338,6 +468,7 @@ export default function AdminLayoutEditorPage() {
                 onUpdate={handleZoneUpdate}
                 onSelectZone={setSelectedZoneId}
                 selectedZoneId={selectedZoneId}
+                customerInfoConfig={customerInfoConfig || undefined}
               />
             </div>
           </div>
