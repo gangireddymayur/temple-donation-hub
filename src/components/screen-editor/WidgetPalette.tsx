@@ -1,27 +1,25 @@
 import { type DragEvent } from "react";
 import {
   Type,
-  Image,
-  Video,
   Clock,
   CloudSun,
   Rss,
-  Images,
-  Link2,
   Coins,
+  Circle,
+  Square,
+  RectangleHorizontal,
 } from "lucide-react";
 import { ContentWidgetType } from "@/lib/screen-editor-types";
 
 const widgets: { type: ContentWidgetType; label: string; icon: React.ElementType; color: string }[] = [
-  { type: 'text', label: 'Text', icon: Type, color: 'bg-warning/15 text-warning' },
-  { type: 'image', label: 'Image', icon: Image, color: 'bg-info/15 text-info' },
-  { type: 'slideshow', label: 'Slideshow', icon: Images, color: 'bg-success/15 text-success' },
-  { type: 'video', label: 'Video', icon: Video, color: 'bg-primary/15 text-primary' },
-  { type: 'clock', label: 'Clock', icon: Clock, color: 'bg-success/15 text-success' },
-  { type: 'weather', label: 'Weather', icon: CloudSun, color: 'bg-warning/15 text-warning' },
+  { type: 'text', label: 'Text Info', icon: Type, color: 'bg-warning/15 text-warning' },
+  { type: 'clock', label: 'Clock Display', icon: Clock, color: 'bg-success/15 text-success' },
+  { type: 'weather', label: 'Weather Info', icon: CloudSun, color: 'bg-warning/15 text-warning' },
   { type: 'rss', label: 'RSS Ticker', icon: Rss, color: 'bg-destructive/15 text-destructive' },
-  { type: 'links', label: 'Quick Links', icon: Link2, color: 'bg-primary/15 text-primary' },
-  { type: 'donation', label: 'Donation Panel', icon: Coins, color: 'bg-success/15 text-success' },
+  { type: 'donation', label: 'Donation Panel', icon: Coins, color: 'bg-emerald-500/15 text-emerald-500' },
+  { type: 'circle_button', label: 'Circle Offering', icon: Circle, color: 'bg-emerald-500/15 text-emerald-500' },
+  { type: 'rectangular_button', label: 'Rectangle Offering', icon: RectangleHorizontal, color: 'bg-indigo-500/15 text-indigo-500' },
+  { type: 'square_button', label: 'Square Offering', icon: Square, color: 'bg-sky-500/15 text-sky-500' },
 ];
 
 export function WidgetPalette() {

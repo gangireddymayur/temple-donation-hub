@@ -273,8 +273,302 @@ function OverlayText({ slide }: { slide: SlideshowItem }) {
   );
 }
 
+/* ── Individual Offering Donation Button ── */
+function IndividualDonationButton({ widget, interactive }: { widget: ContentWidget; interactive: boolean }) {
+  const [activeDonation, setActiveDonation] = useState<any>(null);
+  
+  // Form states
+  const [donorName, setDonorName] = useState("");
+  const [donorPhone, setDonorPhone] = useState("");
+  const [donorEmail, setDonorEmail] = useState("");
+  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
+  const [loading, setLoading] = useState(false);
+  
+  // Payment states
+  const [donationId, setDonationId] = useState<string | null>(null);
+  const [upiString, setUpiString] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  
+  const amount = widget.buttonAmount || 100;
+  const description = widget.buttonDescription || "Offering";
+  const type = widget.type;
+
+  // Polling logic
+  useEffect(() => {
+    if (step !== 'payment' || !donationId) return;
+    let pollTimer: any;
+    let count = 0;
+    
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API}/donations/public/status/${donationId}?t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'success') {
+            setStep('success');
+            setTimeout(() => {
+              handleClose();
+            }, 5000);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Status poll error:", e);
+      }
+      
+      count++;
+      if (count < 100) {
+        pollTimer = setTimeout(checkStatus, 3000);
+      }
+    };
+    
+    pollTimer = setTimeout(checkStatus, 3000);
+    return () => clearTimeout(pollTimer);
+  }, [step, donationId]);
+
+  const handleClose = () => {
+    setActiveDonation(null);
+    setDonorName("");
+    setDonorPhone("");
+    setDonorEmail("");
+    setStep('form');
+    setDonationId(null);
+    setUpiString(null);
+    setQrCodeUrl("");
+  };
+
+  const handleInitiate = async (amt: number, purposeText: string) => {
+    setLoading(true);
+    try {
+      const pathParts = window.location.pathname.split('/');
+      const deviceId = pathParts[pathParts.indexOf('player') + 1] || pathParts[pathParts.indexOf('editor') + 1] || null;
+
+      const response = await fetch(`${API}/donations/public/initiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          amount: amt,
+          purpose: purposeText,
+          donorName: donorName || "Devotee",
+          donorPhone: donorPhone || "",
+          donorEmail: donorEmail || ""
+        })
+      });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to initiate payment');
+      }
+      
+      const data = await response.json();
+      setDonationId(data.donationId);
+      
+      const qrData = data.upiString || `upi://pay?pa=placeholder@upi&pn=Temple&am=${amt}&tr=${data.donationId}`;
+      setUpiString(qrData);
+      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
+      setStep('payment');
+    } catch (e: any) {
+      alert(e.message || "Could not connect to payment server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const simulateSuccess = async () => {
+    if (!donationId) return;
+    try {
+      await fetch(`${API}/donations/public/simulate-success`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ donationId })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Shape-specific classes
+  let shapeClass = "";
+  if (type === 'circle_button') {
+    shapeClass = "rounded-full aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center";
+  } else if (type === 'rectangular_button') {
+    shapeClass = "rounded-2xl w-full h-[85%] flex flex-col justify-center items-center py-6 px-8";
+  } else if (type === 'square_button') {
+    shapeClass = "rounded-none aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center";
+  }
+
+  // Universal button container style
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: widget.backgroundColor || 'rgba(16, 185, 129, 0.1)', // fallback green tint
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderWidth: '1px',
+    padding: widget.padding || 16,
+    borderRadius: widget.borderRadius,
+    opacity: (widget.opacity ?? 100) / 100,
+    backgroundImage: widget.buttonBackgroundUrl ? `url(${widget.buttonBackgroundUrl})` : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    pointerEvents: interactive ? 'auto' : 'none',
+  };
+
+  return (
+    <div className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent select-none p-2">
+      <button
+        onClick={() => interactive && setActiveDonation({ amount, label: description })}
+        className={cn(
+          "relative border shadow-lg transition-all duration-300 overflow-hidden text-white group",
+          interactive ? "cursor-pointer hover:scale-[1.04] hover:shadow-emerald-950/30" : "cursor-default",
+          widget.buttonBackgroundUrl ? "after:absolute after:inset-0 after:bg-black/35 group-hover:after:bg-black/20 after:transition-all after:z-0" : "",
+          shapeClass
+        )}
+        style={containerStyle}
+      >
+        <div className="relative z-10 flex flex-col items-center text-center justify-center w-full h-full space-y-1.5 p-2">
+          {widget.buttonPhotoUrl && (
+            <img src={widget.buttonPhotoUrl} alt="Offering Icon" className="h-10 w-10 object-contain rounded-lg shadow mb-1" />
+          )}
+          <span className="text-2xl font-black tracking-wide text-amber-400 drop-shadow-md">₹{amount}</span>
+          <span className="text-xs font-bold tracking-wider uppercase drop-shadow-sm text-slate-100 max-w-full truncate px-1">{description}</span>
+        </div>
+      </button>
+
+      {/* Reused Payment Dialog Overlay */}
+      {activeDonation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-6">
+          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left">
+            {/* Background glowing gradients */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+              <div className="flex items-center gap-2.5">
+                <Coins className="h-5 w-5 text-emerald-400" />
+                <span className="font-bold text-lg text-slate-100">Daan Offerings</span>
+              </div>
+              <button onClick={handleClose} className="text-slate-400 hover:text-white text-sm bg-slate-800/50 hover:bg-slate-800 px-3 py-1 rounded-full border border-slate-700/50 transition-colors">
+                Cancel
+              </button>
+            </div>
+
+            {step === 'form' && (
+              <div className="space-y-4">
+                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
+                  <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Selected offering</div>
+                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
+                  <div className="text-xs text-slate-400 mt-1">{activeDonation.label}</div>
+                </div>
+
+                <div className="space-y-3.5 pt-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Devotee Name (Optional)</label>
+                    <input
+                      type="text"
+                      value={donorName}
+                      onChange={(e) => setDonorName(e.target.value)}
+                      placeholder="Enter full name"
+                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      value={donorPhone}
+                      onChange={(e) => setDonorPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
+                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  disabled={loading}
+                  onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
+                  className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-4"
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
+                  ) : (
+                    <>
+                      <QrCode className="h-4 w-4 text-[#070b18]" />
+                      <span>Generate Payment QR</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {step === 'payment' && (
+              <div className="flex flex-col items-center text-center space-y-5">
+                <div className="space-y-1">
+                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
+                  <div className="text-xs text-slate-400">{activeDonation.label}</div>
+                </div>
+
+                <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-800/10">
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="UPI Payment QR Code" className="w-[180px] h-[180px]" />
+                  ) : (
+                    <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-slate-500">
+                      Loading QR...
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1 px-4">
+                  <div className="text-sm font-semibold text-slate-200">Scan QR Code to Pay</div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Open BHIM, GPay, PhonePe, Paytm, or any UPI app on your phone and scan the QR code to complete donation.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-4 py-2 rounded-full font-medium animate-pulse">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Waiting for payment confirmation...</span>
+                </div>
+
+                <button
+                  onClick={simulateSuccess}
+                  className="text-[9px] text-slate-600 hover:text-slate-400 mt-2 bg-slate-900 border border-slate-800/50 px-2.5 py-1 rounded"
+                >
+                  [Developer: Simulate Payment Success]
+                </button>
+              </div>
+            )}
+
+            {step === 'success' && (
+              <div className="flex flex-col items-center text-center py-6 space-y-4">
+                <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400 shadow-inner">
+                  <CheckCircle className="h-8 w-8 text-emerald-400" />
+                </div>
+
+                <div className="space-y-2 select-none">
+                  <h3 className="text-xl font-bold text-slate-100 flex items-center justify-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-amber-400" />
+                    Donation Successful
+                  </h3>
+                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    Thank you for your generous offering of <strong>₹{activeDonation.amount}</strong> to the temple devasthanam. May you be blessed with peace and prosperity.
+                  </p>
+                </div>
+
+                <div className="text-[10px] text-slate-500 pt-4">Returning to layout in 5 seconds...</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Standard Widget Preview ── */
 function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget; previewMode?: boolean }) {
+  if (widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') {
+    return <IndividualDonationButton widget={widget} interactive={previewMode} />;
+  }
   if (widget.type === 'links') {
     return <LinksWidget widget={widget} interactive={previewMode} />;
   }

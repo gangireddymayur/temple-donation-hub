@@ -717,6 +717,95 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
         </>
       )}
 
+      {/* ── CUSTOM INDIVIDUAL DONATION BUTTONS ── */}
+      {(widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Offering Title / Description</Label>
+            <Input
+              value={widget.buttonDescription || ''}
+              onChange={(e) => update({ buttonDescription: e.target.value })}
+              placeholder="e.g. Archana Daan"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Offering Amount (INR)</Label>
+            <Input
+              type="number"
+              value={widget.buttonAmount || 0}
+              onChange={(e) => update({ buttonAmount: Number(e.target.value) })}
+              placeholder="e.g. 101"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          {images.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs">Select Center Icon / Photo</Label>
+              <div className="grid grid-cols-4 gap-1.5 max-h-[120px] overflow-y-auto border border-border/50 p-1 rounded bg-muted/20">
+                {images.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => update({ buttonPhotoUrl: item.file_url!, buttonPhotoName: item.name })}
+                    className={cn(
+                      "relative rounded overflow-hidden border transition-all aspect-square",
+                      widget.buttonPhotoUrl === item.file_url
+                        ? "border-primary ring-1 ring-primary"
+                        : "border-border hover:border-primary/40"
+                    )}
+                  >
+                    <img src={item.file_url!} alt={item.name} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              {widget.buttonPhotoUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] w-full"
+                  onClick={() => update({ buttonPhotoUrl: undefined, buttonPhotoName: undefined })}
+                >
+                  Clear Center Photo
+                </Button>
+              )}
+            </div>
+          )}
+
+          {images.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs">Select Background Image</Label>
+              <div className="grid grid-cols-4 gap-1.5 max-h-[120px] overflow-y-auto border border-border/50 p-1 rounded bg-muted/20">
+                {images.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => update({ buttonBackgroundUrl: item.file_url!, buttonBackgroundName: item.name })}
+                    className={cn(
+                      "relative rounded overflow-hidden border transition-all aspect-square",
+                      widget.buttonBackgroundUrl === item.file_url
+                        ? "border-primary ring-1 ring-primary"
+                        : "border-border hover:border-primary/40"
+                    )}
+                  >
+                    <img src={item.file_url!} alt={item.name} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              {widget.buttonBackgroundUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] w-full"
+                  onClick={() => update({ buttonBackgroundUrl: undefined, buttonBackgroundName: undefined })}
+                >
+                  Clear Background Image
+                </Button>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       <Separator />
 

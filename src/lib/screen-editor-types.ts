@@ -4,7 +4,7 @@ export type TextAnimation = 'none' | 'scroll-left' | 'scroll-right' | 'scroll-up
 
 export type SlideTransition = 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom-in' | 'zoom-out' | 'flip' | 'none';
 
-export type ContentWidgetType = 'image' | 'video' | 'text' | 'clock' | 'weather' | 'rss' | 'slideshow' | 'links' | 'donation' | 'empty';
+export type ContentWidgetType = 'image' | 'video' | 'text' | 'clock' | 'weather' | 'rss' | 'slideshow' | 'links' | 'donation' | 'empty' | 'circle_button' | 'rectangular_button' | 'square_button';
 
 export type LinkPlatform = 'instagram' | 'youtube' | 'facebook' | 'twitter' | 'tiktok' | 'linkedin' | 'github' | 'website';
 
@@ -104,6 +104,13 @@ export interface ContentWidget {
   donationStyle?: 'circle' | 'square' | 'rounded';
   donationOrientation?: 'grid' | 'horizontal' | 'vertical';
   donationButtons?: Array<{ id: string; amount: number; label: string }>;
+  // individual button widget props
+  buttonDescription?: string;
+  buttonPhotoUrl?: string;
+  buttonPhotoName?: string;
+  buttonBackgroundUrl?: string;
+  buttonBackgroundName?: string;
+  buttonAmount?: number;
   // styling
   backgroundColor?: string;
   padding?: number;
@@ -225,6 +232,30 @@ export function createWidget(type: ContentWidgetType): ContentWidget {
           { id: `btn-${Date.now()}-3`, amount: 1001, label: 'Kalyanotsavam' },
           { id: `btn-${Date.now()}-4`, amount: 5001, label: 'Temple Fund' },
         ],
+      };
+    case 'circle_button':
+      return {
+        ...base,
+        label: 'Circle Button',
+        buttonDescription: 'Archana Daan',
+        buttonAmount: 101,
+        borderRadius: 9999, // Circular shape default
+      };
+    case 'rectangular_button':
+      return {
+        ...base,
+        label: 'Rectangle Button',
+        buttonDescription: 'Kalyanotsavam',
+        buttonAmount: 1001,
+        borderRadius: 12,
+      };
+    case 'square_button':
+      return {
+        ...base,
+        label: 'Square Button',
+        buttonDescription: 'Anna Prasadam',
+        buttonAmount: 501,
+        borderRadius: 0,
       };
     default:
       return base;
