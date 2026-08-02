@@ -10,6 +10,7 @@ import {
   PlaylistItem,
   splitZone,
   createWidget,
+  CustomerInfoConfig,
 } from "@/lib/screen-editor-types";
 import {
   SplitSquareHorizontal,
@@ -30,6 +31,7 @@ import {
   Sparkles,
   CheckCircle,
   Loader2,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
