@@ -388,29 +388,87 @@ function IndividualDonationButton({ widget, interactive }: { widget: ContentWidg
     }
   };
 
-  // Shape-specific classes
+  // Determine premium default backgrounds & classes
   let shapeClass = "";
-  if (type === 'circle_button') {
-    shapeClass = "rounded-full aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center";
-  } else if (type === 'rectangular_button') {
-    shapeClass = "rounded-2xl w-full h-[85%] flex flex-col justify-center items-center py-6 px-8";
-  } else if (type === 'square_button') {
-    shapeClass = "rounded-none aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center";
-  }
-
-  // Universal button container style
-  const containerStyle: React.CSSProperties = {
-    backgroundColor: widget.backgroundColor || 'rgba(16, 185, 129, 0.1)', // fallback green tint
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-    borderWidth: '1px',
-    padding: widget.padding || 16,
+  let defaultBgClass = "";
+  let innerElements = null;
+  const customContainerStyle: React.CSSProperties = {
+    padding: widget.padding || 0,
     borderRadius: widget.borderRadius,
     opacity: (widget.opacity ?? 100) / 100,
-    backgroundImage: widget.buttonBackgroundUrl ? `url(${widget.buttonBackgroundUrl})` : undefined,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
     pointerEvents: interactive ? 'auto' : 'none',
   };
+
+  const hasCustomBgColor = widget.backgroundColor && widget.backgroundColor !== 'transparent';
+  const hasBgImage = !!widget.buttonBackgroundUrl;
+
+  if (hasBgImage) {
+    customContainerStyle.backgroundImage = `url(${widget.buttonBackgroundUrl})`;
+    customContainerStyle.backgroundSize = 'cover';
+    customContainerStyle.backgroundPosition = 'center';
+  } else if (hasCustomBgColor) {
+    customContainerStyle.backgroundColor = widget.backgroundColor;
+  }
+
+  if (type === 'circle_button') {
+    shapeClass = "rounded-full aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center border-2 border-yellow-300/70 shadow-[0_0_25px_rgba(249,115,22,0.45)] overflow-hidden";
+    if (!hasBgImage && !hasCustomBgColor) {
+      defaultBgClass = "bg-gradient-to-br from-amber-500 via-orange-500 to-red-600";
+    }
+    innerElements = (
+      <div className="relative z-10 flex flex-col items-center text-center justify-center w-full h-full space-y-1.5 p-3 rounded-full border border-yellow-400/20 m-1 bg-black/15">
+        {widget.buttonPhotoUrl ? (
+          <img src={widget.buttonPhotoUrl} alt="Icon" className="h-10 w-10 object-contain rounded-full border border-yellow-500/50 p-0.5 bg-black/20" />
+        ) : (
+          <Coins className="h-6 w-6 text-yellow-300 animate-pulse" />
+        )}
+        <span className="text-2xl font-black tracking-wide text-yellow-300 drop-shadow-md">₹{amount}</span>
+        <span className="text-[10px] font-bold tracking-wider uppercase drop-shadow text-slate-100 max-w-full truncate px-2">{description}</span>
+      </div>
+    );
+  } else if (type === 'rectangular_button') {
+    shapeClass = "rounded-2xl w-full h-[85%] flex flex-col justify-center items-center border border-yellow-500/40 shadow-xl shadow-red-950/25 overflow-hidden before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 before:bg-gradient-to-b before:from-yellow-400 before:to-amber-600 before:z-10";
+    if (!hasBgImage && !hasCustomBgColor) {
+      defaultBgClass = "bg-gradient-to-r from-red-950 via-rose-900 to-red-950";
+    }
+    innerElements = (
+      <div className="relative z-10 flex flex-row items-center justify-between w-full h-full px-6 gap-3 py-4 bg-black/20">
+        <div className="flex items-center gap-3">
+          {widget.buttonPhotoUrl ? (
+            <img src={widget.buttonPhotoUrl} alt="Icon" className="h-12 w-12 shrink-0 object-contain rounded-full border border-yellow-500/50 p-0.5 bg-black/20" />
+          ) : (
+            <div className="h-10 w-10 shrink-0 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+              <Coins className="h-5 w-5 text-yellow-400" />
+            </div>
+          )}
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-bold tracking-wider text-yellow-100 uppercase drop-shadow">{description}</span>
+            <span className="text-[9px] text-amber-200/50 uppercase tracking-widest font-semibold">Devasthanam Offering</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end shrink-0">
+          <span className="text-3xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">₹{amount}</span>
+          <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-semibold mt-0.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">Tap to Pay</span>
+        </div>
+      </div>
+    );
+  } else if (type === 'square_button') {
+    shapeClass = "rounded-none aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center border-2 border-yellow-400/60 shadow-[0_0_20px_rgba(234,179,8,0.25)] overflow-hidden after:absolute after:inset-1.5 after:border after:border-yellow-300/30 after:pointer-events-none";
+    if (!hasBgImage && !hasCustomBgColor) {
+      defaultBgClass = "bg-gradient-to-br from-yellow-600 via-amber-600 to-yellow-800";
+    }
+    innerElements = (
+      <div className="relative z-10 flex flex-col items-center text-center justify-between w-full h-full py-5 px-3 bg-black/20">
+        <span className="text-[11px] font-bold tracking-wider uppercase text-yellow-100/90 drop-shadow-sm max-w-full truncate px-1">{description}</span>
+        {widget.buttonPhotoUrl ? (
+          <img src={widget.buttonPhotoUrl} alt="Icon" className="h-12 w-12 object-contain rounded-lg border border-yellow-500/40 p-0.5 bg-black/20" />
+        ) : (
+          <Sparkles className="h-8 w-8 text-yellow-300 opacity-80" />
+        )}
+        <span className="text-3xl font-black tracking-wide text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">₹{amount}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent select-none p-2">
@@ -418,19 +476,14 @@ function IndividualDonationButton({ widget, interactive }: { widget: ContentWidg
         onClick={() => interactive && setActiveDonation({ amount, label: description })}
         className={cn(
           "relative border shadow-lg transition-all duration-300 overflow-hidden text-white group",
-          interactive ? "cursor-pointer hover:scale-[1.04] hover:shadow-emerald-950/30" : "cursor-default",
-          widget.buttonBackgroundUrl ? "after:absolute after:inset-0 after:bg-black/35 group-hover:after:bg-black/20 after:transition-all after:z-0" : "",
+          defaultBgClass,
+          interactive ? "cursor-pointer hover:scale-[1.04] hover:shadow-yellow-950/30" : "cursor-default",
+          widget.buttonBackgroundUrl ? "after:absolute after:inset-0 after:bg-black/40 group-hover:after:bg-black/25 after:transition-all after:z-0" : "",
           shapeClass
         )}
-        style={containerStyle}
+        style={customContainerStyle}
       >
-        <div className="relative z-10 flex flex-col items-center text-center justify-center w-full h-full space-y-1.5 p-2">
-          {widget.buttonPhotoUrl && (
-            <img src={widget.buttonPhotoUrl} alt="Offering Icon" className="h-10 w-10 object-contain rounded-lg shadow mb-1" />
-          )}
-          <span className="text-2xl font-black tracking-wide text-amber-400 drop-shadow-md">₹{amount}</span>
-          <span className="text-xs font-bold tracking-wider uppercase drop-shadow-sm text-slate-100 max-w-full truncate px-1">{description}</span>
-        </div>
+        {innerElements}
       </button>
 
       {/* Reused Payment Dialog Overlay */}
