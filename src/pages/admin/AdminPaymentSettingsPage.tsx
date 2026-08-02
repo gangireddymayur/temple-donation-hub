@@ -27,6 +27,7 @@ export default function AdminPaymentSettingsPage() {
   const [razorpayKeySecret, setRazorpayKeySecret] = useState("");
   const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState("");
   const [razorpayMode, setRazorpayMode] = useState<"test" | "live">("test");
+  const [preferredGateway, setPreferredGateway] = useState<"upi" | "razorpay">("upi");
 
   // Test Connection Dialog State
   const [testDialogOpen, setTestDialogOpen] = useState(false);
@@ -43,13 +44,14 @@ export default function AdminPaymentSettingsPage() {
         const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single();
         if (profile?.company_id) {
           setCompanyId(profile.company_id);
-          const { data: company } = await supabase.from("companies").select("upi_id, razorpay_key_id, razorpay_key_secret, razorpay_webhook_secret, razorpay_mode").eq("id", profile.company_id).single();
+          const { data: company } = await supabase.from("companies").select("upi_id, razorpay_key_id, razorpay_key_secret, razorpay_webhook_secret, razorpay_mode, preferred_gateway").eq("id", profile.company_id).single();
           if (company) {
             setUpiId(company.upi_id || "");
             setRazorpayKeyId(company.razorpay_key_id || "");
             setRazorpayKeySecret(company.razorpay_key_secret || "");
             setRazorpayWebhookSecret(company.razorpay_webhook_secret || "");
             setRazorpayMode((company as any).razorpay_mode || "test");
+            setPreferredGateway((company as any).preferred_gateway || "upi");
           }
         }
       } catch (err) {
@@ -70,7 +72,8 @@ export default function AdminPaymentSettingsPage() {
         razorpay_key_id: razorpayKeyId,
         razorpay_key_secret: razorpayKeySecret,
         razorpay_webhook_secret: razorpayWebhookSecret,
-        razorpay_mode: razorpayMode
+        razorpay_mode: razorpayMode,
+        preferred_gateway: preferredGateway
       } as any).eq("id", companyId);
 
       if (error) throw error;
@@ -215,6 +218,41 @@ export default function AdminPaymentSettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
+                  <div className="space-y-2 p-3 bg-slate-950/20 rounded-xl border border-border/30">
+                    <Label className="text-xs font-bold text-slate-200 uppercase tracking-widest block mb-2">Active Kiosk Payment Method</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPreferredGateway("upi")}
+                        className={cn(
+                          "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
+                          preferredGateway === "upi"
+                            ? "bg-amber-500/10 border-amber-500 text-amber-100"
+                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400"
+                        )}
+                      >
+                        <span className="font-bold block text-sm mb-1">Direct UPI Daan</span>
+                        <span className="text-[10px] leading-relaxed text-muted-foreground">Generates zero-fee direct UPI QR codes. Instant bank settlement.</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPreferredGateway("razorpay")}
+                        className={cn(
+                          "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
+                          preferredGateway === "razorpay"
+                            ? "bg-amber-500/10 border-amber-500 text-amber-100"
+                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400"
+                        )}
+                      >
+                        <span className="font-bold block text-sm mb-1">Razorpay Gateway</span>
+                        <span className="text-[10px] leading-relaxed text-muted-foreground">Multi-method payment checkout with cards, netbanking & UPI.</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <Separator className="opacity-50" />
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-200">Merchant UPI ID (Direct Daan)</Label>
                     <Input

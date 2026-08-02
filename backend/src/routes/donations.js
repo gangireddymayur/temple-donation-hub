@@ -88,7 +88,7 @@ router.post('/public/initiate', async (req, res) => {
     }
 
     const [companies] = await db.query(
-      'SELECT name, upi_id, razorpay_key_id, razorpay_key_secret FROM companies WHERE id = :id LIMIT 1',
+      'SELECT name, upi_id, razorpay_key_id, razorpay_key_secret, preferred_gateway FROM companies WHERE id = :id LIMIT 1',
       { id: resolvedCompanyId }
     );
     const company = companies[0];
@@ -133,8 +133,8 @@ router.post('/public/initiate', async (req, res) => {
       }
     );
 
-    // 1. Check if Razorpay keys are configured
-    if (company.razorpay_key_id && company.razorpay_key_secret) {
+    // 1. Check if Razorpay is selected as preferred gateway and keys are configured
+    if (company.preferred_gateway === 'razorpay' && company.razorpay_key_id && company.razorpay_key_secret) {
       try {
         const order = await callRazorpay(
           'POST',

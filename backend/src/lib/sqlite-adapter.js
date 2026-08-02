@@ -279,6 +279,10 @@ class SqlitePool {
         this.db.run("ALTER TABLE companies ADD COLUMN customer_info_config TEXT;");
       } catch (e) {}
 
+      try {
+        this.db.run("ALTER TABLE companies ADD COLUMN preferred_gateway TEXT DEFAULT 'upi';");
+      } catch (e) {}
+
       // Donations table dynamic migrations
       const newDonationCols = [
         "donor_address",

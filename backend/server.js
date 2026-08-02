@@ -340,6 +340,35 @@ const port = process.env.PORT || process.env.HTTP_PLATFORM_PORT || 8080;
 app.listen(port, async () => {
   console.log('RUNNING ON PORT:', port);
 
+  // Auto-migrate database tables on MySQL
+  try {
+    const db = require('./src/lib/db');
+    const isSqlite = process.env.USE_SQLITE === 'true' || process.env.IS_OFFLINE === 'true' || !process.env.DB_USER;
+    if (!isSqlite) {
+      console.log('[db] MySQL database detected. Running schema migrations...');
+      
+      // 1. donations.kiosk_name
+      const [donationCols] = await db.query("SHOW COLUMNS FROM donations LIKE 'kiosk_name'");
+      if (donationCols.length === 0) {
+        console.log('[db] Column kiosk_name is missing from donations table. Altering table...');
+        await db.query("ALTER TABLE donations ADD COLUMN kiosk_name VARCHAR(255) DEFAULT NULL");
+        console.log('[db] Column kiosk_name added successfully!');
+      }
+
+      // 2. companies.preferred_gateway
+      const [companyCols] = await db.query("SHOW COLUMNS FROM companies LIKE 'preferred_gateway'");
+      if (companyCols.length === 0) {
+        console.log('[db] Column preferred_gateway is missing from companies table. Altering table...');
+        await db.query("ALTER TABLE companies ADD COLUMN preferred_gateway VARCHAR(32) NOT NULL DEFAULT 'upi'");
+        console.log('[db] Column preferred_gateway added successfully!');
+      }
+      
+      console.log('[db] MySQL schema migrations check completed!');
+    }
+  } catch (err) {
+    console.error('[db] MySQL schema migration check failed:', err.stack || err.message);
+  }
+
   const isOffline = process.env.IS_OFFLINE === 'true';
   if (isOffline) {
     const fs = require('fs');
