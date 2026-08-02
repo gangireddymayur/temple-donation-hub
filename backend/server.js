@@ -40,6 +40,52 @@ app.get('/api/local-status', (_req, res) => res.json({
   isLocalServer: process.env.IS_OFFLINE === 'true',
   manualCloudSync: process.env.IS_OFFLINE === 'true'
 }));
+
+app.get('/api/db-check', async (req, res) => {
+  try {
+    const db = require('./src/lib/db');
+    const [rows] = await db.query('SELECT 1 + 1 AS result');
+    
+    let usersCount = 0;
+    try {
+      const [uRows] = await db.query('SELECT COUNT(*) AS count FROM users');
+      usersCount = uRows[0].count;
+    } catch (e) {
+      usersCount = `Error: ${e.message}`;
+    }
+
+    res.json({
+      ok: true,
+      mode: db.isSqlite ? 'SQLite' : 'MySQL/MariaDB',
+      query_test: rows[0].result === 2 ? 'success' : 'failed',
+      users_count: usersCount,
+      env: {
+        DB_HOST: process.env.DB_HOST || 'not set',
+        DB_PORT: process.env.DB_PORT || 'not set',
+        DB_NAME: process.env.DB_NAME ? 'set' : 'not set',
+        DB_USER: process.env.DB_USER ? 'set' : 'not set',
+        DB_PASSWORD: process.env.DB_PASSWORD ? 'set' : 'not set',
+        IS_OFFLINE: process.env.IS_OFFLINE || 'not set',
+        NODE_ENV: process.env.NODE_ENV || 'not set'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: err.message,
+      stack: err.stack,
+      env: {
+        DB_HOST: process.env.DB_HOST || 'not set',
+        DB_PORT: process.env.DB_PORT || 'not set',
+        DB_NAME: process.env.DB_NAME ? 'set' : 'not set',
+        DB_USER: process.env.DB_USER ? 'set' : 'not set',
+        DB_PASSWORD: process.env.DB_PASSWORD ? 'set' : 'not set',
+        IS_OFFLINE: process.env.IS_OFFLINE || 'not set',
+        NODE_ENV: process.env.NODE_ENV || 'not set'
+      }
+    });
+  }
+});
 // Run startup database migrations to ensure devices table column exists
 // SQLite: schema is fully managed by sqlite-adapter.js — skip MySQL-specific migrations
 (async () => {
