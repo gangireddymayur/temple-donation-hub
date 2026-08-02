@@ -315,7 +315,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           hoverEffect: 'scale',
           clickAnimation: 'pop',
           visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1609137144813-2d2c16196232?auto=format&fit=crop&w=600&q=80' : undefined
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1543157145-f78c636d023d?auto=format&fit=crop&w=600&q=80' : undefined
         },
         {
           id: `btn-${Date.now()}-2`,
@@ -347,7 +347,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           hoverEffect: 'scale',
           clickAnimation: 'pop',
           visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1600100397608-f010e42ec3b3?auto=format&fit=crop&w=600&q=80' : undefined
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?auto=format&fit=crop&w=600&q=80' : undefined
         }
       ];
 

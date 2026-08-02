@@ -1407,12 +1407,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={minimalContainerStyle} 
         className={cn(
-          "relative select-none text-stone-100 font-sans flex flex-col justify-start bg-[#050505] border border-stone-900 w-full h-full",
+          "relative select-none text-stone-100 font-sans flex flex-col justify-start bg-[#050505] w-full h-full",
           widget.donationContainerShadow || "shadow-none"
         )}
       >
         {/* Top Header Bar */}
-        <div className="w-full bg-[#0a0a0a]/90 backdrop-blur border-b border-stone-900 py-3.5 px-6 flex items-center justify-between shrink-0 z-10">
+        <div className={cn("w-full bg-[#0a0a0a]/90 backdrop-blur border-b border-stone-900 py-3.5 px-6 flex items-center justify-between shrink-0 z-10", !interactive ? "pr-28" : "")}>
           <div className="flex items-center gap-2.5">
             {widget.templeLogoUrl ? (
               <img src={widget.templeLogoUrl} alt="Logo" className="h-8 w-8 object-contain rounded" />
