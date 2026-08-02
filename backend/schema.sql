@@ -147,16 +147,16 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- SEED DATA
--- Default super admin login: super@demo.com / ChangeMe123!
+-- Default super admin login: mayurtemple@gmail.com / ChangeMe123!
 -- Password hash is bcrypt of "ChangeMe123!" — change it after first login.
 -- ============================================================
 
 INSERT INTO `companies` (`id`, `name`, `contact_email`, `plan`, `max_screens`, `status`, `subscription_status`, `trial_ends_at`) VALUES
-('11111111-1111-1111-1111-111111111111', 'Acme Corp', 'admin@acme.com', 'pro', 25, 'active', 'active', NULL);
+('11111111-1111-1111-1111-111111111111', 'Temple Donation Hub', 'admin@templedonation.org', 'pro', 25, 'active', 'active', NULL);
 
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `company_id`) VALUES
-('00000000-0000-0000-0000-000000000001', 'super@demo.com',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Super Admin', NULL),
-('00000000-0000-0000-0000-000000000002', 'admin@acme.com',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Acme Admin',  '11111111-1111-1111-1111-111111111111');
+('00000000-0000-0000-0000-000000000001', 'mayurtemple@gmail.com',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Super Admin', NULL),
+('00000000-0000-0000-0000-000000000002', 'admin@templedonation.org',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Temple Admin',  '11111111-1111-1111-1111-111111111111');
 
 INSERT INTO `user_roles` (`id`, `user_id`, `role`) VALUES
 (UUID(), '00000000-0000-0000-0000-000000000001', 'super_admin'),
