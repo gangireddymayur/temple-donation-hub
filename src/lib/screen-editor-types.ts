@@ -1,0 +1,258 @@
+export type ZoneSplit = 'none' | 'horizontal' | 'vertical';
+
+export type TextAnimation = 'none' | 'scroll-left' | 'scroll-right' | 'scroll-up' | 'scroll-down' | 'typewriter' | 'fade' | 'blink';
+
+export type SlideTransition = 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom-in' | 'zoom-out' | 'flip' | 'none';
+
+export type ContentWidgetType = 'image' | 'video' | 'text' | 'clock' | 'weather' | 'rss' | 'slideshow' | 'links' | 'donation' | 'empty';
+
+export type LinkPlatform = 'instagram' | 'youtube' | 'facebook' | 'twitter' | 'tiktok' | 'linkedin' | 'github' | 'website';
+
+export interface LinkItem {
+  id: string;
+  url: string;
+  label: string;          // custom display label
+  platform: LinkPlatform; // auto-detected, can be overridden
+  iconColor?: string;
+}
+
+export type LinksOrientation = 'auto' | 'horizontal' | 'vertical';
+
+export const MAX_LINKS = 4;
+
+export function detectPlatform(url: string): LinkPlatform {
+  const u = url.toLowerCase();
+  if (u.includes('instagram.com')) return 'instagram';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  if (u.includes('facebook.com') || u.includes('fb.com')) return 'facebook';
+  if (u.includes('twitter.com') || u.includes('x.com')) return 'twitter';
+  if (u.includes('tiktok.com')) return 'tiktok';
+  if (u.includes('linkedin.com')) return 'linkedin';
+  if (u.includes('github.com')) return 'github';
+  return 'website';
+}
+
+export interface SlideshowItem {
+  id: string;
+  imageUrl: string;
+  imageName: string;
+  duration: number; // seconds
+  transition: SlideTransition;
+  objectFit: 'cover' | 'contain' | 'fill';
+  /** Optional overlay text */
+  overlayText?: string;
+  overlayFontSize?: number;
+  overlayColor?: string;
+  overlayAnimation?: TextAnimation;
+}
+
+/** Playlist item for image/video widgets with optional time-window scheduling. */
+export interface PlaylistItem {
+  id: string;
+  mediaType: 'image' | 'video';
+  mediaUrl: string;
+  mediaName: string;
+  /** Seconds. For videos, 0 = play full video length. */
+  duration: number;
+  /** If true, only play during the configured window/days. Otherwise plays always. */
+  scheduleEnabled?: boolean;
+  startTime?: string; // "HH:MM"
+  endTime?: string;   // "HH:MM"
+  daysOfWeek?: number[]; // 0=Sun..6=Sat. Empty/undefined = every day.
+}
+
+export function createPlaylistItem(mediaType: 'image' | 'video' = 'image'): PlaylistItem {
+  return {
+    id: `pl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    mediaType,
+    mediaUrl: '',
+    mediaName: '',
+    duration: mediaType === 'video' ? 0 : 8,
+    scheduleEnabled: false,
+    daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+  };
+}
+
+export interface ContentWidget {
+  id: string;
+  type: ContentWidgetType;
+  label: string;
+  // text props
+  text?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  textColor?: string;
+  textAnimation?: TextAnimation;
+  scrollSpeed?: 'slow' | 'normal' | 'fast';
+  scrollDuration?: number; // seconds for one full scroll cycle
+  // media props
+  mediaUrl?: string;
+  mediaName?: string;
+  objectFit?: 'cover' | 'contain' | 'fill';
+  // playlist mode for image/video widgets
+  playlistEnabled?: boolean;
+  playlistItems?: PlaylistItem[];
+  // slideshow props
+  slides?: SlideshowItem[];
+  slideshowLoop?: boolean;
+  // links widget
+  links?: LinkItem[];
+  linksOrientation?: LinksOrientation;
+  // donation widget props
+  donationTitle?: string;
+  donationPurpose?: string;
+  donationStyle?: 'circle' | 'square' | 'rounded';
+  donationOrientation?: 'grid' | 'horizontal' | 'vertical';
+  donationButtons?: Array<{ id: string; amount: number; label: string }>;
+  // styling
+  backgroundColor?: string;
+  padding?: number;
+  borderRadius?: number;
+  opacity?: number;
+}
+
+export interface ScreenZone {
+  id: string;
+  split: ZoneSplit;
+  /** 0-100, how much first child takes */
+  splitRatio: number;
+  content: ContentWidget | null;
+  children: [ScreenZone, ScreenZone] | null;
+}
+
+export interface ScreenLayout {
+  id: string;
+  name: string;
+  deviceId: string;
+  resolution: { width: number; height: number };
+  backgroundColor: string;
+  rootZone: ScreenZone;
+}
+
+export function createZone(id?: string): ScreenZone {
+  return {
+    id: id || `zone-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    split: 'none',
+    splitRatio: 50,
+    content: null,
+    children: null,
+  };
+}
+
+export function createSlide(): SlideshowItem {
+  return {
+    id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    imageUrl: '',
+    imageName: '',
+    duration: 5,
+    transition: 'fade',
+    objectFit: 'cover',
+  };
+}
+
+export function createWidget(type: ContentWidgetType): ContentWidget {
+  const id = `widget-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const base: ContentWidget = {
+    id,
+    type,
+    label: type.charAt(0).toUpperCase() + type.slice(1),
+    backgroundColor: 'transparent',
+    padding: 0,
+    borderRadius: 0,
+    opacity: 100,
+  };
+
+  switch (type) {
+    case 'text':
+      return {
+        ...base,
+        text: 'Your text here',
+        fontSize: 24,
+        fontWeight: '600',
+        textColor: '#ffffff',
+        textAnimation: 'none',
+        scrollSpeed: 'normal',
+      };
+    case 'clock':
+      return {
+        ...base,
+        label: 'Clock',
+        fontSize: 48,
+        textColor: '#ffffff',
+        fontWeight: '700',
+      };
+    case 'weather':
+      return { ...base, label: 'Weather Widget', text: '22°C Sunny' };
+    case 'rss':
+      return { ...base, label: 'RSS Feed', text: 'Breaking: News headline scrolling...', textAnimation: 'scroll-left', scrollSpeed: 'normal' };
+    case 'image':
+      return { ...base, objectFit: 'cover' };
+    case 'video':
+      return { ...base, objectFit: 'cover' };
+    case 'slideshow':
+      return {
+        ...base,
+        label: 'Slideshow',
+        slides: [createSlide(), createSlide()],
+        slideshowLoop: true,
+      };
+    case 'links':
+      return {
+        ...base,
+        label: 'Quick Links',
+        backgroundColor: 'rgba(0,0,0,0.55)',
+        padding: 0,
+        borderRadius: 8,
+        linksOrientation: 'auto',
+        links: [
+          { id: `link-${Date.now()}-1`, url: '', label: 'Instagram', platform: 'instagram' },
+          { id: `link-${Date.now()}-2`, url: '', label: 'YouTube',   platform: 'youtube' },
+          { id: `link-${Date.now()}-3`, url: '', label: 'Facebook',  platform: 'facebook' },
+          { id: `link-${Date.now()}-4`, url: '', label: 'Website',   platform: 'website' },
+        ],
+      };
+    case 'donation':
+      return {
+        ...base,
+        label: 'Donation Panel',
+        donationTitle: 'Offer Your Daan',
+        donationPurpose: 'General Donation',
+        donationStyle: 'rounded',
+        donationOrientation: 'grid',
+        donationButtons: [
+          { id: `btn-${Date.now()}-1`, amount: 101, label: 'Archana Daan' },
+          { id: `btn-${Date.now()}-2`, amount: 501, label: 'Anna Prasadam' },
+          { id: `btn-${Date.now()}-3`, amount: 1001, label: 'Kalyanotsavam' },
+          { id: `btn-${Date.now()}-4`, amount: 5001, label: 'Temple Fund' },
+        ],
+      };
+    default:
+      return base;
+  }
+}
+
+export function splitZone(zone: ScreenZone, direction: ZoneSplit): ScreenZone {
+  if (direction === 'none') return zone;
+  return {
+    ...zone,
+    split: direction,
+    splitRatio: 50,
+    content: null,
+    children: [
+      { ...createZone(), content: zone.content },
+      createZone(),
+    ],
+  };
+}
+
+export function createDefaultLayout(deviceId: string, name: string): ScreenLayout {
+  return {
+    id: `layout-${Date.now()}`,
+    name,
+    deviceId,
+    resolution: { width: 1920, height: 1080 },
+    backgroundColor: '#1a1a2e',
+    rootZone: createZone('root'),
+  };
+}
+

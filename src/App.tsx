@@ -1,0 +1,67 @@
+// Force rebuild - archiver dynamically imported in backend functions
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ThemeProvider } from "@/components/theme-provider";
+import DashboardPage from "./pages/DashboardPage";
+import HomeRedirect from "./pages/HomeRedirect";
+import CompaniesPage from "./pages/CompaniesPage";
+import UsersPage from "./pages/UsersPage";
+import SettingsPage from "./pages/SettingsPage";
+import DonationsPage from "./pages/DonationsPage";
+import LoginPage from "./pages/LoginPage";
+import NotFound from "./pages/NotFound";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminDevicesPage from "./pages/admin/AdminDevicesPage";
+import AdminContentPage from "./pages/admin/AdminContentPage";
+import AdminSchedulePage from "./pages/admin/AdminSchedulePage";
+import AdminLayoutsPage from "./pages/admin/AdminLayoutsPage";
+import AdminLayoutEditorPage from "./pages/admin/AdminLayoutEditorPage";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import PlayerPage from "./pages/PlayerPage";
+
+const queryClient = new QueryClient();
+
+const App = () => {
+  console.log("App initialized - SQLite WASM");
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme" attribute="class">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/player/:deviceId" element={<PlayerPage />} />
+                <Route path="/" element={<HomeRedirect />} />
+                {/* Super Admin Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute requiredRole="super_admin"><DashboardPage /></ProtectedRoute>} />
+                <Route path="/companies" element={<ProtectedRoute requiredRole="super_admin"><CompaniesPage /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute requiredRole="super_admin"><UsersPage /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute requiredRole="super_admin"><SettingsPage /></ProtectedRoute>} />
+                <Route path="/donations" element={<ProtectedRoute requiredRole="super_admin"><DonationsPage /></ProtectedRoute>} />
+                {/* Company Admin Routes */}
+                <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboardPage /></ProtectedRoute>} />
+                <Route path="/admin/devices" element={<ProtectedRoute requiredRole="admin"><AdminDevicesPage /></ProtectedRoute>} />
+                <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContentPage /></ProtectedRoute>} />
+                <Route path="/admin/schedule" element={<ProtectedRoute requiredRole="admin"><AdminSchedulePage /></ProtectedRoute>} />
+                <Route path="/admin/layouts" element={<ProtectedRoute requiredRole="admin"><AdminLayoutsPage /></ProtectedRoute>} />
+                <Route path="/admin/layouts/:layoutId" element={<ProtectedRoute requiredRole="admin"><AdminLayoutEditorPage /></ProtectedRoute>} />
+                <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettingsPage /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;
