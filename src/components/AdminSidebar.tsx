@@ -45,8 +45,11 @@ export function AdminSidebar() {
   const location = useLocation();
   const { user, role, isTrialExpired, signOut } = useAuth();
 
-  const isActive = (path: string) =>
-    path === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(path);
+  const isActive = (path: string) => {
+    if (path === "/admin") return location.pathname === "/admin";
+    if (path === "/admin/settings") return location.pathname === "/admin/settings";
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <Sidebar collapsible="icon">
