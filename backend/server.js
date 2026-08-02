@@ -347,20 +347,38 @@ app.listen(port, async () => {
     if (!isSqlite) {
       console.log('[db] MySQL database detected. Running schema migrations...');
       
-      // 1. donations.kiosk_name
-      const [donationCols] = await db.query("SHOW COLUMNS FROM donations LIKE 'kiosk_name'");
-      if (donationCols.length === 0) {
-        console.log('[db] Column kiosk_name is missing from donations table. Altering table...');
-        await db.query("ALTER TABLE donations ADD COLUMN kiosk_name VARCHAR(255) DEFAULT NULL");
-        console.log('[db] Column kiosk_name added successfully!');
+      // 1. Check and add donations columns
+      const donationsColumns = {
+        kiosk_name: "VARCHAR(255) DEFAULT NULL",
+        razorpay_order_id: "VARCHAR(255) DEFAULT NULL"
+      };
+
+      for (const [colName, colType] of Object.entries(donationsColumns)) {
+        const [cols] = await db.query("SHOW COLUMNS FROM donations LIKE :colName", { colName });
+        if (cols.length === 0) {
+          console.log(`[db] Column ${colName} is missing from donations table. Altering table...`);
+          await db.query(`ALTER TABLE donations ADD COLUMN ${colName} ${colType}`);
+          console.log(`[db] Column ${colName} added successfully!`);
+        }
       }
 
-      // 2. companies.preferred_gateway
-      const [companyCols] = await db.query("SHOW COLUMNS FROM companies LIKE 'preferred_gateway'");
-      if (companyCols.length === 0) {
-        console.log('[db] Column preferred_gateway is missing from companies table. Altering table...');
-        await db.query("ALTER TABLE companies ADD COLUMN preferred_gateway VARCHAR(32) NOT NULL DEFAULT 'upi'");
-        console.log('[db] Column preferred_gateway added successfully!');
+      // 2. Check and add companies columns
+      const companiesColumns = {
+        upi_id: "VARCHAR(255) DEFAULT NULL",
+        razorpay_key_id: "VARCHAR(255) DEFAULT NULL",
+        razorpay_key_secret: "VARCHAR(255) DEFAULT NULL",
+        razorpay_webhook_secret: "VARCHAR(255) DEFAULT NULL",
+        razorpay_mode: "VARCHAR(16) NOT NULL DEFAULT 'test'",
+        preferred_gateway: "VARCHAR(32) NOT NULL DEFAULT 'upi'"
+      };
+
+      for (const [colName, colType] of Object.entries(companiesColumns)) {
+        const [cols] = await db.query("SHOW COLUMNS FROM companies LIKE :colName", { colName });
+        if (cols.length === 0) {
+          console.log(`[db] Column ${colName} is missing from companies table. Altering table...`);
+          await db.query(`ALTER TABLE companies ADD COLUMN ${colName} ${colType}`);
+          console.log(`[db] Column ${colName} added successfully!`);
+        }
       }
       
       console.log('[db] MySQL schema migrations check completed!');
