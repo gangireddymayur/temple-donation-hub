@@ -155,8 +155,8 @@ INSERT INTO `companies` (`id`, `name`, `contact_email`, `plan`, `max_screens`, `
 ('11111111-1111-1111-1111-111111111111', 'Temple Donation Hub', 'admin@templedonation.org', 'pro', 25, 'active', 'active', NULL);
 
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `company_id`) VALUES
-('00000000-0000-0000-0000-000000000001', 'mayurtemple@gmail.com',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Super Admin', NULL),
-('00000000-0000-0000-0000-000000000002', 'admin@templedonation.org',  '$2b$10$E5l5Z8Ck0kQyqQyHwUkj1u3aPq3v8VYxFvN8rB7Wnv2yQF5q2eXKa', 'Temple Admin',  '11111111-1111-1111-1111-111111111111');
+('00000000-0000-0000-0000-000000000001', 'mayurtemple@gmail.com',  '$2a$10$6BducGkd4OSpJoEYgpzrOeBgEarwEPxA3.GHAQQ3o.BhMVUBXadXO', 'Super Admin', NULL),
+('00000000-0000-0000-0000-000000000002', 'admin@templedonation.org',  '$2a$10$6BducGkd4OSpJoEYgpzrOeBgEarwEPxA3.GHAQQ3o.BhMVUBXadXO', 'Temple Admin',  '11111111-1111-1111-1111-111111111111');
 
 INSERT INTO `user_roles` (`id`, `user_id`, `role`) VALUES
 (UUID(), '00000000-0000-0000-0000-000000000001', 'super_admin'),
