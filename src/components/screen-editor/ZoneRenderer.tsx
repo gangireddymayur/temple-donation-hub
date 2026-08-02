@@ -282,13 +282,15 @@ export function SquareOfferingCard({
   interactive,
   isSelected = false,
   onSelect,
-  customerInfoConfig
+  customerInfoConfig,
+  themeStyle
 }: {
   config: DonationButtonConfig;
   interactive: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
   customerInfoConfig?: CustomerInfoConfig;
+  themeStyle?: string;
 }) {
   const [activeDonation, setActiveDonation] = useState<any>(null);
   
@@ -543,20 +545,36 @@ export function SquareOfferingCard({
 
         <div className="relative z-10 w-full h-full flex flex-col justify-between items-center space-y-2">
           {/* Photo / Icon */}
-          {config.photoUrl ? (
-            <img src={config.photoUrl} alt="" className="h-11 w-11 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
+          {themeStyle === 'minimal' ? (
+            config.photoUrl ? (
+              <img src={config.photoUrl} alt="" className="h-16 w-16 object-contain rounded-full border-2 border-orange-500 p-1 bg-stone-900/60 shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-105" />
+            ) : (
+              <div className="h-12 w-12 rounded-full border-2 border-orange-500/80 flex items-center justify-center bg-orange-500/10 shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <Coins className="h-5 w-5 text-orange-400" />
+              </div>
+            )
           ) : (
-            <Coins className="h-6 w-6 text-amber-400 shrink-0" />
+            config.photoUrl ? (
+              <img src={config.photoUrl} alt="" className="h-11 w-11 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
+            ) : (
+              <Coins className="h-6 w-6 text-amber-400 shrink-0" />
+            )
           )}
 
           {/* Label / Description */}
           <div className="flex-1 flex flex-col justify-center">
-            <h4 className="font-bold text-sm tracking-wide line-clamp-1">{label}</h4>
-            {description && <p className="text-[10px] text-white/50 line-clamp-2 mt-0.5">{description}</p>}
+            <h4 className={cn("font-bold text-sm tracking-wide line-clamp-1", themeStyle === 'minimal' ? "text-white uppercase tracking-wider text-base" : "")}>{label}</h4>
+            {description && <p className={cn("text-[10px] line-clamp-2 mt-1", themeStyle === 'minimal' ? "text-stone-300 max-w-[200px]" : "text-white/50")}>{description}</p>}
           </div>
 
           {/* Amount Badge */}
-          <span className="text-xl font-black text-amber-300 mt-2">₹{amount}</span>
+          {themeStyle === 'minimal' ? (
+            <span className="mt-4 px-6 py-2.5 bg-orange-500 text-stone-950 font-bold text-xs uppercase rounded-full tracking-widest flex items-center gap-1.5 transition-all duration-300 active:scale-95 group-hover:bg-orange-600 shadow-md shadow-orange-500/15">
+              Explore ₹{amount} →
+            </span>
+          ) : (
+            <span className="text-xl font-black text-amber-300 mt-2">₹{amount}</span>
+          )}
         </div>
       </button>
 
@@ -1379,68 +1397,65 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
 
   // Minimalist Template Rendering
   if (styleType === 'minimal') {
+    const minimalContainerStyle: React.CSSProperties = {
+      ...containerStyle,
+      padding: 0,
+      overflowY: 'hidden',
+    };
+
     return (
       <div 
-        style={containerStyle} 
+        style={minimalContainerStyle} 
         className={cn(
-          "relative select-none text-stone-100 font-sans flex flex-col justify-start items-center p-8 bg-[#0c0a09] border border-stone-850",
+          "relative select-none text-stone-100 font-sans flex flex-col justify-start bg-[#050505] border border-stone-900 w-full h-full",
           widget.donationContainerShadow || "shadow-none"
         )}
       >
-        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
-          {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-lg border border-stone-800 p-0.5" />
-          ) : (
-            <div className="h-10 w-10 rounded bg-stone-900 border border-stone-800 flex items-center justify-center">
-              <LayoutGrid className="h-5 w-5 text-orange-550" />
-            </div>
-          )}
-          <h2 
-            className="text-xl font-bold tracking-tight uppercase text-orange-500" 
-            style={{ 
-              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-              fontFamily: widget.donationTitleFontFamily || undefined
-            }}
-          >
-            {title}
-          </h2>
-          {purpose && (
-            <p 
-              className="text-[10px] tracking-wider uppercase font-semibold text-stone-400" 
-              style={{ color: widget.donationSubtitleColor || undefined }}
-            >
-              {purpose}
-            </p>
-          )}
+        {/* Top Header Bar */}
+        <div className="w-full bg-[#0a0a0a]/90 backdrop-blur border-b border-stone-900 py-3.5 px-6 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-2.5">
+            {widget.templeLogoUrl ? (
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-8 w-8 object-contain rounded" />
+            ) : (
+              <div className="h-7 w-7 rounded bg-stone-900 border border-stone-850 flex items-center justify-center">
+                <LayoutGrid className="h-3.5 w-3.5 text-orange-500" />
+              </div>
+            )}
+            <span className="font-extrabold text-sm text-stone-200 uppercase tracking-widest">{title}</span>
+          </div>
+          {purpose && <span className="text-[9px] text-stone-500 uppercase tracking-widest font-bold">{purpose}</span>}
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center">
-          <div className={gridClass}>
-            {visibleButtons.map((btn) => {
-              const minConfig: DonationButtonConfig = {
-                ...btn,
-                backgroundColor: btn.backgroundColor || '#1c1917',
-                borderColor: btn.borderColor || '#3f3f46',
-                textColor: btn.textColor || '#fafaf9',
-                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 0,
-                hoverEffect: btn.hoverEffect || 'scale',
-                shadow: btn.shadow || 'shadow-sm',
-              };
-              return (
+        {/* Horizontal Columns Container */}
+        <div className="flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900 z-10">
+          {visibleButtons.map((btn) => {
+            const minConfig: DonationButtonConfig = {
+              ...btn,
+              backgroundColor: btn.backgroundColor || 'transparent',
+              borderColor: 'transparent', // borders handled by divide-x parent
+              textColor: btn.textColor || '#fafaf9',
+              cornerRadius: 0, // stretched column shape
+              hoverEffect: btn.hoverEffect || 'scale',
+              shadow: 'none',
+            };
+            return (
+              <div key={btn.id} className="flex-1 h-full min-w-0">
                 <SquareOfferingCard 
-                  key={btn.id} 
                   config={minConfig} 
                   interactive={interactive}
                   isSelected={btn.id === selectedBtnId}
                   onSelect={() => handleSelectBtn(btn.id)}
                   customerInfoConfig={customerInfoConfig}
+                  themeStyle="minimal"
                 />
-              );
-            })}
-            {visibleButtons.length === 0 && (
-              <div className="text-xs text-stone-500 col-span-full py-8">No seva options available</div>
-            )}
-          </div>
+              </div>
+            );
+          })}
+          {visibleButtons.length === 0 && (
+            <div className="w-full h-full flex items-center justify-center text-xs text-stone-500 py-8">
+              No seva options configured
+            </div>
+          )}
         </div>
       </div>
     );
