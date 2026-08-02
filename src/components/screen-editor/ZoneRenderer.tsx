@@ -865,6 +865,7 @@ function WidgetPreview({ widget, previewMode = false, customerInfoConfig }: { wi
 
   // Determine animation class & custom duration
   const scrollDuration = widget.scrollDuration;
+  const hasCustomDuration = typeof scrollDuration === 'number' && scrollDuration > 0;
 
   const animationClass = (() => {
     switch (widget.textAnimation) {
