@@ -1236,26 +1236,236 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   }
 
   // Glassmorphism Template Rendering
+  if (styleType === 'glass') {
+    return (
+      <div 
+        style={containerStyle} 
+        className={cn(
+          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 border border-white/10 backdrop-blur-md",
+          !widget.backgroundColor ? "bg-slate-950/40" : "",
+          widget.donationContainerShadow || "shadow-2xl"
+        )}
+      >
+        <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
+          ) : (
+            <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
+              <Sparkles className="h-6 w-6 text-sky-400" />
+            </div>
+          )}
+          <h2 
+            className="text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent" 
+            style={{ 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || undefined
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-xs tracking-widest uppercase font-semibold text-slate-400" 
+              style={{ color: widget.donationSubtitleColor || undefined }}
+            >
+              {purpose}
+            </p>
+          )}
+          <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
+        </div>
+
+        <div className="flex-1 w-full flex items-center justify-center">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => {
+              const glassConfig: DonationButtonConfig = {
+                ...btn,
+                backgroundColor: btn.backgroundColor || 'rgba(255, 255, 255, 0.06)',
+                borderColor: btn.borderColor || 'rgba(255, 255, 255, 0.15)',
+                textColor: btn.textColor || '#f8fafc',
+                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 20,
+                hoverEffect: btn.hoverEffect || 'glow',
+                shadow: btn.shadow || 'shadow-lg shadow-black/10',
+              };
+              return (
+                <SquareOfferingCard 
+                  key={btn.id} 
+                  config={glassConfig} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
+                />
+              );
+            })}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-white/30 col-span-full py-8">No donation buttons configured</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Divine Temple Template Rendering
+  if (styleType === 'divine') {
+    return (
+      <div 
+        style={containerStyle} 
+        className={cn(
+          "relative select-none text-amber-100 font-serif flex flex-col justify-start items-center p-8 border-4 border-amber-500 bg-[#2e0207] shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]",
+          widget.donationContainerShadow || "shadow-2xl"
+        )}
+      >
+        <div className="absolute inset-2 border border-amber-500/30 pointer-events-none rounded" />
+        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0 z-10">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
+          ) : (
+            <div className="h-12 w-12 rounded-full border border-amber-500 bg-amber-500/10 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-amber-400" />
+            </div>
+          )}
+          <h2 
+            className="text-2xl font-extrabold tracking-widest uppercase text-amber-400 drop-shadow-md" 
+            style={{ 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || 'Cinzel, Georgia, serif'
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-xs tracking-wider uppercase font-bold text-amber-200" 
+              style={{ color: widget.donationSubtitleColor || undefined }}
+            >
+              {purpose}
+            </p>
+          )}
+          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent mt-1" />
+        </div>
+
+        <div className="flex-1 w-full flex items-center justify-center z-10">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => {
+              const divConfig: DonationButtonConfig = {
+                ...btn,
+                backgroundColor: btn.backgroundColor || 'rgba(251, 191, 36, 0.08)',
+                borderColor: btn.borderColor || '#fbbf24',
+                textColor: btn.textColor || '#fef08a',
+                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 8,
+                hoverEffect: btn.hoverEffect || 'scale',
+                shadow: btn.shadow || 'shadow-[0_0_10px_rgba(251,191,36,0.2)]',
+              };
+              return (
+                <SquareOfferingCard 
+                  key={btn.id} 
+                  config={divConfig} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
+                />
+              );
+            })}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-amber-200/40 col-span-full py-8">No offerings configured</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Minimalist Template Rendering
+  if (styleType === 'minimal') {
+    return (
+      <div 
+        style={containerStyle} 
+        className={cn(
+          "relative select-none text-stone-100 font-sans flex flex-col justify-start items-center p-8 bg-[#0c0a09] border border-stone-850",
+          widget.donationContainerShadow || "shadow-none"
+        )}
+      >
+        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-lg border border-stone-800 p-0.5" />
+          ) : (
+            <div className="h-10 w-10 rounded bg-stone-900 border border-stone-800 flex items-center justify-center">
+              <LayoutGrid className="h-5 w-5 text-orange-550" />
+            </div>
+          )}
+          <h2 
+            className="text-xl font-bold tracking-tight uppercase text-orange-500" 
+            style={{ 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || undefined
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-[10px] tracking-wider uppercase font-semibold text-stone-400" 
+              style={{ color: widget.donationSubtitleColor || undefined }}
+            >
+              {purpose}
+            </p>
+          )}
+        </div>
+
+        <div className="flex-1 w-full flex items-center justify-center">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => {
+              const minConfig: DonationButtonConfig = {
+                ...btn,
+                backgroundColor: btn.backgroundColor || '#1c1917',
+                borderColor: btn.borderColor || '#3f3f46',
+                textColor: btn.textColor || '#fafaf9',
+                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 0,
+                hoverEffect: btn.hoverEffect || 'scale',
+                shadow: btn.shadow || 'shadow-sm',
+              };
+              return (
+                <SquareOfferingCard 
+                  key={btn.id} 
+                  config={minConfig} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
+                />
+              );
+            })}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-stone-500 col-span-full py-8">No seva options available</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback: Modern Template Rendering
   return (
     <div 
       style={containerStyle} 
       className={cn(
-        "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 border border-white/10 backdrop-blur-md",
-        !widget.backgroundColor ? "bg-slate-950/40" : "",
-        widget.donationContainerShadow || "shadow-2xl"
+        "relative select-none text-white font-sans flex flex-col justify-start items-center p-8",
+        !widget.backgroundColor ? "bg-[#111029]" : "",
+        widget.donationContainerShadow || "shadow-xl border border-white/5"
       )}
     >
       <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
         {widget.templeLogoUrl ? (
-          <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
+          <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
         ) : (
-          <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
-            <Sparkles className="h-6 w-6 text-sky-400" />
-          </div>
+          <LayoutGrid className="h-10 w-10 text-amber-400" />
         )}
         <h2 
-          className="text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent" 
+          className="text-2xl font-extrabold tracking-wide uppercase" 
           style={{ 
+            color: widget.donationTitleColor || '#fbbf24', 
             fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
             fontFamily: widget.donationTitleFontFamily || undefined
           }}
@@ -1264,40 +1474,29 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         </h2>
         {purpose && (
           <p 
-            className="text-xs tracking-widest uppercase font-semibold text-slate-400" 
-            style={{ color: widget.donationSubtitleColor || undefined }}
+            className="text-xs tracking-widest uppercase font-medium" 
+            style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
           >
             {purpose}
           </p>
         )}
-        <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
+        <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
       </div>
 
       <div className="flex-1 w-full flex items-center justify-center">
         <div className={gridClass}>
-          {visibleButtons.map((btn) => {
-            const glassConfig: DonationButtonConfig = {
-              ...btn,
-              backgroundColor: btn.backgroundColor || 'rgba(255, 255, 255, 0.06)',
-              borderColor: btn.borderColor || 'rgba(255, 255, 255, 0.15)',
-              textColor: btn.textColor || '#f8fafc',
-              cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 20,
-              hoverEffect: btn.hoverEffect || 'glow',
-              shadow: btn.shadow || 'shadow-lg shadow-black/10',
-            };
-            return (
-              <SquareOfferingCard 
-                key={btn.id} 
-                config={glassConfig} 
-                interactive={interactive}
-                isSelected={btn.id === selectedBtnId}
-                onSelect={() => handleSelectBtn(btn.id)}
-                customerInfoConfig={customerInfoConfig}
-              />
-            );
-          })}
+          {visibleButtons.map((btn) => (
+            <SquareOfferingCard 
+              key={btn.id} 
+              config={btn} 
+              interactive={interactive}
+              isSelected={btn.id === selectedBtnId}
+              onSelect={() => handleSelectBtn(btn.id)}
+              customerInfoConfig={customerInfoConfig}
+            />
+          ))}
           {visibleButtons.length === 0 && (
-            <div className="text-xs text-white/30 col-span-full py-8">No donation buttons configured</div>
+            <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
           )}
         </div>
       </div>

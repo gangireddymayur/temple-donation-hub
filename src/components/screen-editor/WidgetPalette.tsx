@@ -26,6 +26,8 @@ const widgets: WidgetPaletteItem[] = [
   { type: 'donation', style: 'modern', label: 'Temple Modern', icon: LayoutGrid, color: 'bg-indigo-500/15 text-indigo-500' },
   { type: 'donation', style: 'traditional', label: 'Temple Traditional', icon: LayoutGrid, color: 'bg-amber-500/15 text-amber-500' },
   { type: 'donation', style: 'glass', label: 'Temple Glass', icon: LayoutGrid, color: 'bg-sky-500/15 text-sky-500' },
+  { type: 'donation', style: 'divine', label: 'Temple Divine', icon: LayoutGrid, color: 'bg-rose-500/15 text-rose-500' },
+  { type: 'donation', style: 'minimal', label: 'Temple Minimal', icon: LayoutGrid, color: 'bg-orange-500/15 text-orange-500' },
 ];
 
 export function WidgetPalette() {
