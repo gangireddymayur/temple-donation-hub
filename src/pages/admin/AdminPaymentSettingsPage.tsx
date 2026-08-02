@@ -28,6 +28,7 @@ export default function AdminPaymentSettingsPage() {
   const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState("");
   const [razorpayMode, setRazorpayMode] = useState<"test" | "live">("test");
   const [preferredGateway, setPreferredGateway] = useState<"upi" | "razorpay">("upi");
+  const [isEditable, setIsEditable] = useState(false);
 
   // Test Connection Dialog State
   const [testDialogOpen, setTestDialogOpen] = useState(false);
