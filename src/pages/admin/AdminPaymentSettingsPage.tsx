@@ -223,12 +223,14 @@ export default function AdminPaymentSettingsPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setPreferredGateway("upi")}
+                        disabled={!isEditable}
+                        onClick={() => isEditable && setPreferredGateway("upi")}
                         className={cn(
                           "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
                           preferredGateway === "upi"
                             ? "bg-amber-500/10 border-amber-500 text-amber-100"
-                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400"
+                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400",
+                          !isEditable ? "opacity-75 cursor-not-allowed" : ""
                         )}
                       >
                         <span className="font-bold block text-sm mb-1">Direct UPI Daan</span>
@@ -237,12 +239,14 @@ export default function AdminPaymentSettingsPage() {
 
                       <button
                         type="button"
-                        onClick={() => setPreferredGateway("razorpay")}
+                        disabled={!isEditable}
+                        onClick={() => isEditable && setPreferredGateway("razorpay")}
                         className={cn(
                           "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
                           preferredGateway === "razorpay"
                             ? "bg-amber-500/10 border-amber-500 text-amber-100"
-                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400"
+                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400",
+                          !isEditable ? "opacity-75 cursor-not-allowed" : ""
                         )}
                       >
                         <span className="font-bold block text-sm mb-1">Razorpay Gateway</span>
@@ -257,9 +261,10 @@ export default function AdminPaymentSettingsPage() {
                     <Label className="text-xs font-bold text-slate-200">Merchant UPI ID (Direct Daan)</Label>
                     <Input
                       value={upiId}
+                      disabled={!isEditable}
                       onChange={(e) => setUpiId(e.target.value)}
                       placeholder="templemerchant@upi"
-                      className="bg-slate-950/40 border-border/60"
+                      className="bg-slate-950/40 border-border/60 disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                     <p className="text-[10px] text-muted-foreground">
                       Generates immediate, zero-fee direct-to-bank UPI QR codes for GPay, PhonePe, Paytm, and BHIM.
@@ -277,7 +282,8 @@ export default function AdminPaymentSettingsPage() {
                         </span>
                         <Switch
                           checked={razorpayMode === "live"}
-                          onCheckedChange={(live) => setRazorpayMode(live ? "live" : "test")}
+                          disabled={!isEditable}
+                          onCheckedChange={(live) => isEditable && setRazorpayMode(live ? "live" : "test")}
                         />
                       </div>
                     </div>
@@ -287,9 +293,10 @@ export default function AdminPaymentSettingsPage() {
                         <Label className="text-xs">Razorpay Key ID</Label>
                         <Input
                           value={razorpayKeyId}
+                          disabled={!isEditable}
                           onChange={(e) => setRazorpayKeyId(e.target.value)}
                           placeholder="rzp_test_..."
-                          className="bg-slate-950/40 border-border/60 font-mono text-xs"
+                          className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -297,9 +304,10 @@ export default function AdminPaymentSettingsPage() {
                         <Input
                           type="password"
                           value={razorpayKeySecret}
+                          disabled={!isEditable}
                           onChange={(e) => setRazorpayKeySecret(e.target.value)}
                           placeholder="••••••••••••••••"
-                          className="bg-slate-950/40 border-border/60 font-mono text-xs"
+                          className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                         />
                       </div>
                     </div>
@@ -309,9 +317,10 @@ export default function AdminPaymentSettingsPage() {
                       <Input
                         type="password"
                         value={razorpayWebhookSecret}
+                        disabled={!isEditable}
                         onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
                         placeholder="Configure webhook secret"
-                        className="bg-slate-950/40 border-border/60 font-mono text-xs"
+                        className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -319,12 +328,20 @@ export default function AdminPaymentSettingsPage() {
               </Card>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => window.location.reload()} disabled={saving}>
-                  Reload
-                </Button>
-                <Button onClick={handleSaveSettings} disabled={saving} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6">
-                  {saving ? "Saving Configurations..." : "Save Settings"}
-                </Button>
+                {isEditable ? (
+                  <>
+                    <Button variant="outline" onClick={() => setIsEditable(false)} disabled={saving}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveSettings} disabled={saving} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6">
+                      {saving ? "Saving Configurations..." : "Save Settings"}
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setIsEditable(true)} className="bg-slate-900 border border-border/80 hover:bg-slate-800 text-slate-200 font-bold px-6">
+                    Edit Settings
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -408,16 +425,32 @@ export default function AdminPaymentSettingsPage() {
             </div>
 
             {testStatus === "polling" && (
-              <div className="w-full space-y-4">
-                <div className="flex items-center justify-center gap-2 text-xs text-amber-400 animate-pulse bg-amber-500/10 py-2 rounded-lg border border-amber-500/20">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Waiting for UPI receipt confirmation...</span>
-                </div>
-                <div className="flex gap-2 justify-center mt-2">
-                  <Button variant="ghost" size="sm" className="text-[10px] h-7 text-muted-foreground hover:text-foreground" onClick={simulateSuccess}>
-                    Simulate Success
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={handleCancelTest}>
+              <div className="w-full space-y-4 text-center">
+                {preferredGateway === 'upi' ? (
+                  <div className="space-y-3.5">
+                    <div className="text-xs text-amber-400 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20 leading-relaxed text-left">
+                      💡 <strong>Direct UPI Transfer Mode:</strong> Since direct-to-bank UPI transfers do not have webhook callbacks, auto-confirmation is not available. Please scan, complete the payment, and click confirm below.
+                    </div>
+                    <Button 
+                      onClick={simulateSuccess} 
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-extrabold text-xs py-2 rounded-lg shadow-md shadow-emerald-500/20"
+                    >
+                      Confirm Payment Sent (Manual Verification)
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center justify-center gap-2 text-xs text-amber-400 animate-pulse bg-amber-500/10 py-2 w-full rounded-lg border border-amber-500/20">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Waiting for Razorpay webhook confirmation...</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-[10px] h-7 text-muted-foreground hover:text-foreground mt-1" onClick={simulateSuccess}>
+                      Simulate Success
+                    </Button>
+                  </div>
+                )}
+                <div className="flex justify-center mt-1">
+                  <Button variant="outline" size="sm" className="text-[10px] h-7 px-4" onClick={handleCancelTest}>
                     Cancel Test
                   </Button>
                 </div>
