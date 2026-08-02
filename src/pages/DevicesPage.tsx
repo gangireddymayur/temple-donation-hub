@@ -58,7 +58,7 @@ export default function DevicesPage() {
               <DialogHeader>
                 <DialogTitle className="text-xl">Pair a new TV</DialogTitle>
                 <DialogDescription>
-                  Open SignageHub on your TV — it will display a 6-character pairing code. Enter it below to link the screen to your account.
+                  Open Temple Donation TV on your screen — it will display a 6-character pairing code. Enter it below to link the screen to your account.
                 </DialogDescription>
               </DialogHeader>
 

@@ -20,7 +20,7 @@ function installIfNeeded() {
   const installDir = path.join(
     process.env.LOCALAPPDATA || path.dirname(process.execPath),
     'Programs',
-    'SignageHub Local Server'
+    'Temple Donation Hub'
   );
   const targetExe = path.join(installDir, 'local-server.exe');
   const currentExe = process.execPath;
@@ -32,8 +32,8 @@ function installIfNeeded() {
   const welcome = runPowerShell(`
     Add-Type -AssemblyName System.Windows.Forms;
     $answer = [System.Windows.Forms.MessageBox]::Show(
-      'This will install SignageHub Local Server on this computer and create Desktop and Start Menu shortcuts.',
-      'SignageHub Local Server Setup',
+      'This will install Temple Donation Hub on this computer and create Desktop and Start Menu shortcuts.',
+      'Temple Donation Hub Setup',
       [System.Windows.Forms.MessageBoxButtons]::OKCancel,
       [System.Windows.Forms.MessageBoxIcon]::Information
     );
@@ -53,25 +53,25 @@ function installIfNeeded() {
 
   runPowerShell(`
     $shell = New-Object -ComObject WScript.Shell;
-    $desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) 'SignageHub Local Server.lnk';
+    $desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Temple Donation Hub.lnk';
     $desktopShortcut = $shell.CreateShortcut($desktop);
     $desktopShortcut.TargetPath = '${psQuote(targetExe)}';
     $desktopShortcut.WorkingDirectory = '${psQuote(installDir)}';
-    $desktopShortcut.Description = 'SignageHub Local Server';
+    $desktopShortcut.Description = 'Temple Donation Hub';
     $desktopShortcut.Save();
 
-    $startMenu = Join-Path ([Environment]::GetFolderPath('Programs')) 'SignageHub Local Server.lnk';
+    $startMenu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Temple Donation Hub.lnk';
     $startShortcut = $shell.CreateShortcut($startMenu);
     $startShortcut.TargetPath = '${psQuote(targetExe)}';
     $startShortcut.WorkingDirectory = '${psQuote(installDir)}';
-    $startShortcut.Description = 'SignageHub Local Server';
+    $startShortcut.Description = 'Temple Donation Hub';
     $startShortcut.Save();
   `);
 
   runPowerShell(`
     Add-Type -AssemblyName System.Windows.Forms;
     [System.Windows.Forms.MessageBox]::Show(
-      'SignageHub Local Server was installed successfully. The local dashboard will open now.',
+      'Temple Donation Hub was installed successfully. The local dashboard will open now.',
       'Installation Complete',
       [System.Windows.Forms.MessageBoxButtons]::OK,
       [System.Windows.Forms.MessageBoxIcon]::Information

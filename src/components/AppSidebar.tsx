@@ -52,7 +52,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">
-                SignageHub
+                Temple Donation Hub
               </span>
               <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">
                 Super Admin

@@ -123,7 +123,7 @@ export default function PlayerPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-[#FFB020]" />
             <span>TV paused</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">{deviceName || "SignageHub TV"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{deviceName || "Temple Donation TV"}</h1>
           <p className="text-xl text-white/80 font-medium">Playback Paused</p>
           <p className="text-sm text-white/60 leading-relaxed px-2">
             This screen has been paused from the dashboard. Once resumed, it will instantly display layouts or schedule playlists again.

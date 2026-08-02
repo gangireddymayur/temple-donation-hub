@@ -109,11 +109,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Platform Name</Label>
-              <Input defaultValue="SignageHub" />
+              <Input defaultValue="Temple Donation Hub" />
             </div>
             <div className="space-y-2">
               <Label>Support Email</Label>
-              <Input defaultValue="support@signagehub.com" />
+              <Input defaultValue="support@templedonation.org" />
             </div>
           </CardContent>
         </Card>

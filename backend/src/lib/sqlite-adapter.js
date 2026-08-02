@@ -282,7 +282,7 @@ class SqlitePool {
         // Insert company
         this.db.run(
           "INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, trial_ends_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [companyId, "SignageHub Local Company", "admin@signagehub.local", "pro", 20, "active", "trial", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()]
+          [companyId, "Temple Donation Hub", "admin@templedonation.local", "pro", 20, "active", "trial", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()]
         );
       }
 

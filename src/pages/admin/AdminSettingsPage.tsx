@@ -218,7 +218,7 @@ export default function AdminSettingsPage() {
       const link = document.createElement("a");
       const dateStr = new Date().toISOString().slice(0, 10);
       link.href = url;
-      link.download = `signagehub_backup_${dateStr}.json`;
+      link.download = `temple_donation_backup_${dateStr}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
