@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Image } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { PlaylistEditor } from "./PlaylistEditor";
 
@@ -253,6 +253,21 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
   const images = contentItems.filter((c) => c.type === "image" && c.file_url);
   const videos = contentItems.filter((c) => c.type === "video" && c.file_url);
 
+  const [activeTab, setActiveTab] = useState<'template' | 'buttons'>('template');
+  const [editingButtonId, setEditingButtonId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleSelect = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail.widgetId === widget.id) {
+        setActiveTab('buttons');
+        setEditingButtonId(detail.buttonId);
+      }
+    };
+    window.addEventListener("select-donation-button", handleSelect);
+    return () => window.removeEventListener("select-donation-button", handleSelect);
+  }, [widget.id]);
+
   const updateSlide = (index: number, slide: SlideshowItem) => {
     const slides = [...(widget.slides || [])];
     slides[index] = slide;
@@ -454,112 +469,458 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
           setButtons(next);
         };
         const addButton = () => {
-          setButtons([...buttons, { id: `btn-${Date.now()}`, amount: 100, label: 'New Campaign' }]);
+          setButtons([...buttons, { 
+            id: `btn-${Date.now()}`, 
+            amount: 100, 
+            label: 'New Offering', 
+            description: 'Provide details here',
+            hoverEffect: 'scale',
+            clickAnimation: 'pop',
+            visible: true
+          }]);
         };
         const removeButton = (i: number) => setButtons(buttons.filter((_, idx) => idx !== i));
+        const moveButton = (from: number, to: number) => {
+          const next = [...buttons];
+          const [item] = next.splice(from, 1);
+          next.splice(to, 0, item);
+          setButtons(next);
+        };
 
         return (
           <>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Donation Title</Label>
-              <Input
-                value={widget.donationTitle || ''}
-                onChange={(e) => update({ donationTitle: e.target.value })}
-                placeholder="Offer Your Daan"
-                className="h-8 text-xs"
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <Label className="text-xs">General Purpose / Notes</Label>
-              <Input
-                value={widget.donationPurpose || ''}
-                onChange={(e) => update({ donationPurpose: e.target.value })}
-                placeholder="General Temple Fund"
-                className="h-8 text-xs"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Button Style</Label>
-                <Select
-                  value={widget.donationStyle || 'rounded'}
-                  onValueChange={(v) => update({ donationStyle: v as any })}
-                >
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="circle">Circle</SelectItem>
-                    <SelectItem value="square">Square</SelectItem>
-                    <SelectItem value="rounded">Rounded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Orientation</Label>
-                <Select
-                  value={widget.donationOrientation || 'grid'}
-                  onValueChange={(v) => update({ donationOrientation: v as any })}
-                >
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="grid">Grid</SelectItem>
-                    <SelectItem value="horizontal">Horizontal</SelectItem>
-                    <SelectItem value="vertical">Vertical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Tabs for Template vs Offering Buttons */}
+            <div className="flex border-b border-border/80 mb-3 bg-muted/20 rounded p-0.5">
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1.5 text-[11px] font-bold rounded transition-all",
+                  activeTab === 'template'
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveTab('template')}
+              >
+                Template
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1.5 text-[11px] font-bold rounded transition-all",
+                  activeTab === 'buttons'
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveTab('buttons')}
+              >
+                Offering Cards ({buttons.length})
+              </button>
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">Donation Buttons</span>
-              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addButton}>
-                <Plus className="h-3 w-3 mr-1" /> Add Button
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {buttons.map((btn, i) => (
-                <div key={btn.id} className="rounded-lg border border-border bg-muted/30 p-2.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Button {i + 1}</span>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 hover:text-destructive" onClick={() => removeButton(i)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Amount (INR)</Label>
-                      <Input
-                        type="number"
-                        value={btn.amount}
-                        onChange={(e) => updateButton(i, { amount: Number(e.target.value) })}
-                        placeholder="101"
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Campaign / Label</Label>
-                      <Input
-                        value={btn.label}
-                        onChange={(e) => updateButton(i, { label: e.target.value })}
-                        placeholder="Archana"
-                        className="h-7 text-xs"
-                      />
-                    </div>
+            {activeTab === 'template' ? (
+              <div className="space-y-3.5">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Template Preset</Label>
+                  <div className="text-xs font-bold text-amber-500 capitalize bg-muted/40 border border-border/50 p-2 rounded flex items-center justify-between">
+                    <span>Temple {widget.templateStyle || 'modern'}</span>
+                    <span className="text-[9px] uppercase tracking-widest bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">Preset</span>
                   </div>
                 </div>
-              ))}
-              {buttons.length === 0 && (
-                <p className="text-[11px] text-muted-foreground text-center py-3">
-                  No buttons. Click "Add Button" to start.
-                </p>
-              )}
-            </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Main Title</Label>
+                  <Input
+                    value={widget.donationTitle || ''}
+                    onChange={(e) => update({ donationTitle: e.target.value })}
+                    placeholder="Offer Your Daan"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Subtitle / Purpose</Label>
+                  <Input
+                    value={widget.donationPurpose || ''}
+                    onChange={(e) => update({ donationPurpose: e.target.value })}
+                    placeholder="Choose Your Seva Offering"
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {images.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <Label className="text-xs">Select Temple Logo</Label>
+                    <div className="grid grid-cols-4 gap-1.5 max-h-[90px] overflow-y-auto border border-border/50 p-1 rounded bg-muted/20">
+                      {images.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => update({ templeLogoUrl: item.file_url!, templeLogoName: item.name })}
+                          className={cn(
+                            "relative rounded overflow-hidden border transition-all aspect-square",
+                            widget.templeLogoUrl === item.file_url
+                              ? "border-primary ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          )}
+                        >
+                          <img src={item.file_url!} alt={item.name} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    {widget.templeLogoUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-[10px] w-full"
+                        onClick={() => update({ templeLogoUrl: undefined, templeLogoName: undefined })}
+                      >
+                        Remove Logo
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                <Separator className="my-2 opacity-50" />
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Title Text Color</Label>
+                  <div className="flex gap-2">
+                    <input type="color" value={widget.donationTitleColor || '#fbbf24'} onChange={(e) => update({ donationTitleColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
+                    <Input value={widget.donationTitleColor || '#fbbf24'} onChange={(e) => update({ donationTitleColor: e.target.value })} className="h-8 text-xs font-mono flex-1" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Subtitle Text Color</Label>
+                  <div className="flex gap-2">
+                    <input type="color" value={widget.donationSubtitleColor || '#e2e8f0'} onChange={(e) => update({ donationSubtitleColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
+                    <Input value={widget.donationSubtitleColor || '#e2e8f0'} onChange={(e) => update({ donationSubtitleColor: e.target.value })} className="h-8 text-xs font-mono flex-1" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Title Font Family</Label>
+                  <Input
+                    value={widget.donationTitleFontFamily || ''}
+                    onChange={(e) => update({ donationTitleFontFamily: e.target.value })}
+                    placeholder="e.g. Outfit, Georgia, serif"
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Title Font Size ({widget.donationTitleFontSize || 24}px)</Label>
+                  <Slider
+                    value={[widget.donationTitleFontSize || 24]}
+                    onValueChange={([v]) => update({ donationTitleFontSize: v })}
+                    min={16}
+                    max={60}
+                    step={1}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Grid Spacing ({widget.donationSpacing || 4})</Label>
+                  <Slider
+                    value={[widget.donationSpacing || 4]}
+                    onValueChange={([v]) => update({ donationSpacing: v })}
+                    min={1}
+                    max={12}
+                    step={1}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Container Border Radius ({widget.donationContainerRadius || 12}px)</Label>
+                  <Slider
+                    value={[widget.donationContainerRadius || 12]}
+                    onValueChange={([v]) => update({ donationContainerRadius: v })}
+                    min={0}
+                    max={40}
+                    step={1}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Offerings List</span>
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addButton}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Card
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  {buttons.map((btn, i) => {
+                    const isEditing = btn.id === editingButtonId;
+                    return (
+                      <div 
+                        key={btn.id} 
+                        className={cn(
+                          "rounded-lg border border-border p-2.5 space-y-2 transition-all",
+                          isEditing ? "bg-muted/50 border-primary" : "bg-muted/15 hover:bg-muted/25"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setEditingButtonId(isEditing ? null : btn.id)}
+                            className="flex items-center gap-1.5 hover:text-foreground text-left transition-colors truncate max-w-[140px]"
+                          >
+                            <span className="text-[11px] font-bold text-slate-300 truncate">
+                              {btn.label || `Card ${i + 1}`}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                              (₹{btn.amount})
+                            </span>
+                          </button>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              disabled={i === 0}
+                              onClick={() => moveButton(i, i - 1)}
+                              className="h-5 w-5 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-30"
+                            >
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={i === buttons.length - 1}
+                              onClick={() => moveButton(i, i + 1)}
+                              className="h-5 w-5 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-30"
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                            <Switch
+                              checked={btn.visible !== false}
+                              onCheckedChange={(v) => updateButton(i, { visible: v })}
+                              className="scale-75 origin-right"
+                            />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-5 w-5 text-muted-foreground hover:text-destructive" 
+                              onClick={() => removeButton(i)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {isEditing && (
+                          <div className="space-y-3.5 pt-2 border-t border-border/50 animate-slide-down">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <Label className="text-[10px]">Title</Label>
+                                <Input
+                                  value={btn.label}
+                                  onChange={(e) => updateButton(i, { label: e.target.value })}
+                                  placeholder="Archana Daan"
+                                  className="h-7 text-xs bg-slate-950/40 border-slate-800"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px]">Amount (₹)</Label>
+                                <Input
+                                  type="number"
+                                  value={btn.amount}
+                                  onChange={(e) => updateButton(i, { amount: Number(e.target.value) })}
+                                  placeholder="101"
+                                  className="h-7 text-xs bg-slate-950/40 border-slate-800"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px]">Details (Subtext Description)</Label>
+                              <Input
+                                value={btn.description || ''}
+                                onChange={(e) => updateButton(i, { description: e.target.value })}
+                                placeholder="e.g. Special puja for family"
+                                className="h-7 text-xs bg-slate-950/40 border-slate-800"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px]">Badge Text</Label>
+                              <Input
+                                value={btn.badge || ''}
+                                onChange={(e) => updateButton(i, { badge: e.target.value })}
+                                placeholder="Popular, New, शुभ, standard..."
+                                className="h-7 text-xs bg-slate-950/40 border-slate-800"
+                              />
+                            </div>
+
+                            {images.length > 0 && (
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px]">Center Card Icon</Label>
+                                <div className="grid grid-cols-5 gap-1 max-h-[80px] overflow-y-auto border border-border/30 p-1 rounded bg-slate-950/20">
+                                  {images.map((imgItem) => (
+                                    <button
+                                      key={imgItem.id}
+                                      type="button"
+                                      onClick={() => updateButton(i, { photoUrl: imgItem.file_url!, photoName: imgItem.name })}
+                                      className={cn(
+                                        "relative rounded overflow-hidden border transition-all aspect-square",
+                                        btn.photoUrl === imgItem.file_url
+                                          ? "border-primary ring-1 ring-primary"
+                                          : "border-border/30 hover:border-primary/40"
+                                      )}
+                                    >
+                                      <img src={imgItem.file_url!} alt={imgItem.name} className="w-full h-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                                {btn.photoUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateButton(i, { photoUrl: undefined, photoName: undefined })}
+                                    className="text-[9px] text-amber-500 hover:underline block text-right mt-0.5"
+                                  >
+                                    Remove Icon
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {images.length > 0 && (
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px]">Card Background Image</Label>
+                                <div className="grid grid-cols-5 gap-1 max-h-[80px] overflow-y-auto border border-border/30 p-1 rounded bg-slate-950/20">
+                                  {images.map((imgItem) => (
+                                    <button
+                                      key={imgItem.id}
+                                      type="button"
+                                      onClick={() => updateButton(i, { backgroundUrl: imgItem.file_url!, backgroundName: imgItem.name })}
+                                      className={cn(
+                                        "relative rounded overflow-hidden border transition-all aspect-square",
+                                        btn.backgroundUrl === imgItem.file_url
+                                          ? "border-primary ring-1 ring-primary"
+                                          : "border-border/30 hover:border-primary/40"
+                                      )}
+                                    >
+                                      <img src={imgItem.file_url!} alt={imgItem.name} className="w-full h-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                                {btn.backgroundUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateButton(i, { backgroundUrl: undefined, backgroundName: undefined })}
+                                    className="text-[9px] text-amber-500 hover:underline block text-right mt-0.5"
+                                  >
+                                    Remove Background Image
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <Separator className="my-1.5 opacity-30" />
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Bg Color Override</Label>
+                                <div className="flex gap-1">
+                                  <input 
+                                    type="color" 
+                                    value={btn.backgroundColor || '#000000'} 
+                                    onChange={(e) => updateButton(i, { backgroundColor: e.target.value })} 
+                                    className="h-6 w-6 rounded cursor-pointer border-none" 
+                                  />
+                                  <Input 
+                                    value={btn.backgroundColor || ''} 
+                                    onChange={(e) => updateButton(i, { backgroundColor: e.target.value })} 
+                                    placeholder="Default"
+                                    className="h-6 text-[10px] px-1 font-mono flex-1 bg-slate-950/40" 
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Border Color Override</Label>
+                                <div className="flex gap-1">
+                                  <input 
+                                    type="color" 
+                                    value={btn.borderColor || '#000000'} 
+                                    onChange={(e) => updateButton(i, { borderColor: e.target.value })} 
+                                    className="h-6 w-6 rounded cursor-pointer border-none" 
+                                  />
+                                  <Input 
+                                    value={btn.borderColor || ''} 
+                                    onChange={(e) => updateButton(i, { borderColor: e.target.value })} 
+                                    placeholder="None"
+                                    className="h-6 text-[10px] px-1 font-mono flex-1 bg-slate-950/40" 
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Text Color Override</Label>
+                                <Input 
+                                  value={btn.textColor || ''} 
+                                  onChange={(e) => updateButton(i, { textColor: e.target.value })} 
+                                  placeholder="Default"
+                                  className="h-6 text-[10px] bg-slate-950/40" 
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Corner Radius Override</Label>
+                                <Input 
+                                  type="number"
+                                  value={btn.cornerRadius !== undefined ? btn.cornerRadius : ''} 
+                                  onChange={(e) => updateButton(i, { cornerRadius: e.target.value !== '' ? Number(e.target.value) : undefined })} 
+                                  placeholder="12"
+                                  className="h-6 text-[10px] bg-slate-950/40" 
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Hover Effect</Label>
+                                <Select
+                                  value={btn.hoverEffect || 'scale'}
+                                  onValueChange={(v) => updateButton(i, { hoverEffect: v as any })}
+                                >
+                                  <SelectTrigger className="h-6 text-[10px] bg-slate-950/40"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="scale">Scale Up</SelectItem>
+                                    <SelectItem value="glow">Gold Glow</SelectItem>
+                                    <SelectItem value="bounce">Bounce Hover</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[9px]">Click Effect</Label>
+                                <Select
+                                  value={btn.clickAnimation || 'pop'}
+                                  onValueChange={(v) => updateButton(i, { clickAnimation: v as any })}
+                                >
+                                  <SelectTrigger className="h-6 text-[10px] bg-slate-950/40"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pop">Pop Shrink</SelectItem>
+                                    <SelectItem value="sink">Sink Down</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {buttons.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground text-center py-3">
+                      No offering buttons. Click "Add Card" to start.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         );
       })()}
@@ -718,14 +1079,24 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
       )}
 
       {/* ── CUSTOM INDIVIDUAL DONATION BUTTONS ── */}
-      {(widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') && (
+      {(widget.type === 'donation_button' || widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') && (
         <>
           <div className="space-y-1.5">
-            <Label className="text-xs">Offering Title / Description</Label>
+            <Label className="text-xs">Offering Title</Label>
+            <Input
+              value={widget.label || ''}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="e.g. Archana Daan"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Offering Subtitle / Details</Label>
             <Input
               value={widget.buttonDescription || ''}
               onChange={(e) => update({ buttonDescription: e.target.value })}
-              placeholder="e.g. Archana Daan"
+              placeholder="e.g. Offering dedicated to deity"
               className="h-8 text-xs"
             />
           </div>
@@ -741,6 +1112,16 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="text-xs">Badge Text</Label>
+            <Input
+              value={widget.buttonBadge || ''}
+              onChange={(e) => update({ buttonBadge: e.target.value })}
+              placeholder="e.g. Popular, शुभ"
+              className="h-8 text-xs"
+            />
+          </div>
+
           {images.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs">Select Center Icon / Photo</Label>
@@ -748,6 +1129,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                 {images.map((item) => (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => update({ buttonPhotoUrl: item.file_url!, buttonPhotoName: item.name })}
                     className={cn(
                       "relative rounded overflow-hidden border transition-all aspect-square",
@@ -780,6 +1162,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                 {images.map((item) => (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => update({ buttonBackgroundUrl: item.file_url!, buttonBackgroundName: item.name })}
                     className={cn(
                       "relative rounded overflow-hidden border transition-all aspect-square",
@@ -804,6 +1187,65 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
               )}
             </div>
           )}
+
+          <Separator className="my-2" />
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Card Bg Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={widget.buttonBgColor || '#000000'} onChange={(e) => update({ buttonBgColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
+              <Input value={widget.buttonBgColor || ''} onChange={(e) => update({ buttonBgColor: e.target.value })} placeholder="Default" className="h-8 text-xs font-mono flex-1" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Card Border Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={widget.buttonBorderColor || '#000000'} onChange={(e) => update({ buttonBorderColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
+              <Input value={widget.buttonBorderColor || ''} onChange={(e) => update({ buttonBorderColor: e.target.value })} placeholder="Default" className="h-8 text-xs font-mono flex-1" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Card Text Color</Label>
+            <Input value={widget.buttonTextColor || ''} onChange={(e) => update({ buttonTextColor: e.target.value })} placeholder="Default" className="h-8 text-xs" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Card Corner Radius ({widget.buttonCornerRadius !== undefined ? widget.buttonCornerRadius : 12}px)</Label>
+            <Slider value={[widget.buttonCornerRadius !== undefined ? widget.buttonCornerRadius : 12]} onValueChange={([v]) => update({ buttonCornerRadius: v })} min={0} max={40} step={1} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Background Gradient</Label>
+            <Input value={widget.buttonGradient || ''} onChange={(e) => update({ buttonGradient: e.target.value })} placeholder="e.g. from-amber-500 to-orange-600" className="h-8 text-xs" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Hover Effect</Label>
+              <Select value={widget.buttonHoverEffect || 'scale'} onValueChange={(v) => update({ buttonHoverEffect: v as any })}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scale">Scale Up</SelectItem>
+                  <SelectItem value="glow">Gold Glow</SelectItem>
+                  <SelectItem value="bounce">Translate Up</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Click Effect</Label>
+              <Select value={widget.buttonClickAnimation || 'pop'} onValueChange={(v) => update({ buttonClickAnimation: v as any })}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pop">Pop Shrink</SelectItem>
+                  <SelectItem value="sink">Sink Down</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </>
       )}
 

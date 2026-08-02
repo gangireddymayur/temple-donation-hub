@@ -273,8 +273,18 @@ function OverlayText({ slide }: { slide: SlideshowItem }) {
   );
 }
 
-/* ── Individual Offering Donation Button ── */
-function IndividualDonationButton({ widget, interactive }: { widget: ContentWidget; interactive: boolean }) {
+/* ── Square Offering Card Widget (Universal Component) ── */
+export function SquareOfferingCard({
+  config,
+  interactive,
+  isSelected = false,
+  onSelect
+}: {
+  config: DonationButtonConfig;
+  interactive: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+}) {
   const [activeDonation, setActiveDonation] = useState<any>(null);
   
   // Form states
@@ -288,10 +298,10 @@ function IndividualDonationButton({ widget, interactive }: { widget: ContentWidg
   const [donationId, setDonationId] = useState<string | null>(null);
   const [upiString, setUpiString] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  
-  const amount = widget.buttonAmount || 100;
-  const description = widget.buttonDescription || "Offering";
-  const type = widget.type;
+
+  const amount = config.amount || 100;
+  const label = config.label || "Offering";
+  const description = config.description || "";
 
   // Polling logic
   useEffect(() => {
@@ -388,109 +398,99 @@ function IndividualDonationButton({ widget, interactive }: { widget: ContentWidg
     }
   };
 
-  // Determine premium default backgrounds & classes
-  let shapeClass = "";
-  let defaultBgClass = "";
-  let innerElements = null;
-  const customContainerStyle: React.CSSProperties = {
-    padding: widget.padding || 0,
-    borderRadius: widget.borderRadius,
-    opacity: (widget.opacity ?? 100) / 100,
-    pointerEvents: interactive ? 'auto' : 'none',
+  // Hover animations mapping
+  const hoverClass = (() => {
+    switch (config.hoverEffect) {
+      case 'scale': return 'hover:scale-[1.04] hover:shadow-lg transition-transform duration-300';
+      case 'glow': return 'hover:shadow-[0_0_20px_rgba(245,158,11,0.5)] transition-shadow duration-300';
+      case 'bounce': return 'hover:-translate-y-1.5 transition-transform duration-300';
+      case 'none': return '';
+      default: return 'hover:scale-[1.04] transition-all duration-300';
+    }
+  })();
+
+  // Click animations mapping
+  const clickClass = (() => {
+    switch (config.clickAnimation) {
+      case 'pop': return 'active:scale-95';
+      case 'sink': return 'active:translate-y-0.5';
+      case 'none': return '';
+      default: return 'active:scale-95';
+    }
+  })();
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: config.backgroundColor || undefined,
+    borderColor: config.borderColor || undefined,
+    borderWidth: config.borderColor ? '1px' : undefined,
+    borderRadius: config.cornerRadius !== undefined ? config.cornerRadius : undefined,
+    color: config.textColor || undefined,
+    fontFamily: config.fontFamily || undefined,
+    fontSize: config.fontSize ? `${config.fontSize}px` : undefined,
+    backgroundImage: config.backgroundUrl ? `url(${config.backgroundUrl})` : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
   };
 
-  const hasCustomBgColor = widget.backgroundColor && widget.backgroundColor !== 'transparent';
-  const hasBgImage = !!widget.buttonBackgroundUrl;
-
-  if (hasBgImage) {
-    customContainerStyle.backgroundImage = `url(${widget.buttonBackgroundUrl})`;
-    customContainerStyle.backgroundSize = 'cover';
-    customContainerStyle.backgroundPosition = 'center';
-  } else if (hasCustomBgColor) {
-    customContainerStyle.backgroundColor = widget.backgroundColor;
-  }
-
-  if (type === 'circle_button') {
-    shapeClass = "rounded-full aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center border-2 border-yellow-300/70 shadow-[0_0_25px_rgba(249,115,22,0.45)] overflow-hidden";
-    if (!hasBgImage && !hasCustomBgColor) {
-      defaultBgClass = "bg-gradient-to-br from-amber-500 via-orange-500 to-red-600";
-    }
-    innerElements = (
-      <div className="relative z-10 flex flex-col items-center text-center justify-center w-full h-full space-y-1.5 p-3 rounded-full border border-yellow-400/20 m-1 bg-black/15">
-        {widget.buttonPhotoUrl ? (
-          <img src={widget.buttonPhotoUrl} alt="Icon" className="h-10 w-10 object-contain rounded-full border border-yellow-500/50 p-0.5 bg-black/20" />
-        ) : (
-          <Coins className="h-6 w-6 text-yellow-300 animate-pulse" />
-        )}
-        <span className="text-2xl font-black tracking-wide text-yellow-300 drop-shadow-md">₹{amount}</span>
-        <span className="text-[10px] font-bold tracking-wider uppercase drop-shadow text-slate-100 max-w-full truncate px-2">{description}</span>
-      </div>
-    );
-  } else if (type === 'rectangular_button') {
-    shapeClass = "rounded-2xl w-full h-[85%] flex flex-col justify-center items-center border border-yellow-500/40 shadow-xl shadow-red-950/25 overflow-hidden before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 before:bg-gradient-to-b before:from-yellow-400 before:to-amber-600 before:z-10";
-    if (!hasBgImage && !hasCustomBgColor) {
-      defaultBgClass = "bg-gradient-to-r from-red-950 via-rose-900 to-red-950";
-    }
-    innerElements = (
-      <div className="relative z-10 flex flex-row items-center justify-between w-full h-full px-6 gap-3 py-4 bg-black/20">
-        <div className="flex items-center gap-3">
-          {widget.buttonPhotoUrl ? (
-            <img src={widget.buttonPhotoUrl} alt="Icon" className="h-12 w-12 shrink-0 object-contain rounded-full border border-yellow-500/50 p-0.5 bg-black/20" />
-          ) : (
-            <div className="h-10 w-10 shrink-0 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
-              <Coins className="h-5 w-5 text-yellow-400" />
-            </div>
-          )}
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-bold tracking-wider text-yellow-100 uppercase drop-shadow">{description}</span>
-            <span className="text-[9px] text-amber-200/50 uppercase tracking-widest font-semibold">Devasthanam Offering</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end shrink-0">
-          <span className="text-3xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">₹{amount}</span>
-          <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-semibold mt-0.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">Tap to Pay</span>
-        </div>
-      </div>
-    );
-  } else if (type === 'square_button') {
-    shapeClass = "rounded-none aspect-square w-[80%] max-w-[240px] flex flex-col justify-center items-center border-2 border-yellow-400/60 shadow-[0_0_20px_rgba(234,179,8,0.25)] overflow-hidden after:absolute after:inset-1.5 after:border after:border-yellow-300/30 after:pointer-events-none";
-    if (!hasBgImage && !hasCustomBgColor) {
-      defaultBgClass = "bg-gradient-to-br from-yellow-600 via-amber-600 to-yellow-800";
-    }
-    innerElements = (
-      <div className="relative z-10 flex flex-col items-center text-center justify-between w-full h-full py-5 px-3 bg-black/20">
-        <span className="text-[11px] font-bold tracking-wider uppercase text-yellow-100/90 drop-shadow-sm max-w-full truncate px-1">{description}</span>
-        {widget.buttonPhotoUrl ? (
-          <img src={widget.buttonPhotoUrl} alt="Icon" className="h-12 w-12 object-contain rounded-lg border border-yellow-500/40 p-0.5 bg-black/20" />
-        ) : (
-          <Sparkles className="h-8 w-8 text-yellow-300 opacity-80" />
-        )}
-        <span className="text-3xl font-black tracking-wide text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">₹{amount}</span>
-      </div>
-    );
-  }
+  if (config.visible === false) return null;
 
   return (
-    <div className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent select-none p-2">
+    <>
       <button
-        onClick={() => interactive && setActiveDonation({ amount, label: description })}
+        onClick={() => {
+          if (interactive) {
+            setActiveDonation({ amount, label });
+          } else if (onSelect) {
+            onSelect();
+          }
+        }}
         className={cn(
-          "relative border shadow-lg transition-all duration-300 overflow-hidden text-white group",
-          defaultBgClass,
-          interactive ? "cursor-pointer hover:scale-[1.04] hover:shadow-yellow-950/30" : "cursor-default",
-          widget.buttonBackgroundUrl ? "after:absolute after:inset-0 after:bg-black/40 group-hover:after:bg-black/25 after:transition-all after:z-0" : "",
-          shapeClass
+          "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-md select-none group overflow-hidden border",
+          !config.backgroundColor && !config.backgroundUrl ? "bg-gradient-to-br from-slate-900 to-slate-900 border-white/5" : "",
+          config.backgroundUrl ? "after:absolute after:inset-0 after:bg-black/55 group-hover:after:bg-black/40 after:transition-all after:z-0" : "",
+          config.shadow || "shadow-md shadow-black/10",
+          hoverClass,
+          clickClass,
+          interactive ? "cursor-pointer" : "cursor-default",
+          isSelected ? "ring-2 ring-primary ring-offset-2 z-20" : ""
         )}
-        style={customContainerStyle}
+        style={cardStyle}
       >
-        {innerElements}
+        {/* Glow/Gradient overlay */}
+        {config.gradient && !config.backgroundUrl && (
+          <div className={cn("absolute inset-0 z-0 opacity-80 group-hover:opacity-95 transition-opacity", config.gradient)} />
+        )}
+
+        {/* Badge */}
+        {config.badge && (
+          <div className="absolute top-2.5 right-2.5 z-20 bg-amber-500 text-slate-950 font-bold uppercase text-[9px] tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+            {config.badge}
+          </div>
+        )}
+
+        <div className="relative z-10 w-full h-full flex flex-col justify-between items-center space-y-2">
+          {/* Photo / Icon */}
+          {config.photoUrl ? (
+            <img src={config.photoUrl} alt="" className="h-11 w-11 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
+          ) : (
+            <Coins className="h-6 w-6 text-amber-400 shrink-0" />
+          )}
+
+          {/* Label / Description */}
+          <div className="flex-1 flex flex-col justify-center">
+            <h4 className="font-bold text-sm tracking-wide line-clamp-1">{label}</h4>
+            {description && <p className="text-[10px] text-white/50 line-clamp-2 mt-0.5">{description}</p>}
+          </div>
+
+          {/* Amount Badge */}
+          <span className="text-xl font-black text-amber-300 mt-2">₹{amount}</span>
+        </div>
       </button>
 
-      {/* Reused Payment Dialog Overlay */}
+      {/* Devotee Payment Dialog Overlay */}
       {activeDonation && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-6">
-          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left">
-            {/* Background glowing gradients */}
+          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left text-white font-sans">
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -613,14 +613,40 @@ function IndividualDonationButton({ widget, interactive }: { widget: ContentWidg
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 /* ── Standard Widget Preview ── */
 function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget; previewMode?: boolean }) {
-  if (widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') {
-    return <IndividualDonationButton widget={widget} interactive={previewMode} />;
+  if (widget.type === 'donation_button' || widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') {
+    const config: DonationButtonConfig = {
+      id: widget.id,
+      amount: widget.buttonAmount || 100,
+      label: widget.label || 'Offering',
+      description: widget.buttonDescription,
+      photoUrl: widget.buttonPhotoUrl,
+      photoName: widget.buttonPhotoName,
+      backgroundUrl: widget.buttonBackgroundUrl,
+      backgroundName: widget.buttonBackgroundName,
+      backgroundColor: widget.buttonBgColor,
+      borderColor: widget.buttonBorderColor,
+      textColor: widget.buttonTextColor,
+      fontFamily: widget.buttonFontFamily,
+      fontSize: widget.buttonFontSize,
+      cornerRadius: widget.buttonCornerRadius,
+      gradient: widget.buttonGradient,
+      shadow: widget.buttonShadow,
+      hoverEffect: widget.buttonHoverEffect,
+      clickAnimation: widget.buttonClickAnimation,
+      badge: widget.buttonBadge,
+      visible: widget.buttonVisible !== false
+    };
+    return (
+      <div className="w-full h-full flex items-center justify-center p-2 bg-transparent">
+        <SquareOfferingCard config={config} interactive={previewMode} />
+      </div>
+    );
   }
   if (widget.type === 'links') {
     return <LinksWidget widget={widget} interactive={previewMode} />;
@@ -634,7 +660,6 @@ function WidgetPreview({ widget, previewMode = false }: { widget: ContentWidget;
 
   // Determine animation class & custom duration
   const scrollDuration = widget.scrollDuration;
-  const hasCustomDuration = scrollDuration && scrollDuration > 0;
 
   const animationClass = (() => {
     switch (widget.textAnimation) {
@@ -805,302 +830,266 @@ function ClockWidget({ fontSize, color, fontWeight }: { fontSize?: number; color
 
 function DonationWidget({ widget, interactive }: { widget: ContentWidget; interactive: boolean }) {
   const buttons = widget.donationButtons || [];
-  const [activeDonation, setActiveDonation] = useState<any>(null);
-  
-  // Form states
-  const [donorName, setDonorName] = useState("");
-  const [donorPhone, setDonorPhone] = useState("");
-  const [donorEmail, setDonorEmail] = useState("");
-  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
-  const [loading, setLoading] = useState(false);
-  
-  // Payment states
-  const [donationId, setDonationId] = useState<string | null>(null);
-  const [upiString, setUpiString] = useState<string | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedBtnId, setSelectedBtnId] = useState<string | null>(null);
   
   const title = widget.donationTitle || "Offer Your Daan";
   const purpose = widget.donationPurpose || "General Donation";
-  
-  // Polling logic
+  const styleType = widget.templateStyle || 'modern';
+
+  // Listen to select-donation-button events in edit mode
   useEffect(() => {
-    if (step !== 'payment' || !donationId) return;
-    let pollTimer: any;
-    let count = 0;
-    
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${API}/donations/public/status/${donationId}?t=${Date.now()}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === 'success') {
-            setStep('success');
-            // Auto close after 5 seconds
-            setTimeout(() => {
-              handleClose();
-            }, 5000);
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn("Status poll error:", e);
-      }
-      
-      count++;
-      if (count < 100) { // Poll for ~5 minutes max
-        pollTimer = setTimeout(checkStatus, 3000);
+    if (interactive) return;
+    const handleSelect = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail.widgetId === widget.id) {
+        setSelectedBtnId(detail.buttonId);
+      } else {
+        setSelectedBtnId(null);
       }
     };
-    
-    pollTimer = setTimeout(checkStatus, 3000);
-    return () => clearTimeout(pollTimer);
-  }, [step, donationId]);
+    window.addEventListener("select-donation-button", handleSelect);
+    return () => window.removeEventListener("select-donation-button", handleSelect);
+  }, [widget.id, interactive]);
 
-  const handleClose = () => {
-    setActiveDonation(null);
-    setDonorName("");
-    setDonorPhone("");
-    setDonorEmail("");
-    setStep('form');
-    setDonationId(null);
-    setUpiString(null);
-    setQrCodeUrl("");
+  // Select button callback
+  const handleSelectBtn = (btnId: string) => {
+    setSelectedBtnId(btnId);
+    const event = new CustomEvent("select-donation-button", {
+      detail: { widgetId: widget.id, buttonId: btnId }
+    });
+    window.dispatchEvent(event);
   };
 
-  const handleInitiate = async (amount: number, purposeText: string) => {
-    setLoading(true);
-    try {
-      const pathParts = window.location.pathname.split('/');
-      const deviceId = pathParts[pathParts.indexOf('player') + 1] || pathParts[pathParts.indexOf('editor') + 1] || null;
+  // Filter visible buttons
+  const visibleButtons = buttons.filter(b => b.visible !== false);
+  const N = visibleButtons.length;
 
-      const response = await fetch(`${API}/donations/public/initiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId,
-          amount,
-          purpose: purposeText,
-          donorName: donorName || "Devotee",
-          donorPhone: donorPhone || "",
-          donorEmail: donorEmail || ""
-        })
-      });
-      
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to initiate payment');
-      }
-      
-      const data = await response.json();
-      setDonationId(data.donationId);
-      
-      const qrData = data.upiString || `upi://pay?pa=placeholder@upi&pn=Temple&am=${amount}&tr=${data.donationId}`;
-      setUpiString(qrData);
-      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
-      setStep('payment');
-    } catch (e: any) {
-      alert(e.message || "Could not connect to payment server");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Dynamic columns arrangement
+  let gridClass = "grid gap-5 w-full justify-center justify-items-center mt-6 transition-all duration-300";
+  if (N === 1) gridClass += " grid-cols-1 max-w-sm";
+  else if (N === 2) gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
+  else if (N === 3) gridClass += " grid-cols-1 sm:grid-cols-3 max-w-4xl";
+  else if (N === 4) gridClass += " grid-cols-2 max-w-4xl";
+  else if (N === 5 || N === 6) gridClass += " grid-cols-2 md:grid-cols-3 max-w-5xl";
+  else if (N === 7 || N === 8) gridClass += " grid-cols-3 lg:grid-cols-4 max-w-6xl";
+  else gridClass += " grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-w-7xl";
 
-  const simulateSuccess = async () => {
-    if (!donationId) return;
-    try {
-      await fetch(`${API}/donations/public/simulate-success`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ donationId })
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const orientation = widget.donationOrientation || 'grid';
-  const shape = widget.donationStyle || 'rounded';
-  
-  let gridClass = "grid grid-cols-2 gap-4 w-full";
-  if (orientation === 'horizontal') gridClass = "flex flex-row gap-4 justify-center items-center w-full";
-  if (orientation === 'vertical') gridClass = "flex flex-col gap-4 justify-center items-center w-full";
-
-  let shapeClass = "rounded-lg";
-  if (shape === 'circle') shapeClass = "rounded-full aspect-square flex flex-col justify-center items-center h-28 w-28";
-  if (shape === 'square') shapeClass = "rounded-none aspect-square flex flex-col justify-center items-center h-28 w-28";
-  if (shape === 'rounded') shapeClass = "rounded-xl flex flex-col justify-center items-center py-4 px-6";
-
-  const style: React.CSSProperties = {
-    backgroundColor: widget.backgroundColor || 'transparent',
-    padding: widget.padding || 16,
-    borderRadius: widget.borderRadius || 12,
+  // Template container base styles
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: widget.backgroundColor || undefined,
+    padding: widget.padding !== undefined ? widget.padding : 24,
+    borderRadius: widget.donationContainerRadius !== undefined ? widget.donationContainerRadius : undefined,
     opacity: (widget.opacity ?? 100) / 100,
     width: '100%',
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    overflowY: 'auto',
   };
 
-  return (
-    <div style={style} className="relative select-none text-white font-sans">
-      <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-md">
-        <HeartHandshake className="h-10 w-10 text-emerald-400 animate-pulse" />
-        <h2 className="text-xl font-bold tracking-wide" style={{ fontSize: widget.fontSize ? widget.fontSize * 0.8 : 22 }}>
-          {title}
-        </h2>
-        <p className="text-xs text-white/60 tracking-wider uppercase font-medium">{purpose}</p>
-      </div>
-
-      <div className={gridClass}>
-        {buttons.map((btn) => (
-          <button
-            key={btn.id}
-            onClick={() => interactive && setActiveDonation(btn)}
-            className={cn(
-              "bg-gradient-to-br from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/35 hover:to-teal-500/35 border border-emerald-500/30 text-white font-semibold shadow-lg shadow-emerald-950/10 hover:shadow-emerald-950/30 hover:scale-[1.04] transition-all duration-300",
-              shapeClass
-            )}
-          >
-            <span className="text-lg font-bold">₹{btn.amount}</span>
-            <span className="text-[10px] opacity-70 mt-1 uppercase font-medium tracking-wider truncate max-w-full px-2">{btn.label}</span>
-          </button>
-        ))}
-        {buttons.length === 0 && (
-          <div className="text-xs text-white/40">No donation buttons configured</div>
+  // Modern Template Rendering
+  if (styleType === 'modern') {
+    return (
+      <div 
+        style={containerStyle} 
+        className={cn(
+          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8",
+          !widget.backgroundColor ? "bg-[#111029]" : "",
+          widget.donationContainerShadow || "shadow-xl border border-white/5"
         )}
-      </div>
+      >
+        <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
+          ) : (
+            <LayoutGrid className="h-10 w-10 text-amber-400" />
+          )}
+          <h2 
+            className="text-2xl font-extrabold tracking-wide uppercase" 
+            style={{ 
+              color: widget.donationTitleColor || '#fbbf24', 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || undefined
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-xs tracking-widest uppercase font-medium" 
+              style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
+            >
+              {purpose}
+            </p>
+          )}
+          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
+        </div>
 
-      {/* Interactive Devotee Payment Dialog Overlay */}
-      {activeDonation && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-6">
-          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden">
-            {/* Background glowing gradients */}
-            <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-              <div className="flex items-center gap-2.5">
-                <Coins className="h-5 w-5 text-emerald-400" />
-                <span className="font-bold text-lg text-slate-100">Daan Offerings</span>
-              </div>
-              <button onClick={handleClose} className="text-slate-400 hover:text-white text-sm bg-slate-800/50 hover:bg-slate-800 px-3 py-1 rounded-full border border-slate-700/50 transition-colors">
-                Cancel
-              </button>
-            </div>
-
-            {step === 'form' && (
-              <div className="space-y-4">
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
-                  <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Selected offering</div>
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <div className="text-xs text-slate-400 mt-1">{activeDonation.label}</div>
-                </div>
-
-                <div className="space-y-3.5 pt-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Devotee Name (Optional)</label>
-                    <input
-                      type="text"
-                      value={donorName}
-                      onChange={(e) => setDonorName(e.target.value)}
-                      placeholder="Enter full name"
-                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">Phone Number (Optional)</label>
-                    <input
-                      type="tel"
-                      value={donorPhone}
-                      onChange={(e) => setDonorPhone(e.target.value)}
-                      placeholder="10-digit mobile number"
-                      className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  disabled={loading}
-                  onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
-                  className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-4"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
-                  ) : (
-                    <>
-                      <QrCode className="h-4 w-4 text-[#070b18]" />
-                      <span>Generate Payment QR</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {step === 'payment' && (
-              <div className="flex flex-col items-center text-center space-y-5">
-                <div className="space-y-1">
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <div className="text-xs text-slate-400">{activeDonation.label}</div>
-                </div>
-
-                <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-800/10">
-                  {qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="UPI Payment QR Code" className="w-[180px] h-[180px]" />
-                  ) : (
-                    <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-slate-500">
-                      Loading QR...
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-1 px-4">
-                  <div className="text-sm font-semibold text-slate-200">Scan QR Code to Pay</div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Open BHIM, GPay, PhonePe, Paytm, or any UPI app on your phone and scan the QR code to complete donation.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-4 py-2 rounded-full font-medium animate-pulse">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Waiting for payment confirmation...</span>
-                </div>
-
-                {/* Simulated Success helper for testing locally */}
-                <button
-                  onClick={simulateSuccess}
-                  className="text-[9px] text-slate-600 hover:text-slate-400 mt-2 bg-slate-900 border border-slate-800/50 px-2.5 py-1 rounded"
-                >
-                  [Developer: Simulate Payment Success]
-                </button>
-              </div>
-            )}
-
-            {step === 'success' && (
-              <div className="flex flex-col items-center text-center py-6 space-y-4">
-                <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400 shadow-inner">
-                  <CheckCircle className="h-8 w-8 text-emerald-400" />
-                </div>
-
-                <div className="space-y-2 select-none">
-                  <h3 className="text-xl font-bold text-slate-100 flex items-center justify-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-amber-400" />
-                    Donation Successful
-                  </h3>
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                    Thank you for your generous offering of <strong>₹{activeDonation.amount}</strong> to the temple devasthanam. May you be blessed with peace and prosperity.
-                  </p>
-                </div>
-
-                <div className="text-[10px] text-slate-500 pt-4">Returning to layout in 5 seconds...</div>
-              </div>
+        <div className="flex-1 w-full flex items-center justify-center">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => (
+              <SquareOfferingCard 
+                key={btn.id} 
+                config={btn} 
+                interactive={interactive}
+                isSelected={btn.id === selectedBtnId}
+                onSelect={() => handleSelectBtn(btn.id)}
+              />
+            ))}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Traditional Template Rendering
+  if (styleType === 'traditional') {
+    return (
+      <div 
+        style={containerStyle} 
+        className={cn(
+          "relative select-none text-amber-950 font-serif flex flex-col justify-start items-center p-8 border-4 border-double border-amber-600/75",
+          !widget.backgroundColor ? "bg-[#fffdf6]" : "",
+          widget.donationContainerShadow || "shadow-md"
+        )}
+      >
+        {/* Traditional hanging bell symbols */}
+        <div className="absolute top-2 left-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end">
+          <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
+        </div>
+        <div className="absolute top-2 right-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end">
+          <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
+        </div>
+
+        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
+          ) : (
+            <div className="h-12 w-12 rounded-full border-2 border-amber-600 flex items-center justify-center bg-amber-500/10">
+              <span className="text-xl font-bold text-amber-700">ॐ</span>
+            </div>
+          )}
+          <h2 
+            className="text-2xl font-black tracking-wide" 
+            style={{ 
+              color: widget.donationTitleColor || '#b91c1c', 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || 'Georgia, serif'
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-xs tracking-wider uppercase font-bold" 
+              style={{ color: widget.donationSubtitleColor || '#c2410c' }}
+            >
+              {purpose}
+            </p>
+          )}
+          <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent mt-1" />
+        </div>
+
+        <div className="flex-1 w-full flex items-center justify-center">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => {
+              // Enhance configuration with default traditional themes if overrides not present
+              const tradConfig: DonationButtonConfig = {
+                ...btn,
+                backgroundColor: btn.backgroundColor || 'rgba(185, 28, 28, 0.04)',
+                borderColor: btn.borderColor || 'rgba(185, 28, 28, 0.25)',
+                textColor: btn.textColor || '#451a03',
+                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 6,
+                hoverEffect: btn.hoverEffect || 'scale',
+                shadow: btn.shadow || 'shadow-sm',
+              };
+              return (
+                <SquareOfferingCard 
+                  key={btn.id} 
+                  config={tradConfig} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                />
+              );
+            })}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-amber-900/40 col-span-full py-8">No offerings configured</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Glassmorphism Template Rendering
+  return (
+    <div 
+      style={containerStyle} 
+      className={cn(
+        "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 border border-white/10 backdrop-blur-md",
+        !widget.backgroundColor ? "bg-slate-950/40" : "",
+        widget.donationContainerShadow || "shadow-2xl"
       )}
+    >
+      <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+        {widget.templeLogoUrl ? (
+          <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
+        ) : (
+          <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
+            <Sparkles className="h-6 w-6 text-sky-400" />
+          </div>
+        )}
+        <h2 
+          className="text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent" 
+          style={{ 
+            fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+            fontFamily: widget.donationTitleFontFamily || undefined
+          }}
+        >
+          {title}
+        </h2>
+        {purpose && (
+          <p 
+            className="text-xs tracking-widest uppercase font-semibold text-slate-400" 
+            style={{ color: widget.donationSubtitleColor || undefined }}
+          >
+            {purpose}
+          </p>
+        )}
+        <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
+      </div>
+
+      <div className="flex-1 w-full flex items-center justify-center">
+        <div className={gridClass}>
+          {visibleButtons.map((btn) => {
+            const glassConfig: DonationButtonConfig = {
+              ...btn,
+              backgroundColor: btn.backgroundColor || 'rgba(255, 255, 255, 0.06)',
+              borderColor: btn.borderColor || 'rgba(255, 255, 255, 0.15)',
+              textColor: btn.textColor || '#f8fafc',
+              cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 20,
+              hoverEffect: btn.hoverEffect || 'glow',
+              shadow: btn.shadow || 'shadow-lg shadow-black/10',
+            };
+            return (
+              <SquareOfferingCard 
+                key={btn.id} 
+                config={glassConfig} 
+                interactive={interactive}
+                isSelected={btn.id === selectedBtnId}
+                onSelect={() => handleSelectBtn(btn.id)}
+              />
+            );
+          })}
+          {visibleButtons.length === 0 && (
+            <div className="text-xs text-white/30 col-span-full py-8">No donation buttons configured</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1218,8 +1207,9 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
     setIsDragOver(false);
 
     const widgetType = e.dataTransfer.getData('widget-type') as ContentWidgetType;
+    const templateStyle = e.dataTransfer.getData('template-style') || undefined;
     if (widgetType && zone.split === 'none') {
-      const widget = createWidget(widgetType);
+      const widget = createWidget(widgetType, templateStyle);
       onUpdate({ ...zone, content: widget });
     }
   }, [zone, onUpdate]);

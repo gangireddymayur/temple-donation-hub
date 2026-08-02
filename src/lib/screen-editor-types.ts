@@ -4,7 +4,7 @@ export type TextAnimation = 'none' | 'scroll-left' | 'scroll-right' | 'scroll-up
 
 export type SlideTransition = 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom-in' | 'zoom-out' | 'flip' | 'none';
 
-export type ContentWidgetType = 'image' | 'video' | 'text' | 'clock' | 'weather' | 'rss' | 'slideshow' | 'links' | 'donation' | 'empty' | 'circle_button' | 'rectangular_button' | 'square_button';
+export type ContentWidgetType = 'image' | 'video' | 'text' | 'clock' | 'weather' | 'rss' | 'slideshow' | 'links' | 'donation' | 'empty' | 'donation_button';
 
 export type LinkPlatform = 'instagram' | 'youtube' | 'facebook' | 'twitter' | 'tiktok' | 'linkedin' | 'github' | 'website';
 
@@ -73,6 +73,29 @@ export function createPlaylistItem(mediaType: 'image' | 'video' = 'image'): Play
   };
 }
 
+export interface DonationButtonConfig {
+  id: string;
+  amount: number;
+  label: string; // e.g. "Archana Daan"
+  description?: string;
+  photoUrl?: string;
+  photoName?: string;
+  backgroundUrl?: string;
+  backgroundName?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  cornerRadius?: number;
+  gradient?: string;
+  shadow?: string;
+  hoverEffect?: 'scale' | 'glow' | 'bounce' | 'none';
+  clickAnimation?: 'pop' | 'sink' | 'none';
+  badge?: string;
+  visible?: boolean;
+}
+
 export interface ContentWidget {
   id: string;
   type: ContentWidgetType;
@@ -98,19 +121,43 @@ export interface ContentWidget {
   // links widget
   links?: LinkItem[];
   linksOrientation?: LinksOrientation;
-  // donation widget props
+  
+  // templates / donation widget props
+  templateStyle?: 'modern' | 'traditional' | 'glass';
+  templeLogoUrl?: string;
+  templeLogoName?: string;
   donationTitle?: string;
   donationPurpose?: string;
-  donationStyle?: 'circle' | 'square' | 'rounded';
-  donationOrientation?: 'grid' | 'horizontal' | 'vertical';
-  donationButtons?: Array<{ id: string; amount: number; label: string }>;
-  // individual button widget props
+  donationTitleColor?: string;
+  donationSubtitleColor?: string;
+  donationTitleFontFamily?: string;
+  donationTitleFontSize?: number;
+  donationSpacing?: number;
+  donationContainerShadow?: string;
+  donationContainerGradient?: string;
+  donationContainerRadius?: number;
+  donationButtons?: DonationButtonConfig[];
+  
+  // single button widget properties mapping
   buttonDescription?: string;
   buttonPhotoUrl?: string;
   buttonPhotoName?: string;
   buttonBackgroundUrl?: string;
   buttonBackgroundName?: string;
   buttonAmount?: number;
+  buttonBgColor?: string;
+  buttonBorderColor?: string;
+  buttonTextColor?: string;
+  buttonFontFamily?: string;
+  buttonFontSize?: number;
+  buttonCornerRadius?: number;
+  buttonGradient?: string;
+  buttonShadow?: string;
+  buttonHoverEffect?: 'scale' | 'glow' | 'bounce' | 'none';
+  buttonClickAnimation?: 'pop' | 'sink' | 'none';
+  buttonBadge?: string;
+  buttonVisible?: boolean;
+
   // styling
   backgroundColor?: string;
   padding?: number;
@@ -157,7 +204,7 @@ export function createSlide(): SlideshowItem {
   };
 }
 
-export function createWidget(type: ContentWidgetType): ContentWidget {
+export function createWidget(type: ContentWidgetType, style?: string): ContentWidget {
   const id = `widget-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const base: ContentWidget = {
     id,
@@ -218,45 +265,113 @@ export function createWidget(type: ContentWidgetType): ContentWidget {
           { id: `link-${Date.now()}-4`, url: '', label: 'Website',   platform: 'website' },
         ],
       };
-    case 'donation':
+    case 'donation_button':
       return {
         ...base,
-        label: 'Donation Panel',
-        donationTitle: 'Offer Your Daan',
-        donationPurpose: 'General Donation',
-        donationStyle: 'rounded',
-        donationOrientation: 'grid',
-        donationButtons: [
-          { id: `btn-${Date.now()}-1`, amount: 101, label: 'Archana Daan' },
-          { id: `btn-${Date.now()}-2`, amount: 501, label: 'Anna Prasadam' },
-          { id: `btn-${Date.now()}-3`, amount: 1001, label: 'Kalyanotsavam' },
-          { id: `btn-${Date.now()}-4`, amount: 5001, label: 'Temple Fund' },
-        ],
+        label: 'Square Offering',
+        buttonDescription: 'Devotee Offering',
+        buttonAmount: 100,
+        buttonBgColor: 'rgba(245, 158, 11, 0.1)',
+        buttonBorderColor: '#f59e0b',
+        buttonTextColor: '#ffffff',
+        buttonCornerRadius: 12,
+        buttonHoverEffect: 'scale',
+        buttonClickAnimation: 'pop',
+        buttonVisible: true,
       };
-    case 'circle_button':
+    case 'donation': {
+      const selectedStyle = (style || 'modern') as 'modern' | 'traditional' | 'glass';
+      
+      const defaultButtons: DonationButtonConfig[] = [
+        {
+          id: `btn-${Date.now()}-1`,
+          amount: 101,
+          label: selectedStyle === 'traditional' ? 'अर्चना पूजा (Archana)' : 'Archana Puja',
+          description: 'Personal puja offering to deity',
+          badge: selectedStyle === 'traditional' ? 'शुभ' : 'Popular',
+          hoverEffect: 'scale',
+          clickAnimation: 'pop',
+          visible: true
+        },
+        {
+          id: `btn-${Date.now()}-2`,
+          amount: 501,
+          label: selectedStyle === 'traditional' ? 'अन्नदानम् (Annadanam)' : 'Anna Prasadam',
+          description: 'Free sacred food for pilgrims',
+          badge: selectedStyle === 'traditional' ? 'नित्य' : 'Daily',
+          hoverEffect: 'scale',
+          clickAnimation: 'pop',
+          visible: true
+        },
+        {
+          id: `btn-${Date.now()}-3`,
+          amount: 1001,
+          label: selectedStyle === 'traditional' ? 'अभिषेक सेवा (Abhishekam)' : 'Abhishekam',
+          description: 'Sacred deity bath offering',
+          hoverEffect: 'scale',
+          clickAnimation: 'pop',
+          visible: true
+        },
+        {
+          id: `btn-${Date.now()}-4`,
+          amount: 2501,
+          label: selectedStyle === 'traditional' ? 'मंदिर विकास (Temple Fund)' : 'Temple Development',
+          description: 'General support for mandir building',
+          badge: 'Noble',
+          hoverEffect: 'scale',
+          clickAnimation: 'pop',
+          visible: true
+        }
+      ];
+
+      if (selectedStyle === 'traditional') {
+        return {
+          ...base,
+          label: 'Temple Traditional',
+          templateStyle: 'traditional',
+          donationTitle: 'श्री देवस्थानम पूजा समर्पण',
+          donationPurpose: 'Shri Devasthanam Spiritual Offerings',
+          backgroundColor: '#fffdf6',
+          donationTitleColor: '#b91c1c',
+          donationSubtitleColor: '#c2410c',
+          donationTitleFontFamily: 'Playfair Display, Georgia, serif',
+          donationSpacing: 4,
+          donationContainerRadius: 8,
+          donationButtons: defaultButtons
+        };
+      }
+      
+      if (selectedStyle === 'glass') {
+        return {
+          ...base,
+          label: 'Temple Glass',
+          templateStyle: 'glass',
+          donationTitle: 'Devotee Kiosk Offerings',
+          donationPurpose: 'Select your donation amount',
+          backgroundColor: 'rgba(15, 23, 42, 0.45)',
+          donationTitleColor: '#38bdf8',
+          donationSubtitleColor: '#94a3b8',
+          donationSpacing: 5,
+          donationContainerRadius: 24,
+          donationButtons: defaultButtons
+        };
+      }
+
+      // Default: 'modern'
       return {
         ...base,
-        label: 'Circle Button',
-        buttonDescription: 'Archana Daan',
-        buttonAmount: 101,
-        borderRadius: 9999, // Circular shape default
+        label: 'Temple Modern',
+        templateStyle: 'modern',
+        donationTitle: 'Devasthanam Offering Portal',
+        donationPurpose: 'Choose Your Seva Offering',
+        backgroundColor: '#111029',
+        donationTitleColor: '#fbbf24',
+        donationSubtitleColor: '#e2e8f0',
+        donationSpacing: 4,
+        donationContainerRadius: 16,
+        donationButtons: defaultButtons
       };
-    case 'rectangular_button':
-      return {
-        ...base,
-        label: 'Rectangle Button',
-        buttonDescription: 'Kalyanotsavam',
-        buttonAmount: 1001,
-        borderRadius: 12,
-      };
-    case 'square_button':
-      return {
-        ...base,
-        label: 'Square Button',
-        buttonDescription: 'Anna Prasadam',
-        buttonAmount: 501,
-        borderRadius: 0,
-      };
+    }
     default:
       return base;
   }
@@ -286,4 +401,3 @@ export function createDefaultLayout(deviceId: string, name: string): ScreenLayou
     rootZone: createZone('root'),
   };
 }
-
