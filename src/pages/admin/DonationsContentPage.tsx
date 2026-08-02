@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, ClipboardList, Settings, HeartHandshake, IndianRupee, HelpCircle, Loader2 } from "lucide-react";
+import { Search, Download, ClipboardList, Settings, HeartHandshake, IndianRupee, HelpCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +87,7 @@ export default function DonationsContentPage() {
   // Customer Info form configuration
   const [formConfig, setFormConfig] = useState<CustomerInfoConfig>(DEFAULT_FORM_CONFIG);
   const [savingForm, setSavingForm] = useState(false);
+  const [formConfigExpanded, setFormConfigExpanded] = useState(false);
 
   // Stats
   const [totalCollected, setTotalCollected] = useState(0);
@@ -297,70 +298,83 @@ export default function DonationsContentPage() {
           <div className="space-y-6">
             {/* Form Fields Default Setup */}
             <Card className="border border-border/80 shadow-md">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-amber-500" />
-                  <CardTitle className="text-base font-bold">Default Devotee Form Configuration</CardTitle>
-                </div>
-                <CardDescription>
-                  Configure which fields devotees must fill on the kiosk popup before the payment QR code is displayed. This setting applies globally across all templates unless overridden in layout properties.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3.5 bg-muted/20 border rounded-xl mb-4">
-                  <div className="space-y-0.5">
-                    <Label className="text-xs font-bold text-slate-200">Enable Devotee Information Popup</Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      When enabled, tapping any offering card launches a popup form before generating the QR code.
-                    </p>
+              <CardHeader
+                className="cursor-pointer select-none"
+                onClick={() => setFormConfigExpanded(prev => !prev)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-amber-500" />
+                    <CardTitle className="text-base font-bold">Default Devotee Form Configuration</CardTitle>
                   </div>
-                  <Switch
-                    checked={formConfig.popupEnabled}
-                    onCheckedChange={(checked) => setFormConfig(prev => ({ ...prev, popupEnabled: checked }))}
-                  />
+                  {formConfigExpanded
+                    ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                    : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  }
                 </div>
-
-                {formConfig.popupEnabled && (
-                  <div className="border border-border/60 rounded-xl overflow-hidden">
-                    <div className="grid grid-cols-3 gap-2 bg-muted/40 p-2.5 text-xs font-bold border-b">
-                      <span>Devotee Field</span>
-                      <span className="text-center">Collect Field</span>
-                      <span className="text-center">Mark Required</span>
-                    </div>
-
-                    <div className="divide-y divide-border/40">
-                      {(Object.keys(formConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
-                        const config = formConfig.fields[field];
-                        const label = field.charAt(0).toUpperCase() + field.slice(1);
-                        return (
-                          <div key={field} className="grid grid-cols-3 gap-2 p-2.5 items-center text-xs">
-                            <span className="font-semibold text-slate-300 capitalize">{label}</span>
-                            <div className="flex justify-center">
-                              <Switch
-                                checked={config.enabled}
-                                onCheckedChange={(val) => updateField(field, "enabled", val)}
-                              />
-                            </div>
-                            <div className="flex justify-center">
-                              <Switch
-                                checked={config.required}
-                                disabled={!config.enabled}
-                                onCheckedChange={(val) => updateField(field, "required", val)}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                {!formConfigExpanded && (
+                  <CardDescription className="mt-1 text-xs">
+                    Click to configure which fields devotees must fill before the payment QR is shown.
+                  </CardDescription>
                 )}
+              </CardHeader>
+              {formConfigExpanded && (
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3.5 bg-muted/20 border rounded-xl mb-4">
+                    <div className="space-y-0.5">
+                      <Label className="text-xs font-bold text-slate-200">Enable Devotee Information Popup</Label>
+                      <p className="text-[11px] text-muted-foreground">
+                        When enabled, tapping any offering card launches a popup form before generating the QR code.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formConfig.popupEnabled}
+                      onCheckedChange={(checked) => setFormConfig(prev => ({ ...prev, popupEnabled: checked }))}
+                    />
+                  </div>
 
-                <div className="flex justify-end pt-2">
-                  <Button onClick={handleSaveFormConfig} disabled={savingForm} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5">
-                    {savingForm ? "Saving Fields..." : "Save Default Form Settings"}
-                  </Button>
-                </div>
-              </CardContent>
+                  {formConfig.popupEnabled && (
+                    <div className="border border-border/60 rounded-xl overflow-hidden">
+                      <div className="grid grid-cols-3 gap-2 bg-muted/40 p-2.5 text-xs font-bold border-b">
+                        <span>Devotee Field</span>
+                        <span className="text-center">Collect Field</span>
+                        <span className="text-center">Mark Required</span>
+                      </div>
+
+                      <div className="divide-y divide-border/40">
+                        {(Object.keys(formConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
+                          const config = formConfig.fields[field];
+                          const label = field.charAt(0).toUpperCase() + field.slice(1);
+                          return (
+                            <div key={field} className="grid grid-cols-3 gap-2 p-2.5 items-center text-xs">
+                              <span className="font-semibold text-slate-300 capitalize">{label}</span>
+                              <div className="flex justify-center">
+                                <Switch
+                                  checked={config.enabled}
+                                  onCheckedChange={(val) => updateField(field, "enabled", val)}
+                                />
+                              </div>
+                              <div className="flex justify-center">
+                                <Switch
+                                  checked={config.required}
+                                  disabled={!config.enabled}
+                                  onCheckedChange={(val) => updateField(field, "required", val)}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={handleSaveFormConfig} disabled={savingForm} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5">
+                      {savingForm ? "Saving Fields..." : "Save Default Form Settings"}
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
             </Card>
 
             {/* Donation Logs */}
