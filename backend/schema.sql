@@ -47,6 +47,9 @@ CREATE TABLE `companies` (
   `logo_url` TEXT DEFAULT NULL,
   `notes` TEXT DEFAULT NULL,
   `created_by` CHAR(36) DEFAULT NULL,
+  `upi_id` VARCHAR(255) DEFAULT NULL,
+  `razorpay_key_id` VARCHAR(255) DEFAULT NULL,
+  `razorpay_key_secret` VARCHAR(255) DEFAULT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_companies_status` (`status`)
@@ -118,6 +121,26 @@ CREATE TABLE `schedules` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_schedules_company` (`company_id`),
   INDEX `idx_schedules_device` (`device_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------- DONATIONS ----------
+DROP TABLE IF EXISTS `donations`;
+CREATE TABLE `donations` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY,
+  `company_id` CHAR(36) NOT NULL,
+  `device_id` CHAR(36) DEFAULT NULL,
+  `donor_name` VARCHAR(255) DEFAULT NULL,
+  `donor_phone` VARCHAR(32) DEFAULT NULL,
+  `donor_email` VARCHAR(255) DEFAULT NULL,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `purpose` VARCHAR(255) NOT NULL,
+  `payment_status` ENUM('pending', 'success', 'failed') NOT NULL DEFAULT 'pending',
+  `razorpay_order_id` VARCHAR(255) DEFAULT NULL,
+  `razorpay_payment_id` VARCHAR(255) DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_donations_company` (`company_id`),
+  INDEX `idx_donations_status` (`payment_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;
