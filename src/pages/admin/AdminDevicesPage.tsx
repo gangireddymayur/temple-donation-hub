@@ -290,9 +290,9 @@ export default function AdminDevicesPage() {
           </div>
           <div className="flex items-center gap-2">
             {isLocalServer && (
-              <Button size="sm" variant="outline" onClick={handleCloudSync} disabled={syncing}>
-                <RefreshCw className={cn("h-4 w-4 mr-2", syncing && "animate-spin")} />
-                {syncing ? "Syncing..." : "Sync from Cloud"}
+              <Button size="sm" variant="outline" disabled title="Cloud sync has been disabled.">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sync from Cloud (Disabled)
               </Button>
             )}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>

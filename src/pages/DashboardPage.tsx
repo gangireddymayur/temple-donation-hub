@@ -119,10 +119,10 @@ export default function DashboardPage() {
             </a>
 
             {/* Offline Bundle Download Modal */}
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={false} onOpenChange={() => {}}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors border-none h-9">
-                  <Building2 className="h-4 w-4" /> Download Offline Windows Server
+                <Button disabled variant="outline" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium opacity-50 cursor-not-allowed border-none h-9">
+                  <Building2 className="h-4 w-4" /> Download Offline Windows Server (Disabled)
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
