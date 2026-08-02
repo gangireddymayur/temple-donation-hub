@@ -314,7 +314,8 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           badge: selectedStyle === 'traditional' ? 'शुभ' : selectedStyle === 'divine' ? 'दिव्य' : 'Popular',
           hoverEffect: 'scale',
           clickAnimation: 'pop',
-          visible: true
+          visible: true,
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1609137144813-2d2c16196232?auto=format&fit=crop&w=600&q=80' : undefined
         },
         {
           id: `btn-${Date.now()}-2`,
@@ -324,7 +325,8 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           badge: selectedStyle === 'traditional' ? 'नित्य' : selectedStyle === 'divine' ? 'पवित्र' : 'Daily',
           hoverEffect: 'scale',
           clickAnimation: 'pop',
-          visible: true
+          visible: true,
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=80' : undefined
         },
         {
           id: `btn-${Date.now()}-3`,
@@ -333,7 +335,8 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           description: 'Sacred deity bath offering',
           hoverEffect: 'scale',
           clickAnimation: 'pop',
-          visible: true
+          visible: true,
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1560184897-ae75f418493e?auto=format&fit=crop&w=600&q=80' : undefined
         },
         {
           id: `btn-${Date.now()}-4`,
@@ -343,7 +346,8 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           badge: selectedStyle === 'divine' ? 'महासेवा' : 'Noble',
           hoverEffect: 'scale',
           clickAnimation: 'pop',
-          visible: true
+          visible: true,
+          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1600100397608-f010e42ec3b3?auto=format&fit=crop&w=600&q=80' : undefined
         }
       ];
 
