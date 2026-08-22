@@ -520,9 +520,9 @@ export function SquareOfferingCard({
       <button
         onClick={handleCardClick}
         className={cn(
-          "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-md select-none group overflow-hidden border",
-          !config.backgroundColor && !config.backgroundUrl ? "bg-gradient-to-br from-slate-900 to-slate-900 border-white/5" : "",
-          config.shadow || "shadow-md shadow-black/10",
+          "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-lg select-none group overflow-hidden border transition-all duration-300",
+          !config.backgroundColor && !config.backgroundUrl ? "bg-slate-950/80 backdrop-blur-md border-white/15 hover:border-amber-400/50 hover:bg-slate-950/90" : "",
+          config.shadow || "shadow-lg shadow-black/20",
           hoverClass,
           clickClass,
           interactive ? "cursor-pointer" : "cursor-default",
@@ -1167,56 +1167,66 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   if (styleType === 'modern') {
     return (
       <div 
-        style={containerStyle} 
         className={cn(
-          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 overflow-hidden",
+          "relative select-none text-white font-sans w-full h-full min-h-full overflow-hidden",
           !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#111029]" : "",
           widget.donationContainerShadow || "shadow-xl border border-white/5"
         )}
+        style={{
+          borderRadius: widget.donationContainerRadius !== undefined ? widget.donationContainerRadius : undefined,
+          opacity: (widget.opacity ?? 100) / 100,
+        }}
       >
         {renderBackgroundMedia()}
-        <div className="relative z-10 flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
-          {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
-          ) : (
-            <LayoutGrid className="h-10 w-10 text-amber-400" />
-          )}
-          <h2 
-            className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide uppercase max-w-full text-center break-words px-2 leading-tight" 
-            style={{ 
-              color: widget.donationTitleColor || '#fbbf24', 
-              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-              fontFamily: widget.donationTitleFontFamily || undefined
-            }}
-          >
-            {title}
-          </h2>
-          {purpose && (
-            <p 
-              className="text-xs tracking-widest uppercase font-medium" 
-              style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
-            >
-              {purpose}
-            </p>
-          )}
-          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
-        </div>
 
-        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
-          <div className={gridClass}>
-            {visibleButtons.map((btn) => (
-              <SquareOfferingCard 
-                key={btn.id} 
-                config={btn} 
-                interactive={interactive}
-                isSelected={btn.id === selectedBtnId}
-                onSelect={() => handleSelectBtn(btn.id)}
-                customerInfoConfig={customerInfoConfig}
-              />
-            ))}
-            {visibleButtons.length === 0 && (
-              <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
+        {/* Scrollable Content Container */}
+        <div 
+          className="relative z-10 w-full h-full overflow-y-auto flex flex-col justify-start items-center p-6 sm:p-8"
+          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+        >
+          <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+            {widget.templeLogoUrl ? (
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/20 border border-white/10 p-0.5 backdrop-blur-xs" />
+            ) : (
+              <LayoutGrid className="h-10 w-10 text-amber-400 drop-shadow" />
             )}
+            <h2 
+              className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide uppercase max-w-full text-center break-words px-2 leading-tight drop-shadow-md" 
+              style={{ 
+                color: widget.donationTitleColor || '#fbbf24', 
+                fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+                fontFamily: widget.donationTitleFontFamily || undefined
+              }}
+            >
+              {title}
+            </h2>
+            {purpose && (
+              <p 
+                className="text-xs tracking-widest uppercase font-medium drop-shadow-xs" 
+                style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
+              >
+                {purpose}
+              </p>
+            )}
+            <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
+          </div>
+
+          <div className="flex-1 w-full flex items-center justify-center">
+            <div className={gridClass}>
+              {visibleButtons.map((btn) => (
+                <SquareOfferingCard 
+                  key={btn.id} 
+                  config={btn} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
+                />
+              ))}
+              {visibleButtons.length === 0 && (
+                <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
