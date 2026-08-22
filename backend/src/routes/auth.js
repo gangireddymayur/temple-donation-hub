@@ -286,8 +286,8 @@ router.post('/register', async (req, res) => {
           id: companyId,
           name: compName,
           contact_email: normalizedEmail,
-          plan: 'pro',
-          max_screens: 10,
+          plan: 'trial',
+          max_screens: 2,
           status: 'active',
           subscription_status: 'trial',
           trial_ends_at: trialEndsAt,
@@ -304,8 +304,8 @@ router.post('/register', async (req, res) => {
           id: companyId,
           name: compName,
           contact_email: normalizedEmail,
-          plan: 'pro',
-          max_screens: 10,
+          plan: 'trial',
+          max_screens: 2,
           status: 'active'
         }
       );
