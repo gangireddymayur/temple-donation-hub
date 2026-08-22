@@ -1127,15 +1127,15 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   const renderBackgroundMedia = () => {
     if (widget.backgroundVideoUrl) {
       return (
-        <div className="absolute inset-0 w-full h-full min-w-full min-h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <video
             src={widget.backgroundVideoUrl}
             autoPlay
             loop
             muted
             playsInline
-            className="w-full h-full min-w-full min-h-full object-center"
-            style={{ objectFit: fitMode }}
+            className="absolute inset-0 w-full h-full block object-center pointer-events-none"
+            style={{ objectFit: fitMode, width: '100%', height: '100%' }}
           />
           <div
             className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
@@ -1146,12 +1146,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     }
     if (widget.backgroundImageUrl) {
       return (
-        <div className="absolute inset-0 w-full h-full min-w-full min-h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <img
             src={widget.backgroundImageUrl}
             alt=""
-            className="w-full h-full min-w-full min-h-full object-center"
-            style={{ objectFit: fitMode }}
+            className="absolute inset-0 w-full h-full block object-center pointer-events-none"
+            style={{ objectFit: fitMode, width: '100%', height: '100%' }}
           />
           <div
             className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
