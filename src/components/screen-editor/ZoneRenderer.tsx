@@ -1098,7 +1098,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   const N = visibleButtons.length;
 
   // Dynamic columns arrangement
-  let gridClass = "grid gap-5 w-full justify-center justify-items-center mt-6 transition-all duration-300";
+  let gridClass = "grid gap-3.5 sm:gap-4 w-full justify-center justify-items-center mt-2 sm:mt-3 transition-all duration-300";
   if (N === 1) gridClass += " grid-cols-1 max-w-sm";
   else if (N === 2) gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
   else if (N === 3) gridClass += " grid-cols-1 sm:grid-cols-3 max-w-4xl";
@@ -1109,36 +1109,22 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
 
   const fitMode = widget.backgroundFit || 'cover';
 
-  // Template container base styles
-  const containerStyle: React.CSSProperties = {
-    backgroundColor: widget.backgroundColor || undefined,
-    padding: widget.padding !== undefined ? widget.padding : 24,
-    borderRadius: widget.donationContainerRadius !== undefined ? widget.donationContainerRadius : undefined,
-    opacity: (widget.opacity ?? 100) / 100,
-    width: '100%',
-    height: '100%',
-    minHeight: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    overflowY: 'auto',
-  };
-
   // Dynamic Background Video or Image for Template Canvas
   const renderBackgroundMedia = () => {
     if (widget.backgroundVideoUrl) {
       return (
-        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 w-full h-full min-h-full overflow-hidden pointer-events-none z-0">
           <video
             src={widget.backgroundVideoUrl}
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full block object-center pointer-events-none"
+            className="absolute inset-0 w-full h-full min-h-full block object-center pointer-events-none"
             style={{ objectFit: fitMode, width: '100%', height: '100%' }}
           />
           <div
-            className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
+            className="absolute inset-0 w-full h-full min-h-full bg-black pointer-events-none transition-opacity duration-300"
             style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
           />
         </div>
@@ -1146,15 +1132,15 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     }
     if (widget.backgroundImageUrl) {
       return (
-        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 w-full h-full min-h-full overflow-hidden pointer-events-none z-0">
           <img
             src={widget.backgroundImageUrl}
             alt=""
-            className="absolute inset-0 w-full h-full block object-center pointer-events-none"
+            className="absolute inset-0 w-full h-full min-h-full block object-center pointer-events-none"
             style={{ objectFit: fitMode, width: '100%', height: '100%' }}
           />
           <div
-            className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
+            className="absolute inset-0 w-full h-full min-h-full bg-black pointer-events-none transition-opacity duration-300"
             style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
           />
         </div>
@@ -1175,23 +1161,27 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         style={{
           borderRadius: widget.donationContainerRadius !== undefined ? widget.donationContainerRadius : undefined,
           opacity: (widget.opacity ?? 100) / 100,
+          backgroundImage: widget.backgroundImageUrl ? `url("${widget.backgroundImageUrl}")` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'local',
         }}
       >
         {renderBackgroundMedia()}
 
         {/* Scrollable Content Container */}
         <div 
-          className="relative z-10 w-full h-full overflow-y-auto flex flex-col justify-start items-center p-6 sm:p-8"
+          className="relative z-10 w-full h-full overflow-y-auto flex flex-col justify-between items-center p-4 sm:p-6"
           style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
         >
-          <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+          <div className="flex flex-col items-center gap-1.5 sm:gap-2 mb-2 sm:mb-4 text-center max-w-xl shrink-0">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/20 border border-white/10 p-0.5 backdrop-blur-xs" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-11 sm:h-12 w-11 sm:w-12 object-contain rounded-full shadow bg-black/20 border border-white/10 p-0.5 backdrop-blur-xs" />
             ) : (
-              <LayoutGrid className="h-10 w-10 text-amber-400 drop-shadow" />
+              <LayoutGrid className="h-8 sm:h-9 w-8 sm:w-9 text-amber-400 drop-shadow" />
             )}
             <h2 
-              className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide uppercase max-w-full text-center break-words px-2 leading-tight drop-shadow-md" 
+              className="text-base sm:text-xl md:text-2xl font-extrabold tracking-wide uppercase max-w-full text-center break-words px-2 leading-tight drop-shadow-md" 
               style={{ 
                 color: widget.donationTitleColor || '#fbbf24', 
                 fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
@@ -1202,16 +1192,16 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             </h2>
             {purpose && (
               <p 
-                className="text-xs tracking-widest uppercase font-medium drop-shadow-xs" 
+                className="text-[11px] sm:text-xs tracking-widest uppercase font-medium drop-shadow-xs opacity-90" 
                 style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
               >
                 {purpose}
               </p>
             )}
-            <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
+            <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-0.5" />
           </div>
 
-          <div className="flex-1 w-full flex items-center justify-center">
+          <div className="flex-1 w-full flex items-center justify-center min-h-0">
             <div className={gridClass}>
               {visibleButtons.map((btn) => (
                 <SquareOfferingCard 
