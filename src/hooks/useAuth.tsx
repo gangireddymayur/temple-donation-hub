@@ -72,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<any | null>(null);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [religion, setReligion] = useState<string>("hinduism");
+  const [loading, setLoading] = useState(true);
+  const initialized = useRef(false);
 
   const refreshCompany = async () => {
     if (!user) return;
