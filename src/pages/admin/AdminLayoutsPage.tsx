@@ -89,57 +89,32 @@ export default function AdminLayoutsPage() {
 
     const layoutData = {
       id: "root",
-      split: "horizontal",
+      split: "none",
       splitRatio: 50,
-      content: null,
-      children: [
-        {
-          id: `zone-${Date.now()}-left`,
-          split: "none",
-          splitRatio: 50,
-          children: null,
-          content: {
-            id: `widget-${Date.now()}-1`,
-            type: "text",
-            label: `${relMeta.shortName} Welcome Banner`,
-            text: `${relMeta.greeting}\n\n${relMeta.tagline}`,
-            fontFamily: "Inter, sans-serif",
-            fontSize: 32,
-            fontColor: "#ffffff",
-            backgroundColor: "rgba(0,0,0,0.6)",
-            textAlignment: "center",
-          }
-        },
-        {
-          id: `zone-${Date.now()}-right`,
-          split: "none",
-          splitRatio: 50,
-          children: null,
-          content: {
-            id: `widget-${Date.now()}-2`,
-            type: "donation",
-            label: `${relMeta.shortName} ${templateStyle}`,
-            templateStyle: templateStyle,
-            donationTitle: theme.header,
-            donationPurpose: theme.subheader,
-            backgroundColor: "#111029",
-            donationTitleColor: "#fbbf24",
-            donationSubtitleColor: "#e2e8f0",
-            donationSpacing: 4,
-            donationContainerRadius: 16,
-            donationButtons: relMeta.presetCauses.slice(0, 4).map((c, idx) => ({
-              id: `btn-${Date.now()}-${idx + 1}`,
-              amount: c.amount,
-              label: c.name,
-              description: c.description,
-              badge: c.isPopular ? "Featured" : undefined,
-              hoverEffect: "scale",
-              clickAnimation: "pop",
-              visible: true,
-            }))
-          }
-        }
-      ]
+      children: null,
+      content: {
+        id: `widget-${Date.now()}`,
+        type: "donation",
+        label: `${relMeta.shortName} ${templateStyle}`,
+        templateStyle: templateStyle,
+        donationTitle: theme.header,
+        donationPurpose: theme.subheader,
+        backgroundColor: "#111029",
+        donationTitleColor: "#fbbf24",
+        donationSubtitleColor: "#e2e8f0",
+        donationSpacing: 4,
+        donationContainerRadius: 16,
+        donationButtons: relMeta.presetCauses.slice(0, 4).map((c, idx) => ({
+          id: `btn-${Date.now()}-${idx + 1}`,
+          amount: c.amount,
+          label: c.name,
+          description: c.description,
+          badge: c.isPopular ? "Featured" : undefined,
+          hoverEffect: "scale",
+          clickAnimation: "pop",
+          visible: true,
+        }))
+      }
     };
 
     const { data, error } = await supabase.from("layouts").insert({
