@@ -1,13 +1,30 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export const DashboardLayout = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
   ({ children }, ref) => {
+    const { refreshCompany } = useAuth();
+    const [syncing, setSyncing] = useState(false);
+
+    const handleRefresh = async () => {
+      try {
+        setSyncing(true);
+        await refreshCompany();
+        toast.success("Super admin access data refreshed!");
+      } catch {
+        toast.error("Failed to refresh status");
+      } finally {
+        setSyncing(false);
+      }
+    };
+
     return (
       <SidebarProvider>
         <div ref={ref} className="min-h-screen flex w-full">
@@ -25,6 +42,23 @@ export const DashboardLayout = forwardRef<HTMLDivElement, { children: React.Reac
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card/70 border border-white/10 text-xs font-medium select-none shadow-sm backdrop-blur-md">
+                  <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                  <span className="text-foreground font-bold">Super Admin</span>
+                  <span className="text-muted-foreground font-mono text-[10px] border-l border-white/10 pl-1.5">Full System Access</span>
+                </div>
+
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleRefresh}
+                  disabled={syncing}
+                  className="size-8 rounded-xl bg-white/5 border border-white/10 text-muted-foreground hover:text-foreground hover:bg-white/10 cursor-pointer shrink-0 transition-all active:scale-95"
+                  title="Refresh system access data"
+                >
+                  <RefreshCw className={`size-3.5 ${syncing ? "animate-spin text-primary" : ""}`} />
+                </Button>
+
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-4 w-4" />

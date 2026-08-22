@@ -31,9 +31,15 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function getTrialInfo(company: any) {
-  if (!company) return { isExpired: false, text: "Active", variant: "default" };
-  if (company.subscription_status === "active") return { isExpired: false, text: "Active", variant: "default" };
-  if (company.subscription_status === "expired") return { isExpired: true, text: "Trial Expired", variant: "destructive" };
+  if (!company) {
+    return {
+      isExpired: false,
+      text: "Active",
+      expiresAtFormatted: null,
+      expiryDate: null,
+      variant: "default"
+    };
+  }
 
   const parseDate = (dateStr: string) => {
     if (!dateStr || dateStr === "null") return null;
@@ -50,18 +56,65 @@ export function getTrialInfo(company: any) {
         })()
       : null;
 
+  const formatDate = (date: Date | null) => {
+    if (!date) return null;
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
   if (!trialEnd || isNaN(trialEnd.getTime())) {
-    return { isExpired: false, text: "Trial (7d left)", variant: "warning" };
+    if (company.subscription_status === "active") {
+      return {
+        isExpired: false,
+        text: "Lifetime Access",
+        expiresAtFormatted: "Lifetime Access",
+        expiryDate: "Lifetime",
+        variant: "default"
+      };
+    }
+    return {
+      isExpired: false,
+      text: "Trial (7d left)",
+      expiresAtFormatted: "Trial (7d left)",
+      expiryDate: null,
+      variant: "warning"
+    };
   }
 
   const diff = trialEnd.getTime() - new Date().getTime();
   const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  const isExpired = diff <= 0;
+  const isExpired = company.subscription_status === "expired" || diff <= 0;
+  const formattedExpiry = formatDate(trialEnd);
+
+  if (isExpired) {
+    return {
+      isExpired: true,
+      text: "Access Expired",
+      expiresAtFormatted: `Expired on ${formattedExpiry}`,
+      expiryDate: formattedExpiry,
+      variant: "destructive"
+    };
+  }
+
+  if (company.subscription_status === "active") {
+    return {
+      isExpired: false,
+      text: `${days}d left`,
+      expiresAtFormatted: `Expires: ${formattedExpiry}`,
+      expiryDate: formattedExpiry,
+      variant: "default"
+    };
+  }
 
   return {
-    isExpired,
-    text: isExpired ? "Trial Expired" : `Trial (${days}d left)`,
-    variant: isExpired ? "destructive" : "warning"
+    isExpired: false,
+    text: `Trial (${days}d left)`,
+    expiresAtFormatted: `Trial Ends: ${formattedExpiry}`,
+    expiryDate: formattedExpiry,
+    variant: "warning"
   };
 }
 

@@ -1,19 +1,33 @@
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { Bell, Search, AlertTriangle, ShieldAlert, MessageSquare, ExternalLink, LogOut, RefreshCw, Lock } from "lucide-react";
+import { Bell, Search, AlertTriangle, ShieldAlert, ShieldCheck, Clock, MessageSquare, ExternalLink, LogOut, RefreshCw, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, getTrialInfo } from "@/hooks/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
   ({ children }, ref) => {
-    const { role, isTrialExpired, signOut, refreshCompany } = useAuth();
+    const { role, company, isTrialExpired, signOut, refreshCompany } = useAuth();
+    const [syncing, setSyncing] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+    const trialInfo = getTrialInfo(company);
+
+    const handleRefreshAccess = async () => {
+      try {
+        setSyncing(true);
+        await refreshCompany();
+        toast.success("Access data & subscription status refreshed!");
+      } catch {
+        toast.error("Failed to refresh status");
+      } finally {
+        setSyncing(false);
+      }
+    };
 
     return (
       <SidebarProvider>
@@ -32,6 +46,59 @@ export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNod
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Top-Bar License Expiration Indicator */}
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card/70 border border-white/10 text-xs font-medium select-none shadow-sm backdrop-blur-md">
+                  {company?.subscription_status === "active" && !trialInfo.isExpired ? (
+                    <>
+                      <ShieldCheck className="size-3.5 text-emerald-400 shrink-0" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-emerald-400 font-bold">Active</span>
+                        {trialInfo.expiresAtFormatted && (
+                          <span className="text-muted-foreground font-mono text-[11px] border-l border-white/10 pl-1.5">
+                            {trialInfo.expiresAtFormatted}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  ) : trialInfo.isExpired ? (
+                    <>
+                      <AlertTriangle className="size-3.5 text-rose-400 shrink-0 animate-pulse" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-rose-400 font-bold">Access Expired</span>
+                        {trialInfo.expiryDate && (
+                          <span className="text-rose-300/70 font-mono text-[11px] border-l border-rose-500/20 pl-1.5">
+                            {trialInfo.expiresAtFormatted}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="size-3.5 text-amber-400 shrink-0" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-amber-400 font-bold">{trialInfo.text}</span>
+                        {trialInfo.expiryDate && (
+                          <span className="text-muted-foreground font-mono text-[11px] border-l border-white/10 pl-1.5">
+                            {trialInfo.expiresAtFormatted}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Refresh Access Data Button */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleRefreshAccess}
+                  disabled={syncing}
+                  className="size-8 rounded-xl bg-white/5 border border-white/10 text-muted-foreground hover:text-foreground hover:bg-white/10 cursor-pointer shrink-0 transition-all active:scale-95"
+                  title="Refresh subscription access data"
+                >
+                  <RefreshCw className={`size-3.5 ${syncing ? "animate-spin text-primary" : ""}`} />
+                </Button>
+
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-4 w-4" />
