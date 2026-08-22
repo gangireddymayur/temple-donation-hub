@@ -33,7 +33,7 @@ import PlayerPage from "./pages/PlayerPage";
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log("App initialized - SQLite WASM");
+  console.log("Temple Donation Hub v0.1.0 - Multi-Faith Platform");
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme" attribute="class">
