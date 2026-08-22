@@ -59,10 +59,10 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
-            {relMeta.symbol || <Tv className="h-5 w-5 text-primary-foreground" />}
+      <SidebarHeader className="p-3 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center">
+        <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-base select-none shadow-sm">
+            {relMeta.symbol || <Tv className="h-4 w-4 text-primary-foreground" />}
           </div>
           {!collapsed && (
             <div className="flex flex-col">

@@ -31,8 +31,10 @@ export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNod
       }
     };
 
+    const isEditorPage = location.pathname.startsWith("/admin/layouts/") && location.pathname !== "/admin/layouts";
+
     return (
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={!isEditorPage}>
         <div ref={ref} className="min-h-screen flex w-full">
           <AdminSidebar />
           <div className="flex-1 flex flex-col min-w-0">
