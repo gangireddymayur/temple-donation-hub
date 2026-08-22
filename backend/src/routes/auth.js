@@ -210,9 +210,52 @@ router.post('/login', async (req, res) => {
   }
 });
 
+async function ensureSchema() {
+  try {
+    if (db.isSqlite) return;
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id VARCHAR(64) PRIMARY KEY,
+        company_id VARCHAR(64) NULL,
+        user_id VARCHAR(64) NULL,
+        user_email VARCHAR(255) NULL,
+        user_name VARCHAR(255) NULL,
+        action VARCHAR(64) NOT NULL,
+        category VARCHAR(64) NOT NULL DEFAULT 'general',
+        details TEXT NULL,
+        ip_address VARCHAR(64) NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    const [cRel] = await db.query("SHOW COLUMNS FROM companies LIKE 'religion'");
+    if (cRel.length === 0) {
+      await db.query("ALTER TABLE companies ADD COLUMN religion VARCHAR(64) DEFAULT 'hinduism'");
+    }
+
+    const [uRel] = await db.query("SHOW COLUMNS FROM users LIKE 'religion'");
+    if (uRel.length === 0) {
+      await db.query("ALTER TABLE users ADD COLUMN religion VARCHAR(64) DEFAULT 'hinduism'");
+    }
+
+    const [cSub] = await db.query("SHOW COLUMNS FROM companies LIKE 'subscription_status'");
+    if (cSub.length === 0) {
+      await db.query("ALTER TABLE companies ADD COLUMN subscription_status VARCHAR(32) DEFAULT 'trial'");
+    }
+
+    const [cTrial] = await db.query("SHOW COLUMNS FROM companies LIKE 'trial_ends_at'");
+    if (cTrial.length === 0) {
+      await db.query("ALTER TABLE companies ADD COLUMN trial_ends_at DATETIME NULL");
+    }
+  } catch (err) {
+    console.warn('[auth.js] ensureSchema notice:', err.message);
+  }
+}
+
 // POST /api/auth/register { email, password, full_name, company_name, religion }
 router.post('/register', async (req, res) => {
   try {
+    await ensureSchema();
     const { email, password, full_name, company_name, religion } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
     if (String(password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
@@ -235,21 +278,38 @@ router.post('/register', async (req, res) => {
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Create default company with 7-day free trial
-    await db.query(
-      'INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, trial_ends_at, religion) ' +
-      'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status, :subscription_status, :trial_ends_at, :religion)',
-      {
-        id: companyId,
-        name: compName,
-        contact_email: normalizedEmail,
-        plan: 'pro',
-        max_screens: 10,
-        status: 'active',
-        subscription_status: 'trial',
-        trial_ends_at: trialEndsAt,
-        religion: selectedReligion
-      }
-    );
+    try {
+      await db.query(
+        'INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, trial_ends_at, religion) ' +
+        'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status, :subscription_status, :trial_ends_at, :religion)',
+        {
+          id: companyId,
+          name: compName,
+          contact_email: normalizedEmail,
+          plan: 'pro',
+          max_screens: 10,
+          status: 'active',
+          subscription_status: 'trial',
+          trial_ends_at: trialEndsAt,
+          religion: selectedReligion
+        }
+      );
+    } catch (insertErr) {
+      // Fallback in case columns are in legacy format
+      console.warn('[auth.js] Company insert fallback:', insertErr.message);
+      await db.query(
+        'INSERT INTO companies (id, name, contact_email, plan, max_screens, status) ' +
+        'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status)',
+        {
+          id: companyId,
+          name: compName,
+          contact_email: normalizedEmail,
+          plan: 'pro',
+          max_screens: 10,
+          status: 'active'
+        }
+      );
+    }
 
     // Create user
     await db.query(

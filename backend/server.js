@@ -156,6 +156,35 @@ app.get('/api/db-check', async (req, res) => {
       console.log("[db] Added trial_ends_at column to companies table.");
     }
 
+    const [compRelCols] = await db.query("SHOW COLUMNS FROM companies LIKE 'religion'");
+    if (compRelCols.length === 0) {
+      await db.query("ALTER TABLE companies ADD COLUMN religion VARCHAR(64) DEFAULT 'hinduism'");
+      console.log("[db] Added religion column to companies table.");
+    }
+
+    const [userRelCols] = await db.query("SHOW COLUMNS FROM users LIKE 'religion'");
+    if (userRelCols.length === 0) {
+      await db.query("ALTER TABLE users ADD COLUMN religion VARCHAR(64) DEFAULT 'hinduism'");
+      console.log("[db] Added religion column to users table.");
+    }
+
+    // Ensure audit_logs table exists in MySQL
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id VARCHAR(64) PRIMARY KEY,
+        company_id VARCHAR(64) NULL,
+        user_id VARCHAR(64) NULL,
+        user_email VARCHAR(255) NULL,
+        user_name VARCHAR(255) NULL,
+        action VARCHAR(64) NOT NULL,
+        category VARCHAR(64) NOT NULL DEFAULT 'general',
+        details TEXT NULL,
+        ip_address VARCHAR(64) NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    console.log("[db] Checked/created audit_logs table in MySQL.");
+
     const [tableExist] = await db.query("SHOW TABLES LIKE 'schedule_instances'");
     if (tableExist.length === 0) {
       console.log("[db] Initializing advanced schedules database tables...");

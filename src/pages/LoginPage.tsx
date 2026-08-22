@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { HeartHandshake, Sparkles, Lock, Mail, Loader2, User, Building2, CheckCircle2, ShieldCheck, LogIn, UserPlus, Gift } from "lucide-react";
+import { HeartHandshake, Sparkles, Lock, Mail, Loader2, User, Building2, CheckCircle2, ShieldCheck, LogIn, UserPlus, Gift, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ALL_RELIGIONS, ReligionType, getReligionConfig } from "@/lib/religion-config";
@@ -17,12 +17,15 @@ export default function LoginPage() {
   // Sign In state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
   
   // Sign Up state
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
   const [selectedReligion, setSelectedReligion] = useState<ReligionType>("hinduism");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showSignUpConfirmPassword, setShowSignUpConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -192,13 +195,22 @@ export default function LoginPage() {
                   <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" />
                   <Input
                     id="signin-password"
-                    type="password"
+                    type={showSignInPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl pl-10 text-sm text-slate-200 focus:outline-none focus:border-orange-500/50 placeholder-slate-600 transition-colors"
+                    className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl pl-10 pr-10 text-sm text-slate-200 focus:outline-none focus:border-orange-500/50 placeholder-slate-600 transition-colors"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignInPassword(!showSignInPassword)}
+                    className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                    tabIndex={-1}
+                    title={showSignInPassword ? "Hide password" : "Show password"}
+                  >
+                    {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -350,13 +362,22 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                     <Input
                       id="signup-password"
-                      type="password"
+                      type={showSignUpPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl pl-9 text-sm text-slate-200 focus:border-orange-500/50 placeholder-slate-600"
+                      className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl pl-9 pr-9 text-sm text-slate-200 focus:border-orange-500/50 placeholder-slate-600"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                      className="absolute right-3 top-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                      tabIndex={-1}
+                      title={showSignUpPassword ? "Hide password" : "Show password"}
+                    >
+                      {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -368,13 +389,22 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                     <Input
                       id="signup-confirm-password"
-                      type="password"
+                      type={showSignUpConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl pl-9 text-sm text-slate-200 focus:border-orange-500/50 placeholder-slate-600"
+                      className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl pl-9 pr-9 text-sm text-slate-200 focus:border-orange-500/50 placeholder-slate-600"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignUpConfirmPassword(!showSignUpConfirmPassword)}
+                      className="absolute right-3 top-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                      tabIndex={-1}
+                      title={showSignUpConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showSignUpConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
               </div>
