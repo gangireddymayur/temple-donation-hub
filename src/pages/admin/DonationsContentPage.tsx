@@ -85,11 +85,13 @@ export default function DonationsContentPage() {
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [datePreset, setDatePreset] = useState<string>("all");
 
-  // Customer Info form configuration
-  const [formConfig, setFormConfig] = useState<CustomerInfoConfig>(DEFAULT_FORM_CONFIG);
-  const [savingForm, setSavingForm] = useState(false);
-  const [formConfigExpanded, setFormConfigExpanded] = useState(false);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
 
   // Stats
   const [totalCollected, setTotalCollected] = useState(0);
@@ -97,7 +99,11 @@ export default function DonationsContentPage() {
 
   const fetchLogs = async (cid: string) => {
     try {
-      const { data, error } = await supabase.from("donations").select("*").eq("company_id", cid).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("donations")
+        .select("*")
+        .eq("company_id", cid)
+        .order("created_at", { ascending: false });
       if (data && !error) {
         const records = data as DonationRecord[];
         setDonations(records);
@@ -119,20 +125,6 @@ export default function DonationsContentPage() {
         const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single();
         if (profile?.company_id) {
           setCompanyId(profile.company_id);
-          
-          // Load company config
-          const { data: company } = await supabase.from("companies").select("customer_info_config").eq("id", profile.company_id).single();
-          if (company && company.customer_info_config) {
-            try {
-              const parsed = typeof company.customer_info_config === "string" 
-                ? JSON.parse(company.customer_info_config) 
-                : company.customer_info_config;
-              setFormConfig(parsed);
-            } catch (err) {
-              console.warn("Using default form config:", err);
-            }
-          }
-
           await fetchLogs(profile.company_id);
         }
       } catch (err) {
@@ -144,45 +136,37 @@ export default function DonationsContentPage() {
     init();
   }, [user]);
 
-  const handleSaveFormConfig = async () => {
-    if (!companyId) return;
-    setSavingForm(true);
-    try {
-      const { error } = await supabase.from("companies").update({
-        customer_info_config: JSON.stringify(formConfig)
-      } as any).eq("id", companyId);
-
-      if (error) throw error;
-      toast.success("Default devotee form configurations updated!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update devotee form configuration");
-    } finally {
-      setSavingForm(false);
+  // Date Preset Handler
+  const handleDatePreset = (preset: string) => {
+    setDatePreset(preset);
+    setCurrentPage(1);
+    const now = new Date();
+    if (preset === "all") {
+      setFromDate("");
+      setToDate("");
+    } else if (preset === "today") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split("T")[0];
+      setFromDate(start);
+      setToDate(start);
+    } else if (preset === "7days") {
+      const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const end = now.toISOString().split("T")[0];
+      setFromDate(start);
+      setToDate(end);
+    } else if (preset === "30days") {
+      const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const end = now.toISOString().split("T")[0];
+      setFromDate(start);
+      setToDate(end);
+    } else if (preset === "this_month") {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+      const end = now.toISOString().split("T")[0];
+      setFromDate(start);
+      setToDate(end);
     }
   };
 
-  const updateField = (field: keyof CustomerInfoConfig["fields"], key: "enabled" | "required", value: boolean) => {
-    setFormConfig(prev => {
-      const updatedFields = { ...prev.fields };
-      updatedFields[field] = { ...updatedFields[field], [key]: value };
-      
-      // If we disable a field, force it to be not required as well
-      if (key === "enabled" && !value) {
-        updatedFields[field].required = false;
-      }
-      // If we make a field required, force it to be enabled
-      if (key === "required" && value) {
-        updatedFields[field].enabled = true;
-      }
-
-      return {
-        ...prev,
-        fields: updatedFields
-      };
-    });
-  };
-
-  // Filters and searches
+  // Filters and searches (Default latest first)
   const filtered = donations.filter(d => {
     const matchesSearch = 
       (d.donor_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -194,8 +178,24 @@ export default function DonationsContentPage() {
 
     const matchesStatus = statusFilter === "all" || d.payment_status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    let matchesDate = true;
+    if (fromDate) {
+      const donationDate = new Date(d.created_at).toISOString().split("T")[0];
+      if (donationDate < fromDate) matchesDate = false;
+    }
+    if (toDate) {
+      const donationDate = new Date(d.created_at).toISOString().split("T")[0];
+      if (donationDate > toDate) matchesDate = false;
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedDonations = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Export CSV
   const handleExportCSV = () => {
@@ -305,34 +305,122 @@ export default function DonationsContentPage() {
           <div className="space-y-6">
             {/* Donation Logs */}
             <Card className="border border-border/80 shadow-md">
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle className="text-base font-bold">Consolidated Devotee Offerings</CardTitle>
-                  <CardDescription>Consolidated real-time transaction ledger including devotee details and kiosk device origins.</CardDescription>
+              <CardHeader className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-base font-bold flex items-center gap-2">
+                      <HeartHandshake className="size-4 text-primary" /> Consolidated Devotee Offerings
+                    </CardTitle>
+                    <CardDescription>
+                      Consolidated real-time transaction ledger including devotee details and kiosk device origins.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      disabled={filtered.length === 0}
+                      className="border-primary/30 text-primary hover:bg-primary/10 h-8 text-xs font-semibold"
+                    >
+                      <Download className="size-3.5 mr-1.5" /> Export CSV ({filtered.length})
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="relative w-full sm:w-60">
-                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Search name, phone, email, purpose..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-8 h-8 text-xs bg-slate-950/40 border-border/60"
-                    />
+                {/* Filters & Date Range Bar */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-border/50">
+                  <div className="flex flex-wrap items-center gap-2 flex-1">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Search devotee, phone, order ID..."
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                        className="pl-8 h-8 text-xs bg-slate-950/40 border-border/60"
+                      />
+                    </div>
+
+                    <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}>
+                      <SelectTrigger className="h-8 w-32 bg-slate-950/40 border-border/60 text-xs">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="success">Success</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Date Presets */}
+                    <div className="flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/40 text-xs">
+                      {[
+                        { id: "all", label: "All Time" },
+                        { id: "today", label: "Today" },
+                        { id: "7days", label: "7 Days" },
+                        { id: "30days", label: "30 Days" },
+                      ].map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleDatePreset(p.id)}
+                          className={cn(
+                            "px-2.5 py-1 rounded text-[11px] font-medium transition-colors",
+                            datePreset === p.id
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-8 w-full sm:w-32 bg-slate-950/40 border-border/60 text-xs">
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* From & To Custom Date Inputs */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground font-medium">From:</span>
+                      <Input
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => {
+                          setFromDate(e.target.value);
+                          setDatePreset("custom");
+                          setCurrentPage(1);
+                        }}
+                        className="h-8 text-xs w-32 bg-slate-950/40 border-border/60"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground font-medium">To:</span>
+                      <Input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => {
+                          setToDate(e.target.value);
+                          setDatePreset("custom");
+                          setCurrentPage(1);
+                        }}
+                        className="h-8 text-xs w-32 bg-slate-950/40 border-border/60"
+                      />
+                    </div>
+                    {(fromDate || toDate || statusFilter !== "all" || search) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearch("");
+                          setStatusFilter("all");
+                          handleDatePreset("all");
+                        }}
+                        className="h-8 text-[11px] text-muted-foreground hover:text-foreground px-2"
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -353,7 +441,7 @@ export default function DonationsContentPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filtered.map((d) => (
+                      {paginatedDonations.map((d) => (
                         <TableRow key={d.id} className="hover:bg-muted/10">
                           <TableCell className="text-[11px] font-mono whitespace-nowrap">
                             {new Date(d.created_at).toLocaleString("en-IN")}
@@ -429,6 +517,66 @@ export default function DonationsContentPage() {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Numbered Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-border/50 mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} transactions
+                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="h-8 px-2.5 text-xs"
+                      >
+                        Previous
+                      </Button>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                        // Display sliding window of page numbers
+                        if (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+                        ) {
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={cn(
+                                "h-8 w-8 p-0 text-xs font-mono",
+                                currentPage === pageNum ? "bg-primary text-primary-foreground font-bold" : ""
+                              )}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        } else if (
+                          pageNum === currentPage - 3 ||
+                          pageNum === currentPage + 3
+                        ) {
+                          return <span key={pageNum} className="text-xs text-muted-foreground px-1">...</span>;
+                        }
+                        return null;
+                      })}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="h-8 px-2.5 text-xs"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
