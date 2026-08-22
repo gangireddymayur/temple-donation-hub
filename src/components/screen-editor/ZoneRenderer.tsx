@@ -1185,7 +1185,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
 
         {/* Scrollable Content Container */}
         <div 
-          className="relative z-10 w-full h-full overflow-y-auto flex flex-col justify-between items-center p-4 sm:p-6"
+          className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden flex flex-col justify-start items-center p-4 sm:p-6"
           style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
         >
           <div className="flex flex-col items-center gap-1.5 sm:gap-2 mb-2 sm:mb-4 text-center max-w-xl shrink-0">
