@@ -520,7 +520,7 @@ export function SquareOfferingCard({
       <button
         onClick={handleCardClick}
         className={cn(
-          "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-lg select-none group overflow-hidden border transition-all duration-300",
+          "relative w-full h-full min-h-[105px] sm:min-h-[120px] flex flex-col items-center justify-between p-3.5 sm:p-4 text-center shadow-lg select-none group overflow-hidden border transition-all duration-300",
           !config.backgroundColor && !config.backgroundUrl ? "bg-slate-950/80 backdrop-blur-md border-white/15 hover:border-amber-400/50 hover:bg-slate-950/90" : "",
           config.shadow || "shadow-lg shadow-black/20",
           hoverClass,
@@ -545,42 +545,42 @@ export function SquareOfferingCard({
 
         {/* Badge */}
         {config.badge && (
-          <div className="absolute top-2.5 right-2.5 z-20 bg-amber-500 text-slate-950 font-bold uppercase text-[9px] tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+          <div className="absolute top-2 right-2 z-20 bg-amber-500 text-slate-950 font-bold uppercase text-[8px] sm:text-[9px] tracking-wider px-1.5 py-0.5 rounded-full shadow-sm">
             {config.badge}
           </div>
         )}
 
-        <div className="relative z-10 w-full h-full flex flex-col justify-between items-center space-y-2">
+        <div className="relative z-10 w-full h-full flex flex-col justify-between items-center space-y-1.5">
           {/* Photo / Icon */}
           {themeStyle === 'minimal' ? (
             config.photoUrl ? (
-              <img src={config.photoUrl} alt="" className="h-16 w-16 object-contain rounded-full border-2 border-orange-500 p-1 bg-stone-900/60 shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-105" />
+              <img src={config.photoUrl} alt="" className="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-full border-2 border-orange-500 p-0.5 bg-stone-900/60 shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-105" />
             ) : (
-              <div className="h-12 w-12 rounded-full border-2 border-orange-500/80 flex items-center justify-center bg-orange-500/10 shrink-0 transition-transform duration-300 group-hover:scale-105">
-                <Coins className="h-5 w-5 text-orange-400" />
+              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full border-2 border-orange-500/80 flex items-center justify-center bg-orange-500/10 shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <Coins className="h-4 w-4 text-orange-400" />
               </div>
             )
           ) : (
             config.photoUrl ? (
-              <img src={config.photoUrl} alt="" className="h-11 w-11 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
+              <img src={config.photoUrl} alt="" className="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
             ) : (
-              <Coins className="h-6 w-6 text-amber-400 shrink-0" />
+              <Coins className="h-5 w-5 text-amber-400 shrink-0" />
             )
           )}
 
           {/* Label / Description */}
           <div className="flex-1 flex flex-col justify-center">
-            <h4 className={cn("font-bold text-sm tracking-wide line-clamp-1", themeStyle === 'minimal' ? "text-white uppercase tracking-wider text-base" : "")}>{label}</h4>
-            {description && <p className={cn("text-[10px] line-clamp-2 mt-1", themeStyle === 'minimal' ? "text-stone-300 max-w-[200px]" : "text-white/50")}>{description}</p>}
+            <h4 className={cn("font-bold text-xs sm:text-sm tracking-wide line-clamp-1", themeStyle === 'minimal' ? "text-white uppercase tracking-wider text-sm" : "")}>{label}</h4>
+            {description && <p className={cn("text-[9px] sm:text-[10px] line-clamp-1 mt-0.5", themeStyle === 'minimal' ? "text-stone-300 max-w-[200px]" : "text-white/50")}>{description}</p>}
           </div>
 
           {/* Amount Badge */}
           {themeStyle === 'minimal' ? (
-            <span className="mt-4 px-6 py-2.5 bg-orange-500 text-stone-950 font-bold text-xs uppercase rounded-full tracking-widest flex items-center gap-1.5 transition-all duration-300 active:scale-95 group-hover:bg-orange-600 shadow-md shadow-orange-500/15">
+            <span className="mt-2 px-4 py-1.5 bg-orange-500 text-stone-950 font-bold text-[10px] uppercase rounded-full tracking-widest flex items-center gap-1 transition-all duration-300 active:scale-95 group-hover:bg-orange-600 shadow-sm">
               Explore ₹{amount} →
             </span>
           ) : (
-            <span className="text-xl font-black text-amber-300 mt-2">₹{amount}</span>
+            <span className="text-base sm:text-lg font-black text-amber-300 mt-1">₹{amount}</span>
           )}
         </div>
       </button>
@@ -1097,12 +1097,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   const visibleButtons = buttons.filter(b => b.visible !== false);
   const N = visibleButtons.length;
 
-  // Dynamic columns arrangement
-  let gridClass = "grid gap-3.5 sm:gap-4 w-full justify-center justify-items-center mt-2 sm:mt-3 transition-all duration-300";
+  // Dynamic columns arrangement - Auto-adapts to 16:9 screens so all cards fit without scrolling
+  let gridClass = "grid gap-3 sm:gap-4 w-full justify-center justify-items-center mt-1 sm:mt-2 transition-all duration-300";
   if (N === 1) gridClass += " grid-cols-1 max-w-sm";
   else if (N === 2) gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
   else if (N === 3) gridClass += " grid-cols-1 sm:grid-cols-3 max-w-4xl";
-  else if (N === 4) gridClass += " grid-cols-2 max-w-4xl";
+  else if (N === 4) gridClass += " grid-cols-2 lg:grid-cols-4 max-w-5xl";
   else if (N === 5 || N === 6) gridClass += " grid-cols-2 md:grid-cols-3 max-w-5xl";
   else if (N === 7 || N === 8) gridClass += " grid-cols-3 lg:grid-cols-4 max-w-6xl";
   else gridClass += " grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-w-7xl";
