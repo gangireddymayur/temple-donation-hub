@@ -638,7 +638,122 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                     min={0}
                     max={40}
                     step={1}
+                    className="py-1"
                   />
+                </div>
+
+                <Separator className="my-2 opacity-50" />
+
+                {/* Canvas Background Media (Image or Video) */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-foreground">Canvas Background Media</Label>
+                    {widget.backgroundImageUrl || widget.backgroundVideoUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => update({ backgroundType: 'none', backgroundImageUrl: undefined, backgroundVideoUrl: undefined, backgroundMediaName: undefined })}
+                        className="text-[10px] text-destructive hover:underline"
+                      >
+                        Remove Media
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 bg-slate-950/40 p-1 rounded-lg border border-border/40 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => update({ backgroundType: 'image' })}
+                      className={cn(
+                        "py-1.5 rounded text-[11px] font-semibold transition-all text-center",
+                        widget.backgroundType === 'image' || widget.backgroundImageUrl
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      🖼️ Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => update({ backgroundType: 'video' })}
+                      className={cn(
+                        "py-1.5 rounded text-[11px] font-semibold transition-all text-center",
+                        widget.backgroundType === 'video' || widget.backgroundVideoUrl
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      🎬 Video
+                    </button>
+                  </div>
+
+                  {/* Image library selector */}
+                  {(widget.backgroundType === 'image' || widget.backgroundImageUrl || !widget.backgroundType) && images.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Select Background Image</Label>
+                      <div className="grid grid-cols-4 gap-1.5 max-h-[100px] overflow-y-auto border border-border/30 p-1 rounded bg-slate-950/20">
+                        {images.map((img) => (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => update({ backgroundType: 'image', backgroundImageUrl: img.file_url!, backgroundVideoUrl: undefined, backgroundMediaName: img.name })}
+                            className={cn(
+                              "relative rounded overflow-hidden border transition-all aspect-video",
+                              widget.backgroundImageUrl === img.file_url
+                                ? "border-primary ring-1 ring-primary"
+                                : "border-border/30 hover:border-primary/40"
+                            )}
+                          >
+                            <img src={img.file_url!} alt={img.name} className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Video library selector */}
+                  {(widget.backgroundType === 'video' || widget.backgroundVideoUrl) && videos.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Select Background Video</Label>
+                      <div className="grid grid-cols-3 gap-1.5 max-h-[100px] overflow-y-auto border border-border/30 p-1 rounded bg-slate-950/20">
+                        {videos.map((vid) => (
+                          <button
+                            key={vid.id}
+                            type="button"
+                            onClick={() => update({ backgroundType: 'video', backgroundVideoUrl: vid.file_url!, backgroundImageUrl: undefined, backgroundMediaName: vid.name })}
+                            className={cn(
+                              "relative rounded overflow-hidden border transition-all aspect-video",
+                              widget.backgroundVideoUrl === vid.file_url
+                                ? "border-primary ring-1 ring-primary"
+                                : "border-border/30 hover:border-primary/40"
+                            )}
+                          >
+                            <video src={vid.file_url!} className="w-full h-full object-cover" muted />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Background Dim / Overlay Slider */}
+                  {(widget.backgroundImageUrl || widget.backgroundVideoUrl) && (
+                    <div className="space-y-1.5 pt-1 bg-slate-950/40 p-2.5 rounded-lg border border-border/30">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[11px] font-bold">Background Dim Overlay</Label>
+                        <span className="text-[11px] font-mono font-bold text-amber-400">{widget.backgroundDim ?? 50}%</span>
+                      </div>
+                      <Slider
+                        value={[widget.backgroundDim ?? 50]}
+                        onValueChange={([v]) => update({ backgroundDim: v })}
+                        min={0}
+                        max={90}
+                        step={5}
+                        className="py-1"
+                      />
+                      <p className="text-[9px] text-muted-foreground">
+                        Dims the background media so text and donation cards remain easy to read.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -805,13 +920,27 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                                   ))}
                                 </div>
                                 {btn.backgroundUrl && (
-                                  <button
-                                    type="button"
-                                    onClick={() => updateButton(i, { backgroundUrl: undefined, backgroundName: undefined })}
-                                    className="text-[9px] text-amber-500 hover:underline block text-right mt-0.5"
-                                  >
-                                    Remove Background Image
-                                  </button>
+                                  <div className="space-y-1 pt-1 bg-slate-950/40 p-2 rounded border border-border/30">
+                                    <div className="flex items-center justify-between">
+                                      <Label className="text-[9px] font-bold">Card Dim Overlay</Label>
+                                      <span className="text-[9px] font-mono font-bold text-amber-400">{btn.backgroundDim ?? 55}%</span>
+                                    </div>
+                                    <Slider
+                                      value={[btn.backgroundDim ?? 55]}
+                                      onValueChange={([v]) => updateButton(i, { backgroundDim: v })}
+                                      min={0}
+                                      max={90}
+                                      step={5}
+                                      className="py-1"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => updateButton(i, { backgroundUrl: undefined, backgroundName: undefined })}
+                                      className="text-[9px] text-destructive hover:underline block text-right mt-0.5"
+                                    >
+                                      Remove Background Image
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             )}

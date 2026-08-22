@@ -84,6 +84,7 @@ export interface DonationButtonConfig {
   photoName?: string;
   backgroundUrl?: string;
   backgroundName?: string;
+  backgroundDim?: number; // 0 - 100%
   backgroundColor?: string;
   borderColor?: string;
   textColor?: string;
@@ -139,6 +140,13 @@ export interface ContentWidget {
   donationContainerGradient?: string;
   donationContainerRadius?: number;
   donationButtons?: DonationButtonConfig[];
+
+  // Background Media & Dim for Template/Screen
+  backgroundType?: 'none' | 'image' | 'video';
+  backgroundImageUrl?: string;
+  backgroundVideoUrl?: string;
+  backgroundMediaName?: string;
+  backgroundDim?: number; // 0 - 100% (dim overlay)
   
   // single button widget properties mapping
   buttonDescription?: string;

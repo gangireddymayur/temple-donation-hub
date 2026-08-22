@@ -522,7 +522,6 @@ export function SquareOfferingCard({
         className={cn(
           "relative w-full h-full min-h-[140px] flex flex-col items-center justify-between p-5 text-center shadow-md select-none group overflow-hidden border",
           !config.backgroundColor && !config.backgroundUrl ? "bg-gradient-to-br from-slate-900 to-slate-900 border-white/5" : "",
-          config.backgroundUrl ? "after:absolute after:inset-0 after:bg-black/55 group-hover:after:bg-black/40 after:transition-all after:z-0" : "",
           config.shadow || "shadow-md shadow-black/10",
           hoverClass,
           clickClass,
@@ -531,6 +530,14 @@ export function SquareOfferingCard({
         )}
         style={cardStyle}
       >
+        {/* Dynamic Card Background Dim Overlay */}
+        {config.backgroundUrl && (
+          <div
+            className="absolute inset-0 bg-black z-0 pointer-events-none transition-opacity duration-300 group-hover:opacity-40"
+            style={{ opacity: (config.backgroundDim ?? 55) / 100 }}
+          />
+        )}
+
         {/* Glow/Gradient overlay */}
         {config.gradient && !config.backgroundUrl && (
           <div className={cn("absolute inset-0 z-0 opacity-80 group-hover:opacity-95 transition-opacity", config.gradient)} />
@@ -1113,18 +1120,57 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     overflowY: 'auto',
   };
 
+  // Dynamic Background Video or Image for Template Canvas
+  const renderBackgroundMedia = () => {
+    if (widget.backgroundVideoUrl) {
+      return (
+        <>
+          <video
+            src={widget.backgroundVideoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          />
+          <div
+            className="absolute inset-0 bg-black z-0 pointer-events-none transition-opacity duration-300"
+            style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
+          />
+        </>
+      );
+    }
+    if (widget.backgroundImageUrl) {
+      return (
+        <>
+          <img
+            src={widget.backgroundImageUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          />
+          <div
+            className="absolute inset-0 bg-black z-0 pointer-events-none transition-opacity duration-300"
+            style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
+          />
+        </>
+      );
+    }
+    return null;
+  };
+
   // Modern Template Rendering
   if (styleType === 'modern') {
     return (
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8",
-          !widget.backgroundColor ? "bg-[#111029]" : "",
+          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 overflow-hidden",
+          !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#111029]" : "",
           widget.donationContainerShadow || "shadow-xl border border-white/5"
         )}
       >
-        <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+        {renderBackgroundMedia()}
+        <div className="relative z-10 flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
           {widget.templeLogoUrl ? (
             <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
           ) : (
@@ -1151,7 +1197,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center">
+        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
           <div className={gridClass}>
             {visibleButtons.map((btn) => (
               <SquareOfferingCard 
@@ -1178,20 +1224,21 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-amber-950 font-serif flex flex-col justify-start items-center p-8 border-4 border-double border-amber-600/75",
-          !widget.backgroundColor ? "bg-[#fffdf6]" : "",
+          "relative select-none text-amber-950 font-serif flex flex-col justify-start items-center p-8 border-4 border-double border-amber-600/75 overflow-hidden",
+          !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#fffdf6]" : "",
           widget.donationContainerShadow || "shadow-md"
         )}
       >
+        {renderBackgroundMedia()}
         {/* Traditional hanging bell symbols */}
-        <div className="absolute top-2 left-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end">
+        <div className="absolute top-2 left-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10">
           <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
         </div>
-        <div className="absolute top-2 right-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end">
+        <div className="absolute top-2 right-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10">
           <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
         </div>
 
-        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
+        <div className="relative z-10 flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
           {widget.templeLogoUrl ? (
             <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
           ) : (
@@ -1220,10 +1267,9 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           <div className="w-16 h-0.5 bg-amber-600/40 mt-1" />
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center">
+        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
           <div className={gridClass}>
             {visibleButtons.map((btn) => {
-              // Enhance configuration with default traditional themes if overrides not present
               const tradConfig: DonationButtonConfig = {
                 ...btn,
                 backgroundColor: btn.backgroundColor || '#fffdf6',
@@ -1259,11 +1305,13 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-slate-100 flex flex-col justify-start items-center p-8 backdrop-blur-xl border border-white/10 bg-slate-950/40",
+          "relative select-none text-slate-100 flex flex-col justify-start items-center p-8 backdrop-blur-xl border border-white/10 overflow-hidden",
+          !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-slate-950/40" : "",
           widget.donationContainerShadow || "shadow-2xl"
         )}
       >
-        <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
+        {renderBackgroundMedia()}
+        <div className="relative z-10 flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
           {widget.templeLogoUrl ? (
             <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
           ) : (
@@ -1291,7 +1339,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center">
+        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
           <div className={gridClass}>
             {visibleButtons.map((btn) => {
               const glassConfig: DonationButtonConfig = {
@@ -1329,12 +1377,14 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-amber-100 font-serif flex flex-col justify-start items-center p-8 border-4 border-amber-500 bg-[#2e0207] shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]",
+          "relative select-none text-amber-100 font-serif flex flex-col justify-start items-center p-8 border-4 border-amber-500 overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]",
+          !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#2e0207]" : "",
           widget.donationContainerShadow || "shadow-2xl"
         )}
       >
-        <div className="absolute inset-2 border border-amber-500/30 pointer-events-none rounded" />
-        <div className="flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0 z-10">
+        {renderBackgroundMedia()}
+        <div className="absolute inset-2 border border-amber-500/30 pointer-events-none rounded z-10" />
+        <div className="relative z-10 flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
           {widget.templeLogoUrl ? (
             <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
           ) : (
@@ -1362,7 +1412,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent mt-1" />
         </div>
 
-        <div className="flex-1 w-full flex items-center justify-center z-10">
+        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
           <div className={gridClass}>
             {visibleButtons.map((btn) => {
               const divConfig: DonationButtonConfig = {
@@ -1406,10 +1456,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={minimalContainerStyle} 
         className={cn(
-          "relative select-none text-stone-100 font-sans flex flex-col justify-start bg-[#050505] w-full h-full",
+          "relative select-none text-stone-100 font-sans flex flex-col justify-start w-full h-full overflow-hidden",
+          !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#050505]" : "",
           widget.donationContainerShadow || "shadow-none"
         )}
       >
+        {renderBackgroundMedia()}
         {/* Top Header Bar */}
         <div className={cn("w-full bg-[#0a0a0a]/90 backdrop-blur border-b border-stone-900 py-3.5 px-6 flex items-center justify-between shrink-0 z-10", !interactive ? "pr-28" : "")}>
           <div className="flex items-center gap-2.5">
@@ -1426,7 +1478,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         </div>
 
         {/* Horizontal Columns Container */}
-        <div className="flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900 z-10">
+        <div className="relative z-10 flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900">
           {visibleButtons.map((btn) => {
             const minConfig: DonationButtonConfig = {
               ...btn,
