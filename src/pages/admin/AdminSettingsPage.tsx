@@ -24,7 +24,7 @@ import { ALL_RELIGIONS, getReligionConfig, ReligionType } from "@/lib/religion-c
 import { logAudit } from "@/lib/audit-logger";
 
 export default function AdminSettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user, religion: authReligion, updateReligion, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<"general" | "developer">("general");
   const [loading, setLoading] = useState(true);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -116,23 +116,23 @@ export default function AdminSettingsPage() {
   }, [fullName, companyName, logoUrl, showBrandHeader, brandHeaderPlacement, originalData]);
 
   const handleUpdateReligion = async (newRel: string) => {
-    if (!companyId) return;
     setSavingReligion(true);
     try {
-      const { error } = await supabase.from("companies").update({ religion: newRel }).eq("id", companyId);
-      if (error) throw error;
+      await updateReligion(newRel);
       setReligion(newRel);
       if (originalData) {
         setOriginalData({ ...originalData, religion: newRel });
       }
       const relMeta = getReligionConfig(newRel);
       toast.success(`Active faith updated to ${relMeta.name}! Templates and terminology adapted.`);
-      await logAudit(
-        "RELIGION_UPDATE",
-        "religion",
-        `Changed active faith system to ${relMeta.name}`,
-        { companyId }
-      );
+      if (companyId) {
+        await logAudit(
+          "RELIGION_UPDATE",
+          "religion",
+          `Changed active faith system to ${relMeta.name}`,
+          { companyId }
+        );
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to update religion");
     } finally {

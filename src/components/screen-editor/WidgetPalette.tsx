@@ -17,20 +17,26 @@ interface WidgetPaletteItem {
   color: string;
 }
 
-const widgets: WidgetPaletteItem[] = [
-  { type: 'text', label: 'Text Info', icon: Type, color: 'bg-warning/15 text-warning' },
-  { type: 'clock', label: 'Clock Display', icon: Clock, color: 'bg-success/15 text-success' },
-  { type: 'weather', label: 'Weather Info', icon: CloudSun, color: 'bg-warning/15 text-warning' },
-  { type: 'rss', label: 'RSS Ticker', icon: Rss, color: 'bg-destructive/15 text-destructive' },
-  { type: 'donation_button', label: 'Square Offering', icon: Square, color: 'bg-emerald-500/15 text-emerald-500' },
-  { type: 'donation', style: 'modern', label: 'Temple Modern', icon: LayoutGrid, color: 'bg-indigo-500/15 text-indigo-500' },
-  { type: 'donation', style: 'traditional', label: 'Temple Traditional', icon: LayoutGrid, color: 'bg-amber-500/15 text-amber-500' },
-  { type: 'donation', style: 'glass', label: 'Temple Glass', icon: LayoutGrid, color: 'bg-sky-500/15 text-sky-500' },
-  { type: 'donation', style: 'divine', label: 'Temple Divine', icon: LayoutGrid, color: 'bg-rose-500/15 text-rose-500' },
-  { type: 'donation', style: 'minimal', label: 'Temple Minimal', icon: LayoutGrid, color: 'bg-orange-500/15 text-orange-500' },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { getReligionConfig } from "@/lib/religion-config";
 
 export function WidgetPalette({ onSelectWidget }: { onSelectWidget?: (type: ContentWidgetType, style?: string) => void }) {
+  const { religion } = useAuth();
+  const relConfig = getReligionConfig(religion);
+
+  const widgets: WidgetPaletteItem[] = [
+    { type: 'text', label: 'Text Info', icon: Type, color: 'bg-warning/15 text-warning' },
+    { type: 'clock', label: 'Clock Display', icon: Clock, color: 'bg-success/15 text-success' },
+    { type: 'weather', label: 'Weather Info', icon: CloudSun, color: 'bg-warning/15 text-warning' },
+    { type: 'rss', label: 'RSS Ticker', icon: Rss, color: 'bg-destructive/15 text-destructive' },
+    { type: 'donation_button', label: 'Offering Card', icon: Square, color: 'bg-emerald-500/15 text-emerald-500' },
+    { type: 'donation', style: 'modern', label: `${relConfig.shortName} Modern`, icon: LayoutGrid, color: 'bg-indigo-500/15 text-indigo-500' },
+    { type: 'donation', style: 'traditional', label: `${relConfig.shortName} Traditional`, icon: LayoutGrid, color: 'bg-amber-500/15 text-amber-500' },
+    { type: 'donation', style: 'glass', label: `${relConfig.shortName} Glass`, icon: LayoutGrid, color: 'bg-sky-500/15 text-sky-500' },
+    { type: 'donation', style: 'divine', label: `${relConfig.shortName} Divine`, icon: LayoutGrid, color: 'bg-rose-500/15 text-rose-500' },
+    { type: 'donation', style: 'minimal', label: `${relConfig.shortName} Minimal`, icon: LayoutGrid, color: 'bg-orange-500/15 text-orange-500' },
+  ];
+
   const handleDragStart = (e: DragEvent, type: ContentWidgetType, style?: string) => {
     e.dataTransfer.setData('widget-type', type);
     if (style) {

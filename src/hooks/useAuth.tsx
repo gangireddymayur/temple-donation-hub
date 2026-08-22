@@ -139,10 +139,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (companyId) {
         await supabase.from("companies").update({ religion: newReligion }).eq("id", companyId);
       }
+      if (user?.id) {
+        await supabase.from("profiles").update({ religion: newReligion }).eq("id", user.id);
+      }
       setReligion(newReligion);
       if (company) {
         setCompany({ ...company, religion: newReligion });
       }
+      try {
+        const cached = localStorage.getItem("sh_session");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.user?.user_metadata) {
+            parsed.user.user_metadata.religion = newReligion;
+            localStorage.setItem("sh_session", JSON.stringify(parsed));
+          }
+        }
+      } catch (e) {}
       return true;
     } catch (e) {
       console.warn("Failed to update religion:", e);

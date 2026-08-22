@@ -44,6 +44,7 @@ function getUniqueLayoutName(baseName: string, existingLayouts: any[]): string {
 
 export default function AdminLayoutsPage() {
   const { user, religion } = useAuth();
+  const relMeta = getReligionConfig(religion);
   const navigate = useNavigate();
   const [layouts, setLayouts] = useState<Layout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,8 +71,6 @@ export default function AdminLayoutsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const relMeta = getReligionConfig(religion);
 
   useEffect(() => {
     if (!user) return;
