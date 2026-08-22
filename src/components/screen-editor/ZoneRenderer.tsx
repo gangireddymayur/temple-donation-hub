@@ -1109,6 +1109,20 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
 
   const fitMode = widget.backgroundFit || 'cover';
 
+  // Base container styles for donation templates
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: widget.backgroundColor || undefined,
+    borderRadius: widget.donationContainerRadius !== undefined ? widget.donationContainerRadius : undefined,
+    opacity: (widget.opacity ?? 100) / 100,
+    width: '100%',
+    height: '100%',
+    minHeight: '100%',
+    backgroundImage: widget.backgroundImageUrl ? `url("${widget.backgroundImageUrl}")` : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'local',
+  };
+
   // Dynamic Background Video or Image for Template Canvas
   const renderBackgroundMedia = () => {
     if (widget.backgroundVideoUrl) {
