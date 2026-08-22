@@ -348,8 +348,31 @@ const authApi = {
       return { data: { session: null, user: null }, error: { message: e?.message || "login failed" } };
     }
   },
-  async signUp(_: { email: string; password: string }) {
-    return { data: { session: null, user: null }, error: { message: "Self sign-up disabled. Ask an admin to create your account." } };
+  async signUp({ email, password, options }: { email: string; password: string; options?: any }) {
+    try {
+      const full_name = options?.data?.full_name || options?.data?.name || "";
+      const company_name = options?.data?.company_name || "";
+      const religion = options?.data?.religion || "hinduism";
+      const r = await api("POST", "/auth/register", {
+        email,
+        password,
+        full_name,
+        company_name,
+        religion,
+      });
+      if (!r || !r.token || !r.user) {
+        throw new Error(r?.error || "Registration failed");
+      }
+      setToken(r.token);
+      currentSession = makeSession(r.token, r.user);
+      saveSession(currentSession);
+      cache.user_roles = [{ id: uid(), user_id: r.user.id, role: r.user.role || "admin" }];
+      loaded.user_roles = true;
+      listeners.forEach((l) => l("SIGNED_IN", currentSession));
+      return { data: { session: currentSession, user: currentSession.user }, error: null };
+    } catch (e: any) {
+      return { data: { session: null, user: null }, error: { message: e?.message || "Registration failed" } };
+    }
   },
   async signOut() {
     setToken(null);

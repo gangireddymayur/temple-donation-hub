@@ -305,59 +305,40 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
     case 'donation': {
       const selectedStyle = (style || 'modern') as 'modern' | 'traditional' | 'glass' | 'divine' | 'minimal';
       
-      const defaultButtons: DonationButtonConfig[] = [
-        {
-          id: `btn-${Date.now()}-1`,
-          amount: 101,
-          label: selectedStyle === 'traditional' ? 'अर्चना पूजा (Archana)' : selectedStyle === 'divine' ? 'श्री महाप्रसाद (Mahaprasad)' : 'Archana Puja',
-          description: selectedStyle === 'divine' ? 'Offering of sacred food prasadam to deity' : 'Personal puja offering to deity',
-          badge: selectedStyle === 'traditional' ? 'शुभ' : selectedStyle === 'divine' ? 'दिव्य' : 'Popular',
-          hoverEffect: 'scale',
-          clickAnimation: 'pop',
-          visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1543157145-f78c636d023d?auto=format&fit=crop&w=600&q=80' : undefined
-        },
-        {
-          id: `btn-${Date.now()}-2`,
-          amount: 501,
-          label: selectedStyle === 'traditional' ? 'अन्नदानम् (Annadanam)' : selectedStyle === 'divine' ? 'नित्य अन्नदान (Annadanam)' : 'Anna Prasadam',
-          description: 'Free sacred food for pilgrims',
-          badge: selectedStyle === 'traditional' ? 'नित्य' : selectedStyle === 'divine' ? 'पवित्र' : 'Daily',
-          hoverEffect: 'scale',
-          clickAnimation: 'pop',
-          visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=80' : undefined
-        },
-        {
-          id: `btn-${Date.now()}-3`,
-          amount: 1001,
-          label: selectedStyle === 'traditional' ? 'अभिषेक सेवा (Abhishekam)' : selectedStyle === 'divine' ? 'मंगला अभिषेक सेवा (Abhishekam)' : 'Abhishekam',
-          description: 'Sacred deity bath offering',
-          hoverEffect: 'scale',
-          clickAnimation: 'pop',
-          visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1560184897-ae75f418493e?auto=format&fit=crop&w=600&q=80' : undefined
-        },
-        {
-          id: `btn-${Date.now()}-4`,
-          amount: 2501,
-          label: selectedStyle === 'traditional' ? 'मंदिर विकास (Temple Fund)' : selectedStyle === 'divine' ? 'गर्भ गृह स्वर्ण सेवा (Golden Seva)' : 'Temple Development',
-          description: selectedStyle === 'divine' ? 'Golden decoration support for garbhagriha' : 'General support for mandir building',
-          badge: selectedStyle === 'divine' ? 'महासेवा' : 'Noble',
-          hoverEffect: 'scale',
-          clickAnimation: 'pop',
-          visible: true,
-          backgroundUrl: selectedStyle === 'minimal' ? 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?auto=format&fit=crop&w=600&q=80' : undefined
+      // Determine active religion (from localStorage or default)
+      let activeReligion = 'hinduism';
+      try {
+        const cached = localStorage.getItem('sh_session');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.user?.user_metadata?.religion) activeReligion = parsed.user.user_metadata.religion;
         }
-      ];
+      } catch (e) {}
+
+      // Get religion config from lib
+      const { getReligionConfig } = require('./religion-config');
+      const relConfig = getReligionConfig(activeReligion);
+      const causes = relConfig.presetCauses;
+      const theme = relConfig.templateThemes[selectedStyle] || relConfig.templateThemes.modern;
+
+      const defaultButtons: DonationButtonConfig[] = causes.slice(0, 4).map((c: any, idx: number) => ({
+        id: `btn-${Date.now()}-${idx + 1}`,
+        amount: c.amount,
+        label: c.name,
+        description: c.description,
+        badge: c.isPopular ? 'Featured' : undefined,
+        hoverEffect: 'scale',
+        clickAnimation: 'pop',
+        visible: true,
+      }));
 
       if (selectedStyle === 'traditional') {
         return {
           ...base,
-          label: 'Temple Traditional',
+          label: `${relConfig.shortName} Traditional`,
           templateStyle: 'traditional',
-          donationTitle: 'श्री देवस्थानम पूजा समर्पण',
-          donationPurpose: 'Shri Devasthanam Spiritual Offerings',
+          donationTitle: theme.header,
+          donationPurpose: theme.subheader,
           backgroundColor: '#fffdf6',
           donationTitleColor: '#b91c1c',
           donationSubtitleColor: '#c2410c',
@@ -371,10 +352,10 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
       if (selectedStyle === 'glass') {
         return {
           ...base,
-          label: 'Temple Glass',
+          label: `${relConfig.shortName} Glass`,
           templateStyle: 'glass',
-          donationTitle: 'Devotee Kiosk Offerings',
-          donationPurpose: 'Select your donation amount',
+          donationTitle: theme.header,
+          donationPurpose: theme.subheader,
           backgroundColor: 'rgba(15, 23, 42, 0.45)',
           donationTitleColor: '#38bdf8',
           donationSubtitleColor: '#94a3b8',
@@ -387,10 +368,10 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
       if (selectedStyle === 'divine') {
         return {
           ...base,
-          label: 'Temple Divine',
+          label: `${relConfig.shortName} Divine`,
           templateStyle: 'divine',
-          donationTitle: 'देवस्थानम महाप्रसाद समर्पण',
-          donationPurpose: 'Shri Mandir Divine Offerings',
+          donationTitle: theme.header,
+          donationPurpose: theme.subheader,
           backgroundColor: '#2e0207',
           donationTitleColor: '#fbbf24',
           donationSubtitleColor: '#fde047',
@@ -404,12 +385,12 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
       if (selectedStyle === 'minimal') {
         return {
           ...base,
-          label: 'Temple Minimal',
+          label: `${relConfig.shortName} Minimal`,
           templateStyle: 'minimal',
-          donationTitle: 'Seva Contribution Portal',
-          donationPurpose: 'Support Our Spiritual Services',
+          donationTitle: theme.header,
+          donationPurpose: theme.subheader,
           backgroundColor: '#0c0a09',
-          donationTitleColor: '#f97316',
+          donationTitleColor: relConfig.accentColor || '#f97316',
           donationSubtitleColor: '#a1a1aa',
           donationSpacing: 4,
           donationContainerRadius: 0,
@@ -420,10 +401,10 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
       // Default: 'modern'
       return {
         ...base,
-        label: 'Temple Modern',
+        label: `${relConfig.shortName} Modern`,
         templateStyle: 'modern',
-        donationTitle: 'Devasthanam Offering Portal',
-        donationPurpose: 'Choose Your Seva Offering',
+        donationTitle: theme.header,
+        donationPurpose: theme.subheader,
         backgroundColor: '#111029',
         donationTitleColor: '#fbbf24',
         donationSubtitleColor: '#e2e8f0',

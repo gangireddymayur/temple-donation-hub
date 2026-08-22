@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Building2, Monitor, Eye, EyeOff, Pencil, Trash2, Mail, Calendar, Shield, KeyRound,
   Search, Download, MoreHorizontal, Copy, ArrowUpDown, ChevronLeft, ChevronRight,
-  Power, PowerOff, CheckCircle2, Circle, FileText, Activity, Server, Image as ImageIcon, Layout, Clock,
+  Power, PowerOff, CheckCircle2, Circle, FileText, Activity, Server, Image as ImageIcon, Layout, Clock, Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -586,6 +586,9 @@ export default function CompaniesPage() {
                       <TableCell className="text-sm text-muted-foreground">{formatDate(company.created_at)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10" title="Manage Access (1 Month, 6 Months, 1 Year)" onClick={(e) => openEdit(company, e)}>
+                            <Zap className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" onClick={(e) => openEdit(company, e)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -599,6 +602,9 @@ export default function CompaniesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => openEdit(company, e as any)}>
+                                <Zap className="h-4 w-4 mr-2 text-amber-500" /> Manage Access & Duration
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={(e) => handleQuickToggle(company, e as any)}>
                                 {company.status === "active" ? <><PowerOff className="h-4 w-4 mr-2" /> Suspend</> : <><Power className="h-4 w-4 mr-2" /> Activate</>}
                               </DropdownMenuItem>
@@ -692,39 +698,136 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Subscription Status</Label>
+              <Label>Subscription Status & Access Period</Label>
               <Select value={editSubscriptionStatus} onValueChange={setEditSubscriptionStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="active">Active (Paid Access)</SelectItem>
                   <SelectItem value="trial">Free Trial</SelectItem>
-                  <SelectItem value="active">Active (Paid)</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="expired">Access Expired / Locked</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {editSubscriptionStatus === "trial" && (
-              <div className="space-y-2">
-                <Label>Trial Expiry Date</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    type="datetime-local" 
-                    value={editTrialEndsAt ? editTrialEndsAt.slice(0, 16) : ""} 
-                    onChange={(e) => setEditTrialEndsAt(e.target.value)} 
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      const future = new Date();
-                      future.setDate(future.getDate() + 7);
-                      setEditTrialEndsAt(future.toISOString());
-                    }}
-                  >
-                    Reset Trial (7 Days)
-                  </Button>
-                </div>
+
+            {/* Quick Access Presets */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-muted/40 border border-border/60">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-amber-500 uppercase tracking-wider">
+                  ⚡ Quick Grant Access Duration
+                </Label>
+                <span className="text-[10px] text-muted-foreground">Sets expiry & activates</span>
               </div>
-            )}
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-medium"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 1);
+                    setEditTrialEndsAt(d.toISOString());
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to 1 Month Access");
+                  }}
+                >
+                  1 Month
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-medium"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 3);
+                    setEditTrialEndsAt(d.toISOString());
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to 3 Months Access");
+                  }}
+                >
+                  3 Months
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-bold text-amber-500"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 6);
+                    setEditTrialEndsAt(d.toISOString());
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to 6 Months Access");
+                  }}
+                >
+                  6 Months
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-bold bg-amber-500/10 border-amber-500/30 text-amber-500"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 1);
+                    setEditTrialEndsAt(d.toISOString());
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to 1 Year Access");
+                  }}
+                >
+                  1 Year
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-medium"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 2);
+                    setEditTrialEndsAt(d.toISOString());
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to 2 Years Access");
+                  }}
+                >
+                  2 Years
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-bold bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                  onClick={() => {
+                    setEditTrialEndsAt(null);
+                    setEditSubscriptionStatus("active");
+                    toast.info("Set to Lifetime Access");
+                  }}
+                >
+                  Lifetime
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Custom Expiry Date & Time</Label>
+              <div className="flex gap-2">
+                <Input 
+                  type="datetime-local" 
+                  value={editTrialEndsAt ? editTrialEndsAt.slice(0, 16) : ""} 
+                  onChange={(e) => setEditTrialEndsAt(e.target.value)} 
+                  placeholder="Leave empty for lifetime"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setEditTrialEndsAt(null)}
+                >
+                  Clear Expiry
+                </Button>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label>Internal Notes <span className="text-xs text-muted-foreground">(super admin only)</span></Label>
               <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="VIP client, billing issue, contract renewal date..." rows={3} maxLength={1000} />

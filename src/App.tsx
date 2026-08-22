@@ -13,6 +13,8 @@ import CompaniesPage from "./pages/CompaniesPage";
 import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
 import DonationsPage from "./pages/DonationsPage";
+import AuditTrailPage from "./pages/AuditTrailPage";
+import ManageAccessSystemPage from "./pages/ManageAccessSystemPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -24,6 +26,8 @@ import AdminLayoutEditorPage from "./pages/admin/AdminLayoutEditorPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminPaymentSettingsPage from "./pages/admin/AdminPaymentSettingsPage";
 import DonationsContentPage from "./pages/admin/DonationsContentPage";
+import AdminAuditTrailPage from "./pages/admin/AuditTrailPage";
+import ManageAccessPage from "./pages/admin/ManageAccessPage";
 import PlayerPage from "./pages/PlayerPage";
 
 const queryClient = new QueryClient();
@@ -45,7 +49,9 @@ const App = () => {
                 {/* Super Admin Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute requiredRole="super_admin"><DashboardPage /></ProtectedRoute>} />
                 <Route path="/companies" element={<ProtectedRoute requiredRole="super_admin"><CompaniesPage /></ProtectedRoute>} />
+                <Route path="/access" element={<ProtectedRoute requiredRole="super_admin"><ManageAccessSystemPage /></ProtectedRoute>} />
                 <Route path="/users" element={<ProtectedRoute requiredRole="super_admin"><UsersPage /></ProtectedRoute>} />
+                <Route path="/audit-trail" element={<ProtectedRoute requiredRole="super_admin"><AuditTrailPage /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute requiredRole="super_admin"><SettingsPage /></ProtectedRoute>} />
                 <Route path="/donations" element={<ProtectedRoute requiredRole="super_admin"><DonationsPage /></ProtectedRoute>} />
                 {/* Company Admin Routes */}
@@ -55,6 +61,8 @@ const App = () => {
                 <Route path="/admin/schedule" element={<ProtectedRoute requiredRole="admin"><AdminSchedulePage /></ProtectedRoute>} />
                 <Route path="/admin/layouts" element={<ProtectedRoute requiredRole="admin"><AdminLayoutsPage /></ProtectedRoute>} />
                 <Route path="/admin/layouts/:layoutId" element={<ProtectedRoute requiredRole="admin"><AdminLayoutEditorPage /></ProtectedRoute>} />
+                <Route path="/admin/access" element={<ProtectedRoute requiredRole="admin"><ManageAccessPage /></ProtectedRoute>} />
+                <Route path="/admin/audit-trail" element={<ProtectedRoute requiredRole="admin"><AdminAuditTrailPage /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettingsPage /></ProtectedRoute>} />
                 <Route path="/admin/settings/payments" element={<ProtectedRoute requiredRole="admin"><AdminPaymentSettingsPage /></ProtectedRoute>} />
                 <Route path="/admin/settings/donations" element={<ProtectedRoute requiredRole="admin"><DonationsContentPage /></ProtectedRoute>} />

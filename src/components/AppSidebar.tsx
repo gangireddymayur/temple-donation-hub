@@ -6,6 +6,8 @@ import {
   Tv,
   LogOut,
   Coins,
+  History,
+  Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -29,7 +31,9 @@ const superAdminNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Donations", url: "/donations", icon: Coins },
   { title: "Companies", url: "/companies", icon: Building2 },
+  { title: "Manage Access", url: "/access", icon: Zap },
   { title: "Users", url: "/users", icon: Users },
+  { title: "Audit Trail", url: "/audit-trail", icon: History },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

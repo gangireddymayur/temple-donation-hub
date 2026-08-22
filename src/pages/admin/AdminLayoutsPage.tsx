@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, LayoutGrid, Trash2, Pencil, Monitor } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Plus, LayoutGrid, Trash2, Pencil, Monitor, Sparkles, Wand2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { getReligionConfig } from "@/lib/religion-config";
+import { logAudit } from "@/lib/audit-logger";
 
 interface Layout {
   id: string;
@@ -26,7 +28,7 @@ interface Layout {
 }
 
 export default function AdminLayoutsPage() {
-  const { user } = useAuth();
+  const { user, religion } = useAuth();
   const navigate = useNavigate();
   const [layouts, setLayouts] = useState<Layout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,8 @@ export default function AdminLayoutsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const relMeta = getReligionConfig(religion);
+
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("company_id").eq("id", user.id).single()
@@ -76,6 +80,94 @@ export default function AdminLayoutsPage() {
     setLoading(false);
   };
 
+  const handleCreateFromReligionTemplate = async (templateStyle: 'modern' | 'traditional' | 'glass' | 'divine' | 'minimal') => {
+    if (!companyId) return;
+    setSubmitting(true);
+
+    const theme = relMeta.templateThemes[templateStyle] || relMeta.templateThemes.modern;
+    const templateName = `${relMeta.shortName} ${templateStyle.charAt(0).toUpperCase() + templateStyle.slice(1)} Screen`;
+
+    const layoutData = {
+      id: "root",
+      split: "horizontal",
+      splitRatio: 50,
+      content: null,
+      children: [
+        {
+          id: `zone-${Date.now()}-left`,
+          split: "none",
+          splitRatio: 50,
+          children: null,
+          content: {
+            id: `widget-${Date.now()}-1`,
+            type: "text",
+            label: `${relMeta.shortName} Welcome Banner`,
+            text: `${relMeta.greeting}\n\n${relMeta.tagline}`,
+            fontFamily: "Inter, sans-serif",
+            fontSize: 32,
+            fontColor: "#ffffff",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            textAlignment: "center",
+          }
+        },
+        {
+          id: `zone-${Date.now()}-right`,
+          split: "none",
+          splitRatio: 50,
+          children: null,
+          content: {
+            id: `widget-${Date.now()}-2`,
+            type: "donation",
+            label: `${relMeta.shortName} ${templateStyle}`,
+            templateStyle: templateStyle,
+            donationTitle: theme.header,
+            donationPurpose: theme.subheader,
+            backgroundColor: "#111029",
+            donationTitleColor: "#fbbf24",
+            donationSubtitleColor: "#e2e8f0",
+            donationSpacing: 4,
+            donationContainerRadius: 16,
+            donationButtons: relMeta.presetCauses.slice(0, 4).map((c, idx) => ({
+              id: `btn-${Date.now()}-${idx + 1}`,
+              amount: c.amount,
+              label: c.name,
+              description: c.description,
+              badge: c.isPopular ? "Featured" : undefined,
+              hoverEffect: "scale",
+              clickAnimation: "pop",
+              visible: true,
+            }))
+          }
+        }
+      ]
+    };
+
+    const { data, error } = await supabase.from("layouts").insert({
+      company_id: companyId,
+      name: templateName,
+      description: `Auto-generated ${templateStyle} layout configured for ${relMeta.name}`,
+      resolution_width: 1920,
+      resolution_height: 1080,
+      background_color: "#0a0a0f",
+      layout_data: JSON.stringify(layoutData),
+    }).select().single();
+
+    setSubmitting(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${templateName} created!`);
+      await logAudit(
+        "LAYOUT_CREATE",
+        "layouts",
+        `Created layout from template "${templateName}" for faith: ${relMeta.name}`,
+        { companyId }
+      );
+      navigate(`/admin/layouts/${data.id}`);
+    }
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyId) return;
@@ -87,13 +179,12 @@ export default function AdminLayoutsPage() {
       resolution_width: resWidth,
       resolution_height: resHeight,
     }).select().single();
-    setSubmitting(true);
+    setSubmitting(false);
     if (error) toast.error(error.message);
     else {
       toast.success("Layout created!");
       setAddOpen(false);
       setName(""); setDescription(""); setResWidth(1920); setResHeight(1080);
-      // Navigate to editor
       navigate(`/admin/layouts/${data.id}`);
     }
   };
@@ -176,6 +267,60 @@ export default function AdminLayoutsPage() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* 1-Click Faith-Specific Screen Layout Templates */}
+        <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/[0.04] via-orange-500/[0.02] to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{relMeta.symbol}</span>
+                <div>
+                  <CardTitle className="text-base font-bold text-foreground">
+                    1-Click {relMeta.shortName} Screen Templates
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Instantly spin up pre-configured donation & signage screens tailored for {relMeta.name}
+                  </CardDescription>
+                </div>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-mono self-start sm:self-auto">
+                Faith: {relMeta.shortName}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[
+                { style: 'modern' as const, label: 'Modern Kiosk', desc: 'Vibrant gradients & clean buttons' },
+                { style: 'traditional' as const, label: 'Traditional Mandir', desc: 'Serene sacred temple theme' },
+                { style: 'glass' as const, label: 'Glassmorphism', desc: 'Sleek frosted glass aesthetic' },
+                { style: 'divine' as const, label: 'Divine Sacred', desc: 'Rich gold & holy sanctuary' },
+                { style: 'minimal' as const, label: 'Minimalist Dark', desc: 'High-contrast focused giving' },
+              ].map((tmpl) => (
+                <button
+                  key={tmpl.style}
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handleCreateFromReligionTemplate(tmpl.style)}
+                  className="flex flex-col text-left p-3 rounded-xl border border-white/10 bg-background/50 hover:bg-white/5 hover:border-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all group shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-foreground group-hover:text-amber-400 transition-colors">
+                      {tmpl.label}
+                    </span>
+                    <Wand2 className="size-3.5 text-muted-foreground group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground line-clamp-2">
+                    {tmpl.desc}
+                  </p>
+                  <span className="text-[9px] text-amber-500 font-semibold mt-2 group-hover:underline">
+                    + Generate Layout
+                  </span>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="p-0">

@@ -176,6 +176,26 @@ router.post('/login', async (req, res) => {
     }
 
     const token = sign({ id: user.id, email: user.email, role: user.role, company_id: user.company_id });
+    
+    // Write login audit log
+    try {
+      const { v4: uuidv4 } = require('uuid');
+      await db.query(
+        'INSERT INTO audit_logs (id, company_id, user_id, user_email, user_name, action, category, details) ' +
+        'VALUES (:id, :company_id, :user_id, :user_email, :user_name, :action, :category, :details)',
+        {
+          id: uuidv4(),
+          company_id: user.company_id || null,
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.full_name || user.email.split('@')[0],
+          action: 'AUTH_LOGIN',
+          category: 'auth',
+          details: `User successfully signed in to ${user.role || 'user'} console`
+        }
+      );
+    } catch (e) {}
+
     res.json({
       token,
       user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role, company_id: user.company_id, local_mode: user.local_mode, max_devices: user.max_devices },
@@ -187,6 +207,104 @@ router.post('/login', async (req, res) => {
       details: err.message,
       stack: err.stack
     });
+  }
+});
+
+// POST /api/auth/register { email, password, full_name, company_name, religion }
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password, full_name, company_name, religion } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (String(password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const [existing] = await db.query('SELECT id FROM users WHERE email = :email LIMIT 1', { email: normalizedEmail });
+    if (existing && existing.length > 0) {
+      return res.status(400).json({ error: 'An account with this email address already exists' });
+    }
+
+    const { v4: uuidv4 } = require('uuid');
+    const companyId = uuidv4();
+    const userId = uuidv4();
+    const passwordHash = await bcrypt.hash(String(password), 10);
+    const selectedReligion = religion || 'hinduism';
+    const compName = (company_name && company_name.trim()) 
+      ? company_name.trim() 
+      : (full_name ? `${full_name.trim()}'s Organization` : 'My Sacred Center');
+
+    // Create default company
+    await db.query(
+      'INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, religion) ' +
+      'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status, :subscription_status, :religion)',
+      {
+        id: companyId,
+        name: compName,
+        contact_email: normalizedEmail,
+        plan: 'pro',
+        max_screens: 10,
+        status: 'active',
+        subscription_status: 'active',
+        religion: selectedReligion
+      }
+    );
+
+    // Create user
+    await db.query(
+      'INSERT INTO users (id, email, password_hash, full_name, company_id, is_active, religion) ' +
+      'VALUES (:id, :email, :password_hash, :full_name, :company_id, 1, :religion)',
+      {
+        id: userId,
+        email: normalizedEmail,
+        password_hash: passwordHash,
+        full_name: full_name || normalizedEmail.split('@')[0],
+        company_id: companyId,
+        religion: selectedReligion
+      }
+    );
+
+    // Assign admin role
+    await db.query(
+      'INSERT INTO user_roles (id, user_id, role) VALUES (:id, :user_id, :role)',
+      {
+        id: uuidv4(),
+        user_id: userId,
+        role: 'admin'
+      }
+    );
+
+    // Create initial audit log
+    try {
+      await db.query(
+        'INSERT INTO audit_logs (id, company_id, user_id, user_email, user_name, action, category, details) ' +
+        'VALUES (:id, :company_id, :user_id, :user_email, :user_name, :action, :category, :details)',
+        {
+          id: uuidv4(),
+          company_id: companyId,
+          user_id: userId,
+          user_email: normalizedEmail,
+          user_name: full_name || normalizedEmail.split('@')[0],
+          action: 'AUTH_REGISTER',
+          category: 'auth',
+          details: `Registered account for "${compName}" under faith: ${selectedReligion}`
+        }
+      );
+    } catch (e) {}
+
+    const token = sign({ id: userId, email: normalizedEmail, role: 'admin', company_id: companyId });
+    res.json({
+      token,
+      user: {
+        id: userId,
+        email: normalizedEmail,
+        full_name: full_name || normalizedEmail.split('@')[0],
+        role: 'admin',
+        company_id: companyId,
+        religion: selectedReligion
+      }
+    });
+  } catch (err) {
+    console.error('REGISTER_ERROR:', err);
+    res.status(500).json({ error: 'Registration failed', details: err.message });
   }
 });
 

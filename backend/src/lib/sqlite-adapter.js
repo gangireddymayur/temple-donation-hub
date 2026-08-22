@@ -134,6 +134,18 @@ const SQLITE_SCHEMA = [
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY(device_id) REFERENCES devices(id) ON DELETE SET NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY,
+    company_id TEXT,
+    user_id TEXT,
+    user_email TEXT,
+    user_name TEXT,
+    action TEXT NOT NULL,
+    category TEXT NOT NULL,
+    details TEXT,
+    ip_address TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`
 ];
 
@@ -281,6 +293,29 @@ class SqlitePool {
 
       try {
         this.db.run("ALTER TABLE companies ADD COLUMN preferred_gateway TEXT DEFAULT 'upi';");
+      } catch (e) {}
+
+      try {
+        this.db.run("ALTER TABLE companies ADD COLUMN religion TEXT DEFAULT 'hinduism';");
+      } catch (e) {}
+
+      try {
+        this.db.run("ALTER TABLE users ADD COLUMN religion TEXT DEFAULT 'hinduism';");
+      } catch (e) {}
+
+      try {
+        this.db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+          id TEXT PRIMARY KEY,
+          company_id TEXT,
+          user_id TEXT,
+          user_email TEXT,
+          user_name TEXT,
+          action TEXT NOT NULL,
+          category TEXT NOT NULL,
+          details TEXT,
+          ip_address TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );`);
       } catch (e) {}
 
       // Donations table dynamic migrations

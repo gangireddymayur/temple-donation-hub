@@ -9,9 +9,12 @@ interface AuthContextType {
   user: User | null;
   role: AppRole | null;
   company: any | null;
+  religion: string;
   isTrialExpired: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshCompany: () => Promise<void>;
+  updateReligion: (newReligion: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,9 +22,12 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   company: null,
+  religion: "hinduism",
   isTrialExpired: false,
   loading: true,
   signOut: async () => {},
+  refreshCompany: async () => {},
+  updateReligion: async () => false,
 });
 
 export function getTrialInfo(company: any) {
@@ -65,8 +71,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [company, setCompany] = useState<any | null>(null);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+  const [religion, setReligion] = useState<string>("hinduism");
+
+  const refreshCompany = async () => {
+    if (!user) return;
+    await fetchRoleAndCompany(user);
+  };
+
+  const updateReligion = async (newReligion: string): Promise<boolean> => {
+    try {
+      const companyId = user?.user_metadata?.company_id || company?.id;
+      if (companyId) {
+        await supabase.from("companies").update({ religion: newReligion }).eq("id", companyId);
+      }
+      setReligion(newReligion);
+      if (company) {
+        setCompany({ ...company, religion: newReligion });
+      }
+      return true;
+    } catch (e) {
+      console.warn("Failed to update religion:", e);
+      return false;
+    }
+  };
 
   const fetchRoleAndCompany = async (userObj: User) => {
     try {
@@ -90,11 +117,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
         console.log("[fetchRoleAndCompany] compData:", JSON.stringify(compData));
         setCompany(compData ?? null);
+        if (compData?.religion) {
+          setReligion(compData.religion);
+        } else if (userObj.user_metadata?.religion) {
+          setReligion(userObj.user_metadata.religion);
+        }
         const trialInfo = getTrialInfo(compData);
         console.log("[fetchRoleAndCompany] trialInfo:", JSON.stringify(trialInfo));
         setIsTrialExpired(trialInfo.isExpired);
       } else {
         setCompany(null);
+        if (userObj.user_metadata?.religion) {
+          setReligion(userObj.user_metadata.religion);
+        }
         setIsTrialExpired(false);
       }
     } catch {
@@ -155,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, company, isTrialExpired, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, company, religion, isTrialExpired, loading, signOut, refreshCompany, updateReligion }}>
       {children}
     </AuthContext.Provider>
   );

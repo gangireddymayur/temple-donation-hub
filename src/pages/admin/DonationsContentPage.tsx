@@ -10,9 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, ClipboardList, Settings, HeartHandshake, IndianRupee, HelpCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Download, ClipboardList, Settings, HeartHandshake, IndianRupee, HelpCircle, Loader2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getReligionConfig } from "@/lib/religion-config";
 
 interface DonationRecord {
   id: string;
@@ -75,7 +76,8 @@ const DEFAULT_FORM_CONFIG: CustomerInfoConfig = {
 };
 
 export default function DonationsContentPage() {
-  const { user } = useAuth();
+  const { user, religion } = useAuth();
+  const relMeta = getReligionConfig(religion);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
 
@@ -245,8 +247,13 @@ export default function DonationsContentPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Donation Content</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage devotee information fields and view consolidated transaction history.</p>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{relMeta.symbol}</span>
+              <h1 className="text-2xl font-bold tracking-tight">{relMeta.shortName} {relMeta.terminology.donationName} Management</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure {relMeta.terminology.devoteeName} details fields and view consolidated transaction history for {relMeta.name}.
+            </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => companyId && fetchLogs(companyId)} className="h-9">
@@ -262,7 +269,7 @@ export default function DonationsContentPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 border-amber-500/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Total Daan Collections</CardTitle>
+              <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Total {relMeta.terminology.donationName}</CardTitle>
               <IndianRupee className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>

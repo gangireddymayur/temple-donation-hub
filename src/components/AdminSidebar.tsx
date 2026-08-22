@@ -9,10 +9,13 @@ import {
   LogOut,
   CreditCard,
   HeartHandshake,
+  Shield,
+  History,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { getReligionConfig } from "@/lib/religion-config";
 import {
   Sidebar,
   SidebarContent,
@@ -34,16 +37,19 @@ const adminNav = [
   { title: "Content", url: "/admin/content", icon: Image },
   { title: "Layouts", url: "/admin/layouts", icon: LayoutGrid },
   { title: "Schedule", url: "/admin/schedule", icon: CalendarClock },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
-  { title: "Payment Settings", url: "/admin/settings/payments", icon: CreditCard },
   { title: "Donation Content", url: "/admin/settings/donations", icon: HeartHandshake },
+  { title: "Payment Settings", url: "/admin/settings/payments", icon: CreditCard },
+  { title: "Manage Access", url: "/admin/access", icon: Shield },
+  { title: "Audit Trail", url: "/admin/audit-trail", icon: History },
+  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { user, role, isTrialExpired, signOut } = useAuth();
+  const { user, role, religion, isTrialExpired, signOut } = useAuth();
+  const relMeta = getReligionConfig(religion);
 
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
@@ -55,17 +61,22 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-            <Tv className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xl">
+            {relMeta.symbol || <Tv className="h-5 w-5 text-primary-foreground" />}
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">
+              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight truncate">
                 Temple Donation Hub
               </span>
-              <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">
-                Admin Panel
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">
+                  Admin Panel
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">
+                  {relMeta.shortName}
+                </span>
+              </div>
             </div>
           )}
         </div>

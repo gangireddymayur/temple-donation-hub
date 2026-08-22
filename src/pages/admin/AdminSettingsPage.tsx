@@ -13,12 +13,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Upload, X, LogOut, Edit2, Save, Loader2, RefreshCw, SlidersHorizontal } from "lucide-react";
+import {
+  Building2, Upload, X, LogOut, Edit2, Save, Loader2, RefreshCw, SlidersHorizontal,
+  CheckCircle2, Sparkles, HeartHandshake, Mail, Phone, MapPin, MessageSquare, ExternalLink,
+  Code2, Sliders
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ALL_RELIGIONS, getReligionConfig, ReligionType } from "@/lib/religion-config";
+import { logAudit } from "@/lib/audit-logger";
 
 export default function AdminSettingsPage() {
   const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState<"general" | "developer">("general");
   const [loading, setLoading] = useState(true);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -44,6 +51,10 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // Faith / Religion selection
+  const [religion, setReligion] = useState<string>("hinduism");
+  const [savingReligion, setSavingReligion] = useState(false);
+
   // Original load state to track modifications
   const [originalData, setOriginalData] = useState<{
     fullName: string;
@@ -51,6 +62,7 @@ export default function AdminSettingsPage() {
     logoUrl: string | null;
     showBrandHeader: number;
     brandHeaderPlacement: string;
+    religion: string;
   } | null>(null);
 
   useEffect(() => {
@@ -63,12 +75,14 @@ export default function AdminSettingsPage() {
           setEmail(profile.email ?? "");
           if (profile.company_id) {
             setCompanyId(profile.company_id);
-            const { data: company } = await supabase.from("companies").select("name, logo_url, show_brand_header, brand_header_placement").eq("id", profile.company_id).single();
+            const { data: company } = await supabase.from("companies").select("name, logo_url, show_brand_header, brand_header_placement, religion").eq("id", profile.company_id).single();
             if (company) {
               setCompanyName(company.name ?? "");
               setLogoUrl((company as any).logo_url ?? null);
               setShowBrandHeader((company as any).show_brand_header ?? 0);
               setBrandHeaderPlacement((company as any).brand_header_placement ?? "top");
+              const rel = (company as any).religion || "hinduism";
+              setReligion(rel);
 
               setOriginalData({
                 fullName: profile.full_name ?? "",
@@ -76,6 +90,7 @@ export default function AdminSettingsPage() {
                 logoUrl: (company as any).logo_url ?? null,
                 showBrandHeader: (company as any).show_brand_header ?? 0,
                 brandHeaderPlacement: (company as any).brand_header_placement ?? "top",
+                religion: rel,
               });
             }
           }
@@ -99,6 +114,31 @@ export default function AdminSettingsPage() {
       brandHeaderPlacement !== originalData.brandHeaderPlacement
     );
   }, [fullName, companyName, logoUrl, showBrandHeader, brandHeaderPlacement, originalData]);
+
+  const handleUpdateReligion = async (newRel: string) => {
+    if (!companyId) return;
+    setSavingReligion(true);
+    try {
+      const { error } = await supabase.from("companies").update({ religion: newRel }).eq("id", companyId);
+      if (error) throw error;
+      setReligion(newRel);
+      if (originalData) {
+        setOriginalData({ ...originalData, religion: newRel });
+      }
+      const relMeta = getReligionConfig(newRel);
+      toast.success(`Active faith updated to ${relMeta.name}! Templates and terminology adapted.`);
+      await logAudit(
+        "RELIGION_UPDATE",
+        "religion",
+        `Changed active faith system to ${relMeta.name}`,
+        { companyId }
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update religion");
+    } finally {
+      setSavingReligion(false);
+    }
+  };
 
   const handleSaveSettings = async () => {
     if (!user || !companyId) return;
@@ -136,6 +176,7 @@ export default function AdminSettingsPage() {
         logoUrl,
         showBrandHeader,
         brandHeaderPlacement,
+        religion,
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to save settings");
@@ -278,12 +319,41 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout>
-      <PageHeader
-        title="Settings"
-        description="Profile, branding preferences, and security options."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Profile, faith preferences, branding and developer information.</p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-2 p-1 rounded-xl bg-card/60 border border-white/10 w-fit">
+          <button
+            onClick={() => setActiveTab("general")}
+            className={cn(
+              "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
+              activeTab === "general"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+            )}
+          >
+            <Sliders className="size-3.5" /> General & Faith
+          </button>
+          <button
+            onClick={() => setActiveTab("developer")}
+            className={cn(
+              "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
+              activeTab === "developer"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+            )}
+          >
+            <Code2 className="size-3.5" /> Developer Info
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "general" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile and Branding Settings Card */}
         <GlassCard className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -454,8 +524,72 @@ export default function AdminSettingsPage() {
           </div>
         </GlassCard>
 
-        {/* Security Password Card */}
+        {/* Right side cards */}
         <div className="space-y-6">
+          {/* Faith & Religion System Configuration Card */}
+          <GlassCard className="border-amber-500/30 bg-gradient-to-br from-amber-500/[0.03] to-orange-500/[0.01]">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{getReligionConfig(religion).symbol}</span>
+                <div>
+                  <h3 className="font-bold text-base text-foreground">Faith & Religion System</h3>
+                  <p className="text-[11px] text-muted-foreground">Sets dynamic screen templates & donation causes</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 mt-3">
+              <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
+                {ALL_RELIGIONS.map((rel) => {
+                  const isSelected = religion.toLowerCase() === rel.id;
+                  return (
+                    <button
+                      key={rel.id}
+                      type="button"
+                      disabled={savingReligion}
+                      onClick={() => handleUpdateReligion(rel.id)}
+                      className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all relative ${
+                        isSelected
+                          ? `${rel.borderClass} ${rel.badgeClass} ring-1 ring-amber-500/50 shadow-md font-bold`
+                          : "border-white/5 bg-white/[0.02] text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-lg mb-0.5">{rel.symbol}</span>
+                      <span className="text-xs truncate w-full">{rel.shortName}</span>
+                      {isSelected && (
+                        <CheckCircle2 className="size-3.5 text-amber-400 absolute top-1.5 right-1.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Religion Preview Banner */}
+              {(() => {
+                const currentRel = getReligionConfig(religion);
+                return (
+                  <div className="p-3 rounded-xl bg-background/60 border border-white/10 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-amber-400">{currentRel.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono">
+                        {currentRel.terminology.donationName}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{currentRel.tagline}</p>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {currentRel.presetCauses.slice(0, 3).map((cause) => (
+                        <span key={cause.id} className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-slate-300">
+                          ₹{cause.amount} • {cause.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </GlassCard>
+
+          {/* Security Password Card */}
           <GlassCard>
             <h3 className="font-semibold text-lg mb-1">Security</h3>
             <p className="text-xs text-muted-foreground mb-4">Update your account password.</p>
@@ -518,6 +652,163 @@ export default function AdminSettingsPage() {
           </GlassCard>
         </div>
       </div>
+      ) : (
+        /* DEVELOPER INFO SHOWCASE PROFILE */
+        <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <GlassCard className="p-6 sm:p-8 border border-border relative overflow-hidden bg-card/60 backdrop-blur-xl">
+            {/* Background gradient blur elements */}
+            <div className="absolute -top-24 -right-24 size-48 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 size-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+            {/* Developer Profile Banner Image */}
+            <div className="w-full rounded-2xl border border-border/40 overflow-hidden bg-muted/40 mb-6 shadow-xl">
+              <img
+                src="/advaitha.png"
+                alt="Advaitha Automations Showcase"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/10">
+              <div className="space-y-2">
+                <div className="inline-flex px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase">
+                  System Developer Profile
+                </div>
+                <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400 bg-clip-text text-transparent">
+                  ADVAITHA Automations
+                </h2>
+                <p className="text-sm font-semibold text-foreground/80">
+                  ADVAITHA Designers N Networks
+                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                  <MapPin className="size-4 text-primary shrink-0" />
+                  <span>Road No.12, Banjara Hills, Mithali Nagar, Hyderabad - 500034</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground font-mono">
+                  Offices: Hyderabad | Vijayawada | Visakhapatnam
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-3 shrink-0">
+                <a
+                  href="mailto:contact@advaitha.co.in"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-foreground hover:bg-white/10 transition-colors"
+                >
+                  <Mail className="size-3.5 text-primary" />
+                  <span>contact@advaitha.co.in</span>
+                </a>
+                <a
+                  href="tel:9490468368"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-foreground hover:bg-white/10 transition-colors"
+                >
+                  <Phone className="size-3.5 text-emerald-400" />
+                  <span>+91 9490468368</span>
+                </a>
+              </div>
+            </div>
+
+            {/* WhatsApp Integration CTA */}
+            <div className="mt-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-center sm:text-left">
+                <h4 className="text-sm font-bold text-emerald-400 flex items-center justify-center sm:justify-start gap-1.5">
+                  <MessageSquare className="size-4 shrink-0" /> Instant Technical Support
+                </h4>
+                <p className="text-xs text-emerald-300/80 leading-normal max-w-md">
+                  Have questions, custom integrations, temple kiosk hardware or need engineering support? Chat directly with our engineering team on WhatsApp.
+                </p>
+              </div>
+              <a
+                href="https://wa.me/9490468368"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-zinc-950 text-xs font-extrabold hover:bg-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
+              >
+                Chat on WhatsApp
+                <ExternalLink className="size-3.5" />
+              </a>
+            </div>
+
+            {/* Services Showcase Grid */}
+            <div className="mt-8 space-y-4">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                Our Solutions & Services
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2.5 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+                  <h4 className="text-xs font-extrabold text-primary uppercase tracking-wider">Enterprise & Operations</h4>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span>High-Performance Servers</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span>IT Infrastructure & Managed Services</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span>Custom Software & Apps Development</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span>Evolis ID Card Printers & Consumables</span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="space-y-2.5 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+                  <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-wider">Security & Digital Signage</h4>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-indigo-400" />
+                      <span>SDWAN / Enterprise Firewalls</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-indigo-400" />
+                      <span>CCTV Surveillance Systems</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-indigo-400" />
+                      <span>Queue Management & Digital Kiosks</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-indigo-400" />
+                      <span>Digital Signage & Biometric Attendance</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Strategic Partnerships Section */}
+            <div className="mt-8 pt-6 border-t border-white/10 space-y-4">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center">
+                Strategic Technology Partnerships
+              </h3>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  Google Partner
+                </span>
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  Cisco Partner
+                </span>
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  Honeywell Partner
+                </span>
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  Microsoft Silver Partner
+                </span>
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  Evolis Partner
+                </span>
+                <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-semibold text-muted-foreground">
+                  StackUp
+                </span>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+      )}
 
       {/* Logout Confirmation Dialog */}
       <Dialog open={logoutOpen} onOpenChange={setLogoutOpen}>

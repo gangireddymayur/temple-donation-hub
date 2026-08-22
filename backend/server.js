@@ -308,6 +308,7 @@ try {
   app.use('/api/layouts',    authRequired, requireTrialNotExpired, crud('layouts'));
   app.use('/api/content',    authRequired, requireTrialNotExpired, crud('content'));
   app.use('/api/schedules',  authRequired, requireTrialNotExpired, require('./src/routes/schedules'));
+  app.use('/api/audit_logs', authRequired, crud('audit_logs'));
   
   const backupRoutes = require('./src/routes/backup');
   app.use('/api/backup', authRequired, backupRoutes.download);
