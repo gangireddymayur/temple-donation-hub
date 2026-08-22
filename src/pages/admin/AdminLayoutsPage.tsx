@@ -27,6 +27,21 @@ interface Layout {
   company_id: string;
 }
 
+function getUniqueLayoutName(baseName: string, existingLayouts: any[]): string {
+  const existingNames = new Set(existingLayouts.map((l: any) => (l.name || "").trim().toLowerCase()));
+  if (!existingNames.has(baseName.trim().toLowerCase())) {
+    return baseName;
+  }
+  let counter = 2;
+  while (
+    existingNames.has(`${baseName} ${counter}`.trim().toLowerCase()) ||
+    existingNames.has(`${baseName} (${counter})`.trim().toLowerCase())
+  ) {
+    counter++;
+  }
+  return `${baseName} ${counter}`;
+}
+
 export default function AdminLayoutsPage() {
   const { user, religion } = useAuth();
   const navigate = useNavigate();
@@ -85,7 +100,8 @@ export default function AdminLayoutsPage() {
     setSubmitting(true);
 
     const theme = relMeta.templateThemes[templateStyle] || relMeta.templateThemes.modern;
-    const templateName = `${relMeta.shortName} ${templateStyle.charAt(0).toUpperCase() + templateStyle.slice(1)} Screen`;
+    const rawTemplateName = `${relMeta.shortName} ${templateStyle.charAt(0).toUpperCase() + templateStyle.slice(1)} Screen`;
+    const templateName = getUniqueLayoutName(rawTemplateName, layouts);
 
     const layoutData = {
       id: "root",
@@ -95,7 +111,7 @@ export default function AdminLayoutsPage() {
       content: {
         id: `widget-${Date.now()}`,
         type: "donation",
-        label: `${relMeta.shortName} ${templateStyle}`,
+        label: templateName,
         templateStyle: templateStyle,
         donationTitle: theme.header,
         donationPurpose: theme.subheader,
@@ -147,9 +163,10 @@ export default function AdminLayoutsPage() {
     e.preventDefault();
     if (!companyId) return;
     setSubmitting(true);
+    const uniqueName = getUniqueLayoutName(name.trim() || "Untitled Layout", layouts);
     const { data, error } = await supabase.from("layouts").insert({
       company_id: companyId,
-      name,
+      name: uniqueName,
       description: description || null,
       resolution_width: resWidth,
       resolution_height: resHeight,
@@ -157,7 +174,7 @@ export default function AdminLayoutsPage() {
     setSubmitting(false);
     if (error) toast.error(error.message);
     else {
-      toast.success("Layout created!");
+      toast.success(`Layout "${uniqueName}" created!`);
       setAddOpen(false);
       setName(""); setDescription(""); setResWidth(1920); setResHeight(1080);
       navigate(`/admin/layouts/${data.id}`);
