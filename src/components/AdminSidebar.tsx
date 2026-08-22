@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, getTrialInfo } from "@/hooks/useAuth";
 import { getReligionConfig } from "@/lib/religion-config";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -48,8 +49,9 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { user, role, religion, isTrialExpired, signOut } = useAuth();
+  const { user, role, company, religion, isTrialExpired, signOut } = useAuth();
   const relMeta = getReligionConfig(religion);
+  const trialInfo = getTrialInfo(company);
 
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
@@ -69,13 +71,18 @@ export function AdminSidebar() {
               <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight truncate">
                 Temple Donation Hub
               </span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                 <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">
                   Admin Panel
                 </span>
                 <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">
                   {relMeta.shortName}
                 </span>
+                {company && (
+                  <Badge variant={trialInfo.variant as any} className="text-[9px] py-0 px-1.5 h-4 font-mono">
+                    {trialInfo.text}
+                  </Badge>
+                )}
               </div>
             </div>
           )}

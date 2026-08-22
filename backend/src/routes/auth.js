@@ -232,10 +232,12 @@ router.post('/register', async (req, res) => {
       ? company_name.trim() 
       : (full_name ? `${full_name.trim()}'s Organization` : 'My Sacred Center');
 
-    // Create default company
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Create default company with 7-day free trial
     await db.query(
-      'INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, religion) ' +
-      'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status, :subscription_status, :religion)',
+      'INSERT INTO companies (id, name, contact_email, plan, max_screens, status, subscription_status, trial_ends_at, religion) ' +
+      'VALUES (:id, :name, :contact_email, :plan, :max_screens, :status, :subscription_status, :trial_ends_at, :religion)',
       {
         id: companyId,
         name: compName,
@@ -243,7 +245,8 @@ router.post('/register', async (req, res) => {
         plan: 'pro',
         max_screens: 10,
         status: 'active',
-        subscription_status: 'active',
+        subscription_status: 'trial',
+        trial_ends_at: trialEndsAt,
         religion: selectedReligion
       }
     );

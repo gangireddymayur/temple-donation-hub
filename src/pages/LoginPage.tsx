@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { HeartHandshake, Sparkles, Lock, Mail, Loader2, User, Building2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { HeartHandshake, Sparkles, Lock, Mail, Loader2, User, Building2, CheckCircle2, ShieldCheck, LogIn, UserPlus, Gift } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { ALL_RELIGIONS, ReligionType, getReligionConfig } from "@/lib/religion-config";
 import { logAudit } from "@/lib/audit-logger";
 
@@ -125,29 +126,36 @@ export default function LoginPage() {
             </CardDescription>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800/80 max-w-xs mx-auto mt-2">
+          {/* High-End Segmented Slider Switcher */}
+          <div className="relative flex p-1 rounded-2xl bg-slate-950/90 border border-slate-800/90 shadow-inner max-w-sm mx-auto mt-3 select-none">
             <button
               type="button"
               onClick={() => setTab("signin")}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+              className={cn(
+                "relative z-10 flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5",
                 tab === "signin"
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+                  ? "bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+              )}
             >
-              Sign In
+              <LogIn className="size-3.5" />
+              <span>Sign In</span>
             </button>
             <button
               type="button"
               onClick={() => setTab("signup")}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+              className={cn(
+                "relative z-10 flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5",
                 tab === "signup"
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+                  ? "bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+              )}
             >
-              Create Account
+              <UserPlus className="size-3.5" />
+              <span>Create Account</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-400/25 text-amber-300 font-extrabold border border-amber-400/40">
+                7d Free
+              </span>
             </button>
           </div>
         </CardHeader>
@@ -218,6 +226,17 @@ export default function LoginPage() {
           ) : (
             /* ================= CREATE ACCOUNT FORM ================= */
             <form onSubmit={handleRegister} className="space-y-4">
+              {/* 7-Day Free Trial Welcome Banner */}
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/25 flex items-center gap-3">
+                <div className="size-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                  <Gift className="size-4" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-bold text-amber-300">7-Day Free Trial Included</p>
+                  <p className="text-[10px] text-slate-400">Instantly creates your sanctuary account with full multi-faith and digital signage capabilities.</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="signup-name" className="text-xs font-semibold text-slate-300 uppercase tracking-wider pl-1">
