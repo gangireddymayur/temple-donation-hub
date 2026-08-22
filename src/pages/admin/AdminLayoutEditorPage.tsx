@@ -306,9 +306,9 @@ export default function AdminLayoutEditorPage() {
 
   return (
     <AdminLayout>
-      <div className="flex flex-col h-[calc(100vh-5rem)]">
+      <div className="flex flex-col h-[calc(100vh-4.25rem)] -m-6 p-4 gap-2.5 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 shrink-0">
+        <div className="flex items-center justify-between pb-2 shrink-0">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate("/admin/layouts")}>
               <ArrowLeft className="h-4 w-4" />
@@ -364,12 +364,12 @@ export default function AdminLayoutEditorPage() {
           </div>
         </div>
 
-        {/* Main Editor */}
-        <div className="flex gap-4 flex-1 min-h-0">
-          {/* Left Panel */}
-          <div className="w-52 shrink-0">
-            <ScrollArea className="h-full">
-              <div className="pr-2 space-y-4">
+        {/* Main Editor 3-Column Studio */}
+        <div className="flex gap-3 flex-1 min-h-0 overflow-hidden">
+          {/* Left Palette & Background Panel */}
+          <div className="w-60 lg:w-64 shrink-0 bg-card/60 border border-border/50 rounded-2xl p-3.5 shadow-sm flex flex-col h-full overflow-hidden backdrop-blur-md">
+            <ScrollArea className="h-full pr-2">
+              <div className="space-y-4">
                 <WidgetPalette onSelectWidget={(type, style) => {
                   const widget = createWidget(type, style);
                   if (selectedZoneId) {
@@ -382,16 +382,16 @@ export default function AdminLayoutEditorPage() {
                   handleZoneUpdate({ ...rootZone, content: widget });
                 }} />
                 <Separator />
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Canvas</h3>
+                <div className="space-y-2.5">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Canvas Background</h3>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Background</Label>
+                    <Label className="text-xs font-medium">Color</Label>
                     <div className="flex gap-2">
                       <input
                         type="color"
                         value={backgroundColor}
                         onChange={(e) => commitSnapshot((prev) => ({ ...prev, backgroundColor: e.target.value }))}
-                        className="h-8 w-8 rounded cursor-pointer border-none"
+                        className="h-8 w-8 rounded-lg cursor-pointer border border-border/50 shrink-0"
                       />
                       <Input
                         value={backgroundColor}
@@ -405,14 +405,15 @@ export default function AdminLayoutEditorPage() {
             </ScrollArea>
           </div>
 
-          {/* Center - Canvas */}
-          <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-xl border border-border/50 overflow-hidden p-4">
+          {/* Center - Canvas Workspace */}
+          <div className="flex-1 min-w-0 bg-muted/15 rounded-2xl border border-border/40 overflow-hidden p-4 flex items-center justify-center h-full relative">
             <div
-              className="rounded-lg overflow-hidden shadow-lg border border-border/30 max-w-full max-h-full"
+              className="rounded-xl overflow-hidden shadow-2xl border border-border/40 max-w-full max-h-full transition-all"
               style={{
                 backgroundColor,
                 aspectRatio: canvasRatio,
                 width: "100%",
+                maxHeight: "100%",
                 height: "auto",
               }}
               onClick={() => setSelectedZoneId(null)}
@@ -427,16 +428,19 @@ export default function AdminLayoutEditorPage() {
             </div>
           </div>
 
-          {/* Right Panel */}
-          <div className="w-56 shrink-0">
-            <ScrollArea className="h-full">
-              <div className="pl-2">
+          {/* Right Properties Panel */}
+          <div className="w-80 lg:w-96 shrink-0 bg-card/60 border border-border/50 rounded-2xl p-3.5 shadow-sm flex flex-col h-full overflow-hidden backdrop-blur-md">
+            <ScrollArea className="h-full pr-2">
+              <div>
                 {selectedWidget ? (
                   <ZoneProperties widget={selectedWidget} onUpdate={handleWidgetUpdate} contentItems={contentItems} />
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p className="text-sm font-medium">No zone selected</p>
-                    <p className="text-xs mt-1">Click a zone or drop a widget to edit its properties</p>
+                  <div className="text-center py-16 text-muted-foreground space-y-2">
+                    <LayoutGrid className="size-8 mx-auto text-muted-foreground/40 stroke-1" />
+                    <p className="text-sm font-semibold">No zone selected</p>
+                    <p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
+                      Click a zone on the screen canvas or choose a widget from the left palette to configure properties.
+                    </p>
                   </div>
                 )}
               </div>
