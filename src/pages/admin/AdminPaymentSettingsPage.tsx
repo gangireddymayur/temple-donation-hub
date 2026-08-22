@@ -27,7 +27,7 @@ export default function AdminPaymentSettingsPage() {
   const [razorpayKeySecret, setRazorpayKeySecret] = useState("");
   const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState("");
   const [razorpayMode, setRazorpayMode] = useState<"test" | "live">("test");
-  const [preferredGateway, setPreferredGateway] = useState<"upi" | "razorpay">("upi");
+  const [preferredGateway, setPreferredGateway] = useState<"razorpay">("razorpay");
   const [isEditable, setIsEditable] = useState(false);
 
   // Test Connection Dialog State
@@ -52,7 +52,7 @@ export default function AdminPaymentSettingsPage() {
             setRazorpayKeySecret(company.razorpay_key_secret || "");
             setRazorpayWebhookSecret(company.razorpay_webhook_secret || "");
             setRazorpayMode((company as any).razorpay_mode || "test");
-            setPreferredGateway((company as any).preferred_gateway || "upi");
+            setPreferredGateway("razorpay");
           }
         }
       } catch (err) {
@@ -219,57 +219,22 @@ export default function AdminPaymentSettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="space-y-2 p-3 bg-slate-950/20 rounded-xl border border-border/30">
-                    <Label className="text-xs font-bold text-slate-200 uppercase tracking-widest block mb-2">Active Kiosk Payment Method</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        disabled={!isEditable}
-                        onClick={() => isEditable && setPreferredGateway("upi")}
-                        className={cn(
-                          "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
-                          preferredGateway === "upi"
-                            ? "bg-amber-500/10 border-amber-500 text-amber-100"
-                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400",
-                          !isEditable ? "opacity-75 cursor-not-allowed" : ""
-                        )}
-                      >
-                        <span className="font-bold block text-sm mb-1">Direct UPI Daan</span>
-                        <span className="text-[10px] leading-relaxed text-muted-foreground">Generates zero-fee direct UPI QR codes. Instant bank settlement.</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={!isEditable}
-                        onClick={() => isEditable && setPreferredGateway("razorpay")}
-                        className={cn(
-                          "flex flex-col items-start text-left p-3.5 rounded-lg border text-xs transition-all",
-                          preferredGateway === "razorpay"
-                            ? "bg-amber-500/10 border-amber-500 text-amber-100"
-                            : "bg-slate-950/30 border-border/50 hover:bg-slate-900 text-slate-400",
-                          !isEditable ? "opacity-75 cursor-not-allowed" : ""
-                        )}
-                      >
-                        <span className="font-bold block text-sm mb-1">Razorpay Gateway</span>
-                        <span className="text-[10px] leading-relaxed text-muted-foreground">Multi-method payment checkout with cards, netbanking & UPI.</span>
-                      </button>
+                  <div className="space-y-3 p-4 bg-slate-950/20 rounded-xl border border-border/30">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-slate-200 uppercase tracking-widest block">Active Payment Gateway</Label>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        Default: Razorpay
+                      </span>
                     </div>
-                  </div>
-
-                  <Separator className="opacity-50" />
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-200">Merchant UPI ID (Direct Daan)</Label>
-                    <Input
-                      value={upiId}
-                      disabled={!isEditable}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      placeholder="templemerchant@upi"
-                      className="bg-slate-950/40 border-border/60 disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                    <p className="text-[10px] text-muted-foreground">
-                      Generates immediate, zero-fee direct-to-bank UPI QR codes for GPay, PhonePe, Paytm, and BHIM.
-                    </p>
+                    <div className="p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 flex items-start gap-3">
+                      <KeyRound className="size-5 text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-sm mb-0.5">Razorpay Gateway (Card / Netbanking / UPI / QR)</span>
+                        <span className="text-xs text-amber-200/80 leading-relaxed">
+                          Unified payment processor for multi-faith donation kiosks, QR offerings, cards, and automatic receipt generation.
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <Separator className="opacity-50" />

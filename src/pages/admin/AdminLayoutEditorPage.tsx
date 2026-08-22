@@ -22,12 +22,17 @@ import {
   Undo2,
   Redo2,
   LayoutGrid,
-  ClipboardList
+  ClipboardList,
+  Globe,
+  Languages,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { SUPPORTED_LANGUAGES, translateZoneContent } from "@/lib/language-translator";
 
 function findZone(zone: ScreenZone, id: string): ScreenZone | null {
   if (zone.id === id) return zone;
@@ -85,10 +90,31 @@ export default function AdminLayoutEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [contentItems, setContentItems] = useState<MediaContentItem[]>([]);
+  const [currentLanguage, setCurrentLanguage] = useState("en");
+  const [translating, setTranslating] = useState(false);
 
   const selectedZone = selectedZoneId ? findZone(rootZone, selectedZoneId) : null;
   const selectedWidget = selectedZone?.content || null;
   const canvasRatio = `${resWidth}/${resHeight}`;
+
+  const handleTranslateLanguage = async (targetLang: string) => {
+    if (targetLang === currentLanguage) return;
+    try {
+      setTranslating(true);
+      const targetMeta = SUPPORTED_LANGUAGES.find(l => l.code === targetLang);
+      toast.loading(`Translating layout to ${targetMeta?.name || targetLang} via Google Translate...`);
+      const translatedRoot = await translateZoneContent(rootZone, targetLang);
+      commitSnapshot((prev) => ({ ...prev, rootZone: translatedRoot }));
+      setCurrentLanguage(targetLang);
+      toast.dismiss();
+      toast.success(`Layout translated to ${targetMeta?.name || targetLang}!`);
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error("Translation failed: " + err.message);
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   useEffect(() => {
     if (!layoutId) return;
@@ -295,7 +321,26 @@ export default function AdminLayoutEditorPage() {
               <p className="text-xs text-muted-foreground">{resWidth}×{resHeight}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Google Language Converter Dropdown */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-card border border-primary/20 shadow-sm">
+              <Globe className="h-3.5 w-3.5 text-primary shrink-0" />
+              <select
+                value={currentLanguage}
+                disabled={translating}
+                onChange={(e) => handleTranslateLanguage(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
+                title="Translate all temple screen text via Google Translate"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code} className="bg-zinc-900 text-white">
+                    {lang.flag} {lang.name} ({lang.nativeName})
+                  </option>
+                ))}
+              </select>
+              {translating && <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />}
+            </div>
+
             <Button variant="outline" size="sm" onClick={handleUndo} disabled={history.past.length === 0}>
               <Undo2 className="h-3.5 w-3.5 mr-1.5" />
               Undo
@@ -325,7 +370,17 @@ export default function AdminLayoutEditorPage() {
           <div className="w-52 shrink-0">
             <ScrollArea className="h-full">
               <div className="pr-2 space-y-4">
-                <WidgetPalette />
+                <WidgetPalette onSelectWidget={(type, style) => {
+                  const widget = createWidget(type, style);
+                  if (selectedZoneId) {
+                    const target = findZone(rootZone, selectedZoneId);
+                    if (target) {
+                      handleZoneUpdate({ ...target, content: widget });
+                      return;
+                    }
+                  }
+                  handleZoneUpdate({ ...rootZone, content: widget });
+                }} />
                 <Separator />
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Canvas</h3>

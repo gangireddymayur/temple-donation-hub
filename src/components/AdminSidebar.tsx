@@ -40,8 +40,6 @@ const adminNav = [
   { title: "Schedule", url: "/admin/schedule", icon: CalendarClock },
   { title: "Donation Content", url: "/admin/settings/donations", icon: HeartHandshake },
   { title: "Payment Settings", url: "/admin/settings/payments", icon: CreditCard },
-  { title: "Manage Access", url: "/admin/access", icon: Shield },
-  { title: "Audit Trail", url: "/admin/audit-trail", icon: History },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 

@@ -1131,7 +1131,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             <LayoutGrid className="h-10 w-10 text-amber-400" />
           )}
           <h2 
-            className="text-2xl font-extrabold tracking-wide uppercase" 
+            className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide uppercase max-w-full text-center break-words px-2 leading-tight" 
             style={{ 
               color: widget.donationTitleColor || '#fbbf24', 
               fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
@@ -1200,7 +1200,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             </div>
           )}
           <h2 
-            className="text-2xl font-black tracking-wide" 
+            className="text-lg sm:text-xl md:text-2xl font-black tracking-wide max-w-full text-center break-words px-2 leading-tight" 
             style={{ 
               color: widget.donationTitleColor || '#b91c1c', 
               fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
@@ -1217,7 +1217,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
               {purpose}
             </p>
           )}
-          <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent mt-1" />
+          <div className="w-16 h-0.5 bg-amber-600/40 mt-1" />
         </div>
 
         <div className="flex-1 w-full flex items-center justify-center">
@@ -1226,12 +1226,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
               // Enhance configuration with default traditional themes if overrides not present
               const tradConfig: DonationButtonConfig = {
                 ...btn,
-                backgroundColor: btn.backgroundColor || 'rgba(185, 28, 28, 0.04)',
-                borderColor: btn.borderColor || 'rgba(185, 28, 28, 0.25)',
-                textColor: btn.textColor || '#451a03',
+                backgroundColor: btn.backgroundColor || '#fffdf6',
+                borderColor: btn.borderColor || '#d97706',
+                textColor: btn.textColor || '#78350f',
                 cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 6,
                 hoverEffect: btn.hoverEffect || 'scale',
-                shadow: btn.shadow || 'shadow-sm',
+                shadow: btn.shadow || 'shadow-md shadow-amber-900/10',
               };
               return (
                 <SquareOfferingCard 
@@ -1259,8 +1259,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-white font-sans flex flex-col justify-start items-center p-8 border border-white/10 backdrop-blur-md",
-          !widget.backgroundColor ? "bg-slate-950/40" : "",
+          "relative select-none text-slate-100 flex flex-col justify-start items-center p-8 backdrop-blur-xl border border-white/10 bg-slate-950/40",
           widget.donationContainerShadow || "shadow-2xl"
         )}
       >
@@ -1273,7 +1272,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             </div>
           )}
           <h2 
-            className="text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent" 
+            className="text-lg sm:text-xl md:text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent max-w-full text-center break-words px-2 leading-tight" 
             style={{ 
               fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
               fontFamily: widget.donationTitleFontFamily || undefined
@@ -1344,7 +1343,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             </div>
           )}
           <h2 
-            className="text-2xl font-extrabold tracking-widest uppercase text-amber-400 drop-shadow-md" 
+            className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-widest uppercase text-amber-400 drop-shadow-md max-w-full text-center break-words px-2 leading-tight" 
             style={{ 
               fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
               fontFamily: widget.donationTitleFontFamily || 'Cinzel, Georgia, serif'

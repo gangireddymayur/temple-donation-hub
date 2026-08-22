@@ -30,7 +30,7 @@ const widgets: WidgetPaletteItem[] = [
   { type: 'donation', style: 'minimal', label: 'Temple Minimal', icon: LayoutGrid, color: 'bg-orange-500/15 text-orange-500' },
 ];
 
-export function WidgetPalette() {
+export function WidgetPalette({ onSelectWidget }: { onSelectWidget?: (type: ContentWidgetType, style?: string) => void }) {
   const handleDragStart = (e: DragEvent, type: ContentWidgetType, style?: string) => {
     e.dataTransfer.setData('widget-type', type);
     if (style) {
@@ -50,7 +50,9 @@ export function WidgetPalette() {
             key={`${w.type}-${w.style || idx}`}
             draggable
             onDragStart={(e) => handleDragStart(e, w.type, w.style)}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-grab active:cursor-grabbing transition-all hover:shadow-sm hover:border-primary/30 select-none"
+            onClick={() => onSelectWidget && onSelectWidget(w.type, w.style)}
+            className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer active:scale-95 transition-all hover:shadow-sm hover:border-primary/40 select-none"
+            title="Click or drag to add to canvas"
           >
             <div className={`h-8 w-8 rounded-md flex items-center justify-center ${w.color}`}>
               <w.icon className="h-4 w-4" />
@@ -60,7 +62,7 @@ export function WidgetPalette() {
         ))}
       </div>
       <p className="text-[10px] text-muted-foreground text-center mt-2">
-        Drag items onto the screen canvas
+        Click or drag items onto the screen canvas
       </p>
     </div>
   );

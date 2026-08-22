@@ -1,3 +1,5 @@
+import { getReligionConfig } from "./religion-config";
+
 export type ZoneSplit = 'none' | 'horizontal' | 'vertical';
 
 export type TextAnimation = 'none' | 'scroll-left' | 'scroll-right' | 'scroll-up' | 'scroll-down' | 'typewriter' | 'fade' | 'blink';
@@ -316,7 +318,6 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
       } catch (e) {}
 
       // Get religion config from lib
-      const { getReligionConfig } = require('./religion-config');
       const relConfig = getReligionConfig(activeReligion);
       const causes = relConfig.presetCauses;
       const theme = relConfig.templateThemes[selectedStyle] || relConfig.templateThemes.modern;

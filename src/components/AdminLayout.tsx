@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth, getTrialInfo } from "@/hooks/useAuth";
+import { getReligionConfig } from "@/lib/religion-config";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
   ({ children }, ref) => {
-    const { role, company, isTrialExpired, signOut, refreshCompany } = useAuth();
+    const { role, company, religion, isTrialExpired, signOut, refreshCompany } = useAuth();
     const [syncing, setSyncing] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const trialInfo = getTrialInfo(company);
+    const relMeta = getReligionConfig(religion);
 
     const handleRefreshAccess = async () => {
       try {
@@ -104,8 +106,11 @@ export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNod
                   <Bell className="h-4 w-4" />
                   <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
                 </Button>
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
-                  A
+                <div
+                  className="h-8 w-8 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center text-sm font-bold text-primary shadow-sm hover:scale-105 transition-all select-none cursor-default"
+                  title={`${relMeta.name} (${relMeta.shortName})`}
+                >
+                  {relMeta.symbol || "🕉️"}
                 </div>
               </div>
             </header>
