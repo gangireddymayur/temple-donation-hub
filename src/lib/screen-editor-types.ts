@@ -147,6 +147,7 @@ export interface ContentWidget {
   backgroundVideoUrl?: string;
   backgroundMediaName?: string;
   backgroundDim?: number; // 0 - 100% (dim overlay)
+  backgroundFit?: 'cover' | 'contain' | 'fill';
   
   // single button widget properties mapping
   buttonDescription?: string;

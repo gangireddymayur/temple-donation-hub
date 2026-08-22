@@ -1107,6 +1107,8 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   else if (N === 7 || N === 8) gridClass += " grid-cols-3 lg:grid-cols-4 max-w-6xl";
   else gridClass += " grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-w-7xl";
 
+  const fitMode = widget.backgroundFit || 'cover';
+
   // Template container base styles
   const containerStyle: React.CSSProperties = {
     backgroundColor: widget.backgroundColor || undefined,
@@ -1115,44 +1117,51 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     opacity: (widget.opacity ?? 100) / 100,
     width: '100%',
     height: '100%',
+    minHeight: '100%',
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
+    backgroundImage: widget.backgroundImageUrl ? `url("${widget.backgroundImageUrl}")` : undefined,
+    backgroundSize: fitMode === 'contain' ? 'contain' : fitMode === 'fill' ? '100% 100%' : 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   };
 
   // Dynamic Background Video or Image for Template Canvas
   const renderBackgroundMedia = () => {
     if (widget.backgroundVideoUrl) {
       return (
-        <>
+        <div className="absolute inset-0 w-full h-full min-w-full min-h-full overflow-hidden pointer-events-none z-0">
           <video
             src={widget.backgroundVideoUrl}
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+            className="w-full h-full min-w-full min-h-full object-center"
+            style={{ objectFit: fitMode }}
           />
           <div
-            className="absolute inset-0 bg-black z-0 pointer-events-none transition-opacity duration-300"
+            className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
             style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
           />
-        </>
+        </div>
       );
     }
     if (widget.backgroundImageUrl) {
       return (
-        <>
+        <div className="absolute inset-0 w-full h-full min-w-full min-h-full overflow-hidden pointer-events-none z-0">
           <img
             src={widget.backgroundImageUrl}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+            className="w-full h-full min-w-full min-h-full object-center"
+            style={{ objectFit: fitMode }}
           />
           <div
-            className="absolute inset-0 bg-black z-0 pointer-events-none transition-opacity duration-300"
+            className="absolute inset-0 w-full h-full bg-black pointer-events-none transition-opacity duration-300"
             style={{ opacity: (widget.backgroundDim ?? 50) / 100 }}
           />
-        </>
+        </div>
       );
     }
     return null;

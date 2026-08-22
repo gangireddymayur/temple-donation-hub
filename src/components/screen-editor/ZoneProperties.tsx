@@ -734,24 +734,43 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                     </div>
                   )}
 
-                  {/* Background Dim / Overlay Slider */}
+                  {/* Background Fit Mode & Dim Slider */}
                   {(widget.backgroundImageUrl || widget.backgroundVideoUrl) && (
-                    <div className="space-y-1.5 pt-1 bg-slate-950/40 p-2.5 rounded-lg border border-border/30">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[11px] font-bold">Background Dim Overlay</Label>
-                        <span className="text-[11px] font-mono font-bold text-amber-400">{widget.backgroundDim ?? 50}%</span>
+                    <div className="space-y-2 pt-1 bg-slate-950/40 p-2.5 rounded-lg border border-border/30">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold">Image / Video Fit Mode</Label>
+                        <Select
+                          value={widget.backgroundFit || 'cover'}
+                          onValueChange={(v) => update({ backgroundFit: v as any })}
+                        >
+                          <SelectTrigger className="h-7 text-xs bg-slate-950/60 border-slate-800">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cover">Cover (Full Screen - 100% Fit)</SelectItem>
+                            <SelectItem value="fill">Fill / Stretch (Exact Screen Size)</SelectItem>
+                            <SelectItem value="contain">Contain (Fit Entire Image)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Slider
-                        value={[widget.backgroundDim ?? 50]}
-                        onValueChange={([v]) => update({ backgroundDim: v })}
-                        min={0}
-                        max={90}
-                        step={5}
-                        className="py-1"
-                      />
-                      <p className="text-[9px] text-muted-foreground">
-                        Dims the background media so text and donation cards remain easy to read.
-                      </p>
+
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[11px] font-bold">Background Dim Overlay</Label>
+                          <span className="text-[11px] font-mono font-bold text-amber-400">{widget.backgroundDim ?? 50}%</span>
+                        </div>
+                        <Slider
+                          value={[widget.backgroundDim ?? 50]}
+                          onValueChange={([v]) => update({ backgroundDim: v })}
+                          min={0}
+                          max={90}
+                          step={5}
+                          className="py-1"
+                        />
+                        <p className="text-[9px] text-muted-foreground">
+                          Dims the background media so text and donation cards remain easy to read.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
