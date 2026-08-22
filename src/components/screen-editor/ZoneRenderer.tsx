@@ -1121,10 +1121,6 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
-    backgroundImage: widget.backgroundImageUrl ? `url("${widget.backgroundImageUrl}")` : undefined,
-    backgroundSize: fitMode === 'contain' ? 'contain' : fitMode === 'fill' ? '100% 100%' : 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
   };
 
   // Dynamic Background Video or Image for Template Canvas
