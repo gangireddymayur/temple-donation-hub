@@ -379,7 +379,7 @@ export default function DonationsContentPage() {
                   </div>
 
                   {/* From & To Custom Date Inputs */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5 flex-wrap">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-muted-foreground font-medium">From:</span>
                       <Input
@@ -390,7 +390,7 @@ export default function DonationsContentPage() {
                           setDatePreset("custom");
                           setCurrentPage(1);
                         }}
-                        className="h-8 text-xs w-32 bg-slate-950/40 border-border/60"
+                        className="h-8 text-xs w-36 sm:w-40 px-2.5 bg-slate-950/40 border-border/60 font-mono"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -403,7 +403,7 @@ export default function DonationsContentPage() {
                           setDatePreset("custom");
                           setCurrentPage(1);
                         }}
-                        className="h-8 text-xs w-32 bg-slate-950/40 border-border/60"
+                        className="h-8 text-xs w-36 sm:w-40 px-2.5 bg-slate-950/40 border-border/60 font-mono"
                       />
                     </div>
                     {(fromDate || toDate || statusFilter !== "all" || search) && (
