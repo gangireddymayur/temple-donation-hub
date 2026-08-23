@@ -755,32 +755,45 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
             ) : (
               <div className="space-y-3.5">
                 {/* Max Cards Per Row (Placed at the very top of Offering Cards) */}
-                <div className="space-y-1.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Max Cards Per Row</Label>
-                    <span className="text-[10px] text-amber-400 font-mono font-bold">{(widget.cardsPerRow || 2)} in a row</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-border/40 text-xs">
-                    {[2, 3, 4].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => update({ cardsPerRow: num })}
-                        className={cn(
-                          "py-1.5 rounded text-[11px] font-bold transition-all text-center",
-                          (widget.cardsPerRow || 2) === num
-                            ? "bg-amber-500 text-slate-950 shadow-xs font-black"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                        )}
-                      >
-                        {num} Cards
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[9px] text-muted-foreground">
-                    Sets max cards in 1 row (2, 3, or 4). Remaining cards scroll vertically.
-                  </p>
-                </div>
+                {(() => {
+                  const isMinimal = widget.donationStyle === 'minimal';
+                  const options = isMinimal ? [4, 5, 6, 7] : [2, 3, 4];
+                  const currentCardsPerRow = widget.cardsPerRow || (isMinimal ? 4 : 2);
+                  return (
+                    <div className="space-y-1.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Max Cards Per Row</Label>
+                        <span className="text-[10px] text-amber-400 font-mono font-bold">{currentCardsPerRow} in a row</span>
+                      </div>
+                      <div className={cn(
+                        "grid gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-border/40 text-xs",
+                        isMinimal ? "grid-cols-4" : "grid-cols-3"
+                      )}>
+                        {options.map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => update({ cardsPerRow: num })}
+                            className={cn(
+                              "py-1.5 rounded text-[11px] font-bold transition-all text-center",
+                              currentCardsPerRow === num
+                                ? "bg-amber-500 text-slate-950 shadow-xs font-black"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            )}
+                          >
+                            {num} Cards
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[9px] text-muted-foreground">
+                        {isMinimal 
+                          ? "Sets visible column cards (default: 4, options: 4, 5, 6, 7)." 
+                          : "Sets max cards in 1 row (default: 2, options: 2, 3, 4). Remaining cards scroll vertically."
+                        }
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 {/* All Cards Default Styling */}
                 <div className="space-y-2.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">

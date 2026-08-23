@@ -1103,8 +1103,8 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   const visibleButtons = buttons.filter(b => b.visible !== false);
   const N = visibleButtons.length;
 
-  // Dynamic columns arrangement based on cardsPerRow setting (2, 3, or 4) and total cards
-  const cardsPerRow = widget.cardsPerRow || 2;
+  // Dynamic columns arrangement based on cardsPerRow setting and total cards
+  const cardsPerRow = widget.cardsPerRow || (styleType === 'minimal' ? 4 : 2);
   let gridClass = "grid gap-4 sm:gap-5 md:gap-6 w-full justify-center justify-items-center transition-all duration-300";
   if (N === 1) {
     gridClass += " grid-cols-1 max-w-sm";
@@ -1124,6 +1124,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     } else {
       gridClass += " grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl xl:max-w-7xl";
     }
+  } else if (cardsPerRow === 5) {
+    gridClass += " grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 max-w-7xl";
+  } else if (cardsPerRow === 6) {
+    gridClass += " grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 max-w-7xl";
+  } else if (cardsPerRow === 7) {
+    gridClass += " grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 max-w-full";
   } else {
     gridClass += " grid-cols-1 sm:grid-cols-2 max-w-3xl";
   }
