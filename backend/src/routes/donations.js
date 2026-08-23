@@ -222,6 +222,33 @@ router.post('/public/initiate', async (req, res) => {
           company.razorpay_key_secret
         );
 
+        let paymentLink = null;
+        try {
+          const plink = await callRazorpay(
+            'POST',
+            '/payment_links',
+            {
+              amount: Math.round(finalAmount * 100),
+              currency: 'INR',
+              accept_partial: false,
+              description: purpose || 'Temple Offering',
+              customer: {
+                name: donorName || 'Devotee',
+                email: donorEmail || undefined,
+                contact: donorPhone || undefined
+              },
+              notes: { donationId }
+            },
+            company.razorpay_key_id,
+            company.razorpay_key_secret
+          );
+          if (plink && plink.short_url) {
+            paymentLink = plink.short_url;
+          }
+        } catch (plinkErr) {
+          console.warn('Razorpay payment_links creation notice:', plinkErr.message);
+        }
+
         await db.query(
           'UPDATE donations SET razorpay_order_id = :order_id WHERE id = :id',
           { order_id: order.id, id: donationId }
@@ -232,7 +259,8 @@ router.post('/public/initiate', async (req, res) => {
           amount: finalAmount,
           purpose: purpose || 'General Daan',
           orderId: order.id,
-          upiString: null,
+          paymentLink,
+          upiString: paymentLink || null,
           useRazorpay: true,
           razorpayKeyId: company.razorpay_key_id
         });
@@ -399,6 +427,28 @@ router.post('/public/test-connection', async (req, res) => {
           razorpayKeySecret
         );
 
+        let paymentLink = null;
+        try {
+          const plink = await callRazorpay(
+            'POST',
+            '/payment_links',
+            {
+              amount: 100, // ₹1
+              currency: 'INR',
+              accept_partial: false,
+              description: 'Temple ₹1 Test Donation',
+              notes: { donationId }
+            },
+            razorpayKeyId,
+            razorpayKeySecret
+          );
+          if (plink && plink.short_url) {
+            paymentLink = plink.short_url;
+          }
+        } catch (plinkErr) {
+          console.warn('Razorpay payment_links test notice:', plinkErr.message);
+        }
+
         await db.query(
           'UPDATE donations SET razorpay_order_id = :order_id WHERE id = :id',
           { order_id: order.id, id: donationId }
@@ -408,7 +458,8 @@ router.post('/public/test-connection', async (req, res) => {
           donationId,
           amount,
           orderId: order.id,
-          upiString: null,
+          paymentLink,
+          upiString: paymentLink || null,
           useRazorpay: true,
           razorpayKeyId
         });

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2, Copy, Wand2, HelpCircle } from "lucide-react";
+import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2, Copy, Wand2, HelpCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +86,8 @@ export default function AdminPaymentSettingsPage() {
     }
   };
 
+  const [testPaymentLink, setTestPaymentLink] = useState<string | null>(null);
+
   // Connection Test Flow
   const handleStartTest = async () => {
     if (!upiId && !razorpayKeyId) {
@@ -98,6 +100,7 @@ export default function AdminPaymentSettingsPage() {
     setTestStatus("initiating");
     setTestQrUrl(null);
     setTestDonationId(null);
+    setTestPaymentLink(null);
 
     try {
       const res = await fetch(`${API}/donations/public/test-connection`, {
@@ -119,13 +122,13 @@ export default function AdminPaymentSettingsPage() {
       const payload = await res.json();
       setTestDonationId(payload.donationId);
 
-      // Generate the test QR
-      if (payload.upiString) {
+      // Generate the test QR using live Razorpay Payment Link or direct merchant UPI
+      if (payload.paymentLink) {
+        setTestPaymentLink(payload.paymentLink);
+        setTestQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(payload.paymentLink)}`);
+      } else if (payload.upiString) {
+        setTestPaymentLink(payload.upiString.startsWith("http") ? payload.upiString : null);
         setTestQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(payload.upiString)}`);
-      } else if (payload.useRazorpay && payload.orderId) {
-        // Generate a standard test Razorpay payment link or UPI QR code simulation link
-        const razorpayUpiString = `upi://pay?pa=temple.razorpay@icici&pn=Temple%20Donation&am=1.00&tr=${payload.donationId}&cu=INR&tn=Razorpay%20Test%20Order`;
-        setTestQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(razorpayUpiString)}`);
       }
 
       setTestStatus("polling");
@@ -528,11 +531,25 @@ export default function AdminPaymentSettingsPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-2.5">
                     <div className="flex items-center justify-center gap-2 text-xs text-amber-400 animate-pulse bg-amber-500/10 py-2 w-full rounded-lg border border-amber-500/20">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       <span>Waiting for Razorpay webhook confirmation...</span>
                     </div>
+
+                    {testPaymentLink && (
+                      <Button
+                        asChild
+                        size="sm"
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-9 shadow-md shadow-emerald-500/20 gap-1.5"
+                      >
+                        <a href={testPaymentLink} target="_blank" rel="noreferrer">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>Open Live Razorpay Checkout in Browser</span>
+                        </a>
+                      </Button>
+                    )}
+
                     <Button variant="ghost" size="sm" className="text-[10px] h-7 text-muted-foreground hover:text-foreground mt-1" onClick={simulateSuccess}>
                       Simulate Success
                     </Button>
