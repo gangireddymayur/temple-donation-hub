@@ -703,112 +703,6 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                   </p>
                 </div>
 
-                <Separator className="my-2.5 opacity-50" />
-
-                {/* All Cards Default Styling */}
-                <div className="space-y-2.5 bg-slate-950/30 p-2.5 rounded-xl border border-border/40">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block">All Cards Styling</Label>
-                      <span className="text-[9px] text-muted-foreground block">Default color for all offering cards</span>
-                    </div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-6 text-[10px] px-2"
-                      onClick={() => {
-                        const updated = buttons.map(b => ({
-                          ...b,
-                          backgroundColor: widget.cardDefaultBgColor || b.backgroundColor,
-                          borderColor: widget.cardDefaultBorderColor || b.borderColor,
-                          textColor: widget.cardDefaultTextColor || b.textColor,
-                          cornerRadius: widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : b.cornerRadius
-                        }));
-                        update({ donationButtons: updated });
-                        toast.success("Applied style to all cards!");
-                      }}
-                    >
-                      Apply To All
-                    </Button>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">All Cards Background Color</Label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="color" 
-                        value={widget.cardDefaultBgColor || '#1e1b4b'} 
-                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
-                        className="h-8 w-8 rounded cursor-pointer border-none" 
-                      />
-                      <Input 
-                        value={widget.cardDefaultBgColor || ''} 
-                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
-                        placeholder="Template Default" 
-                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
-                      />
-                      {widget.cardDefaultBgColor && (
-                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBgColor: undefined })}>Reset</Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">All Cards Border Color</Label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="color" 
-                        value={widget.cardDefaultBorderColor || '#fbbf24'} 
-                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
-                        className="h-8 w-8 rounded cursor-pointer border-none" 
-                      />
-                      <Input 
-                        value={widget.cardDefaultBorderColor || ''} 
-                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
-                        placeholder="Template Default" 
-                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
-                      />
-                      {widget.cardDefaultBorderColor && (
-                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBorderColor: undefined })}>Reset</Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">All Cards Text Color</Label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="color" 
-                        value={widget.cardDefaultTextColor || '#ffffff'} 
-                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
-                        className="h-8 w-8 rounded cursor-pointer border-none" 
-                      />
-                      <Input 
-                        value={widget.cardDefaultTextColor || ''} 
-                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
-                        placeholder="Template Default" 
-                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
-                      />
-                      {widget.cardDefaultTextColor && (
-                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultTextColor: undefined })}>Reset</Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">All Cards Corner Radius ({widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12}px)</Label>
-                    <Slider 
-                      value={[widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12]} 
-                      onValueChange={([v]) => update({ cardDefaultRadius: v })} 
-                      min={0} 
-                      max={40} 
-                      step={1} 
-                      className="py-1"
-                    />
-                  </div>
-                </div>
-
                 <Separator className="my-2 opacity-50" />
 
                 {/* Canvas Background Media (Image or Video) */}
@@ -901,73 +795,135 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                     </div>
                   )}
 
-                  {/* Background Fit Mode & Dim Slider */}
+                  {/* Background Dim Slider */}
                   {(widget.backgroundImageUrl || widget.backgroundVideoUrl) && (
-                    <div className="space-y-2 pt-1 bg-slate-950/40 p-2.5 rounded-lg border border-border/30">
-                      <div className="space-y-1">
-                        <Label className="text-[11px] font-bold">Image / Video Fit Mode</Label>
-                        <Select
-                          value={widget.backgroundFit || 'cover'}
-                          onValueChange={(v) => update({ backgroundFit: v as any })}
-                        >
-                          <SelectTrigger className="h-7 text-xs bg-slate-950/60 border-slate-800">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cover">Cover (Full Screen - 100% Fit)</SelectItem>
-                            <SelectItem value="fill">Fill / Stretch (Exact Screen Size)</SelectItem>
-                            <SelectItem value="contain">Contain (Fit Entire Image)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div className="space-y-1.5 pt-1 bg-slate-950/40 p-2.5 rounded-lg border border-border/30">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[11px] font-bold">Background Dim Overlay</Label>
+                        <span className="text-[11px] font-mono font-bold text-amber-400">{widget.backgroundDim ?? 50}%</span>
                       </div>
-
-                      <div className="space-y-1.5 pt-1">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[11px] font-bold">Background Dim Overlay</Label>
-                          <span className="text-[11px] font-mono font-bold text-amber-400">{widget.backgroundDim ?? 50}%</span>
-                        </div>
-                        <Slider
-                          value={[widget.backgroundDim ?? 50]}
-                          onValueChange={([v]) => update({ backgroundDim: v })}
-                          min={0}
-                          max={90}
-                          step={5}
-                          className="py-1"
-                        />
-                        <p className="text-[9px] text-muted-foreground">
-                          Dims the background media so text and donation cards remain easy to read.
-                        </p>
-                      </div>
+                      <Slider
+                        value={[widget.backgroundDim ?? 50]}
+                        onValueChange={([v]) => update({ backgroundDim: v })}
+                        min={0}
+                        max={90}
+                        step={5}
+                        className="py-1"
+                      />
+                      <p className="text-[9px] text-muted-foreground">
+                        Dims the background media so text and donation cards remain easy to read.
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               <div className="space-y-3.5">
-                {/* Quick Cards Per Row Setting */}
-                <div className="flex items-center justify-between bg-muted/20 border border-border/40 p-2 rounded-lg">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-bold text-foreground block">Cards Per Row</span>
-                    <span className="text-[9px] text-muted-foreground block">Max buttons in 1 row (default: 2)</span>
+                {/* All Cards Default Styling (Placed at the top of Offering Cards) */}
+                <div className="space-y-2.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block">All Cards Styling</Label>
+                      <span className="text-[9px] text-muted-foreground block">Default color for all offering cards</span>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-6 text-[10px] px-2 bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                      onClick={() => {
+                        const updated = buttons.map(b => ({
+                          ...b,
+                          backgroundColor: widget.cardDefaultBgColor || b.backgroundColor,
+                          borderColor: widget.cardDefaultBorderColor || b.borderColor,
+                          textColor: widget.cardDefaultTextColor || b.textColor,
+                          cornerRadius: widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : b.cornerRadius
+                        }));
+                        update({ donationButtons: updated });
+                        toast.success("Applied style to all cards!");
+                      }}
+                    >
+                      Apply To All
+                    </Button>
                   </div>
-                  <div className="flex gap-1 bg-slate-950/60 p-0.5 rounded border border-border/50">
-                    {[2, 3, 4].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => update({ cardsPerRow: num })}
-                        className={cn(
-                          "px-2.5 py-1 rounded text-[10px] font-bold transition-all",
-                          (widget.cardsPerRow || 2) === num
-                            ? "bg-amber-500 text-slate-950 font-black shadow-xs"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                        )}
-                      >
-                        {num}
-                      </button>
-                    ))}
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px]">All Cards Background Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultBgColor || '#1e1b4b'} 
+                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
+                        className="h-7 w-7 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultBgColor || ''} 
+                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-7 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultBgColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBgColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px]">All Cards Border Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultBorderColor || '#fbbf24'} 
+                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
+                        className="h-7 w-7 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultBorderColor || ''} 
+                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-7 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultBorderColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBorderColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px]">All Cards Text Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultTextColor || '#ffffff'} 
+                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
+                        className="h-7 w-7 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultTextColor || ''} 
+                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-7 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultTextColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultTextColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px]">All Cards Corner Radius ({widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12}px)</Label>
+                    <Slider 
+                      value={[widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12]} 
+                      onValueChange={([v]) => update({ cardDefaultRadius: v })} 
+                      min={0} 
+                      max={40} 
+                      step={1} 
+                      className="py-1"
+                    />
                   </div>
                 </div>
+
+                <Separator className="my-1.5 opacity-40" />
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">Offerings List</span>
@@ -1555,31 +1511,34 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
         </>
       )}
 
-      <Separator />
+      {/* ── Universal styling (for non-donation widgets) ── */}
+      {widget.type !== 'donation' && (
+        <>
+          <Separator />
+          <div className="space-y-1.5">
+            <Label className="text-xs">Background Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={widget.backgroundColor || '#000000'} onChange={(e) => update({ backgroundColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
+              <Input value={widget.backgroundColor || 'transparent'} onChange={(e) => update({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono flex-1" />
+            </div>
+          </div>
 
-      {/* ── Universal styling ── */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">Background Color</Label>
-        <div className="flex gap-2">
-          <input type="color" value={widget.backgroundColor || '#000000'} onChange={(e) => update({ backgroundColor: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-none" />
-          <Input value={widget.backgroundColor || 'transparent'} onChange={(e) => update({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono flex-1" />
-        </div>
-      </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Padding ({widget.padding}px)</Label>
+            <Slider value={[widget.padding || 0]} onValueChange={([v]) => update({ padding: v })} min={0} max={60} step={2} />
+          </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-xs">Padding ({widget.padding}px)</Label>
-        <Slider value={[widget.padding || 0]} onValueChange={([v]) => update({ padding: v })} min={0} max={60} step={2} />
-      </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Border Radius ({widget.borderRadius}px)</Label>
+            <Slider value={[widget.borderRadius || 0]} onValueChange={([v]) => update({ borderRadius: v })} min={0} max={50} step={1} />
+          </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-xs">Border Radius ({widget.borderRadius}px)</Label>
-        <Slider value={[widget.borderRadius || 0]} onValueChange={([v]) => update({ borderRadius: v })} min={0} max={50} step={1} />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">Opacity ({widget.opacity}%)</Label>
-        <Slider value={[widget.opacity ?? 100]} onValueChange={([v]) => update({ opacity: v })} min={10} max={100} step={5} />
-      </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Opacity ({widget.opacity}%)</Label>
+            <Slider value={[widget.opacity ?? 100]} onValueChange={([v]) => update({ opacity: v })} min={10} max={100} step={5} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
