@@ -312,8 +312,9 @@ export function SquareOfferingCard({
   const [donorNakshatra, setDonorNakshatra] = useState("");
   const [specialPrayer, setSpecialPrayer] = useState("");
 
-  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
+  const [step, setStep] = useState<'form' | 'payment' | 'success' | 'failed'>('form');
   const [loading, setLoading] = useState(false);
+  const [autoCloseCountdown, setAutoCloseCountdown] = useState(10);
   
   // Payment states
   const [donationId, setDonationId] = useState<string | null>(null);
@@ -334,66 +335,27 @@ export function SquareOfferingCard({
   const badgeDescription = relMeta.tagline;
   const prayerLabel = relMeta.terminology.prayerLabel;
 
-  // Open native in-page Razorpay Checkout Popup on tablets and kiosks
-  const openRazorpayModal = async (orderData: any) => {
-    if (!orderData?.orderId || !orderData?.razorpayKeyId) return;
-
-    if (typeof window !== 'undefined' && !(window as any).Razorpay) {
-      await new Promise<void>((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => resolve();
-        document.body.appendChild(script);
-      });
+  // 10-second auto-close countdown for success and failed modal views
+  useEffect(() => {
+    if (step !== 'success' && step !== 'failed') {
+      setAutoCloseCountdown(10);
+      return;
     }
 
-    if (typeof window !== 'undefined' && (window as any).Razorpay) {
-      const rzp = new (window as any).Razorpay({
-        key: orderData.razorpayKeyId,
-        amount: Math.round(Number(orderData.amount || amount) * 100),
-        currency: "INR",
-        name: relMeta.name || "Temple Offering",
-        description: orderData.purpose || "Sacred Offering",
-        order_id: orderData.orderId,
-        handler: async function (response: any) {
-          try {
-            await fetch(`${API}/donations/public/verify-payment`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                donationId: orderData.donationId,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature
-              })
-            });
-            setStep('success');
-            setTimeout(() => {
-              handleClose();
-            }, 5000);
-          } catch (e) {
-            console.error("Payment verification error:", e);
-          }
-        },
-        prefill: {
-          name: donorName || "Devotee",
-          email: donorEmail || "devotee@temple.org",
-          contact: donorPhone || "9999999999"
-        },
-        theme: {
-          color: "#f59e0b",
-          backdrop_color: "transparent"
-        },
-        modal: {
-          backdropclose: true,
-          escape: true,
-          handleback: true,
-          animation: true
+    setAutoCloseCountdown(10);
+    const interval = setInterval(() => {
+      setAutoCloseCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleClose();
+          return 0;
         }
+        return prev - 1;
       });
-      rzp.open();
-    }
-  };
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [step]);
 
   const defaultFields = {
     name: { enabled: true, required: true },
@@ -425,9 +387,9 @@ export function SquareOfferingCard({
           const data = await res.json();
           if (data.payment_status === 'success') {
             setStep('success');
-            setTimeout(() => {
-              handleClose();
-            }, 5000);
+            return;
+          } else if (data.payment_status === 'failed') {
+            setStep('failed');
             return;
           }
         }
@@ -438,6 +400,8 @@ export function SquareOfferingCard({
       count++;
       if (count < 60) {
         pollTimer = setTimeout(checkStatus, 3000);
+      } else {
+        setStep('failed');
       }
     };
     
@@ -525,11 +489,6 @@ export function SquareOfferingCard({
       setUpiString(qrData);
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
       setStep('payment');
-
-      // Auto-launch official Razorpay Checkout popup if Razorpay is configured!
-      if (data.useRazorpay && data.orderId) {
-        openRazorpayModal({ ...data, amount: amt, purpose: purposeText });
-      }
     } catch (e: any) {
       setErrorMessage(e.message || "Payment mode is not configured or server unreachable. Please check Admin > Payment Settings.");
     } finally {
@@ -929,23 +888,43 @@ export function SquareOfferingCard({
                       </div>
                     )}
                   </div>
+                  <p className="text-[11px] text-slate-500">Scan using any UPI App</p>
+                </div>
+              </div>
+            )}
 
-                  {razorpayOrderData?.orderId && (
-                    <button
-                      onClick={() => openRazorpayModal({ ...razorpayOrderData, amount: activeDonation.amount, purpose: activeDonation.label })}
-                      className="w-full max-w-[220px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs h-9 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-transform active:scale-95"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span>Pay Directly on Screen</span>
-                    </button>
-                  )}
+            {step === 'failed' && (
+              <div className="flex flex-col items-center text-center py-6 space-y-4">
+                <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20 text-rose-400 shadow-inner">
+                  <AlertTriangle className="h-8 w-8 text-rose-400" />
+                </div>
 
+                <div className="space-y-2 select-none">
+                  <h3 className="text-xl font-bold text-slate-100 flex items-center justify-center gap-1.5 text-rose-400">
+                    Payment Unsuccessful
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    The payment was not completed or was cancelled. No amount was deducted.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
                   <button
-                    onClick={simulateSuccess}
-                    className="text-[10px] text-slate-500 hover:text-slate-300 mt-1 bg-slate-900 border border-slate-800/50 px-3 py-1 rounded-lg transition-colors"
+                    onClick={() => setStep('form')}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold rounded-xl shadow-md transition-colors"
                   >
-                    [Developer: Simulate Payment Success]
+                    Try Again
                   </button>
+                  <button
+                    onClick={handleClose}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="text-[11px] text-slate-500 pt-2 font-medium">
+                  Returning to layout in {autoCloseCountdown}s...
                 </div>
               </div>
             )}
@@ -967,7 +946,9 @@ export function SquareOfferingCard({
                   </p>
                 </div>
 
-                <div className="text-[10px] text-slate-500 pt-4">Returning to layout in 5 seconds...</div>
+                <div className="text-[11px] text-slate-400 pt-2 font-medium">
+                  Returning to layout in {autoCloseCountdown}s...
+                </div>
               </div>
             )}
           </div>
