@@ -142,6 +142,16 @@ router.post('/public/initiate', async (req, res) => {
       return res.status(400).json({ error: 'Invalid donation amount' });
     }
 
+    // Ensure at least one payment gateway or UPI is configured BEFORE inserting donation record
+    const hasRazorpay = company.preferred_gateway === 'razorpay' && company.razorpay_key_id && company.razorpay_key_secret;
+    const hasUpi = Boolean(company.upi_id);
+
+    if (!hasRazorpay && !hasUpi) {
+      return res.status(400).json({
+        error: 'Payment system is not initialized. Please configure UPI ID or Razorpay keys in Admin Settings.'
+      });
+    }
+
     try {
       await db.query(
         `INSERT INTO donations (
@@ -197,7 +207,7 @@ router.post('/public/initiate', async (req, res) => {
     }
 
     // 1. Check if Razorpay is selected as preferred gateway and keys are configured
-    if (company.preferred_gateway === 'razorpay' && company.razorpay_key_id && company.razorpay_key_secret) {
+    if (hasRazorpay) {
       try {
         const order = await callRazorpay(
           'POST',
