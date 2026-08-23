@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2, Copy, Wand2, HelpCircle, ExternalLink } from "lucide-react";
+import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2, Copy, Wand2, HelpCircle, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ export default function AdminPaymentSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [showWebhookSecret, setShowWebhookSecret] = useState(false);
 
   // Form Fields
   const [upiId, setUpiId] = useState("");
@@ -50,7 +51,14 @@ export default function AdminPaymentSettingsPage() {
             setUpiId(company.upi_id || "");
             setRazorpayKeyId(company.razorpay_key_id || "");
             setRazorpayKeySecret(company.razorpay_key_secret || "");
-            setRazorpayWebhookSecret(company.razorpay_webhook_secret || "");
+            
+            let webhookSecret = company.razorpay_webhook_secret;
+            if (!webhookSecret) {
+              webhookSecret = 'whsec_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+              await supabase.from("companies").update({ razorpay_webhook_secret: webhookSecret } as any).eq("id", profile.company_id);
+            }
+            setRazorpayWebhookSecret(webhookSecret);
             setRazorpayMode((company as any).razorpay_mode || "test");
             setPreferredGateway("razorpay");
           }
@@ -390,49 +398,39 @@ export default function AdminPaymentSettingsPage() {
                     </div>
                   </div>
 
-                  {/* Webhook Secret Input with Generate & Copy Buttons */}
+                  {/* Webhook Secret Input with Eye Toggle & Copy Button */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold text-slate-300">2. Secret (Copy & Paste in Razorpay Modal)</Label>
-                      {isEditable && (
+                    <Label className="text-xs font-semibold text-slate-300">2. Webhook Secret (Paste in Razorpay Modal)</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          type={showWebhookSecret ? "text" : "password"}
+                          value={razorpayWebhookSecret}
+                          readOnly
+                          className="bg-slate-950/60 border-slate-800 font-mono text-xs text-amber-300 pr-10 selection:bg-amber-500/30"
+                        />
                         <button
                           type="button"
-                          onClick={() => {
-                            const randomSecret = 'whsec_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
-                              .map(b => b.toString(16).padStart(2, '0')).join('');
-                            setRazorpayWebhookSecret(randomSecret);
-                            navigator.clipboard.writeText(randomSecret);
-                            toast.success("Generated and copied new Webhook Secret!");
-                          }}
-                          className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
+                          onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                          title={showWebhookSecret ? "Hide Secret" : "Show Secret"}
                         >
-                          <Wand2 className="h-3 w-3" />
-                          <span>Generate Secret</span>
+                          {showWebhookSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        value={razorpayWebhookSecret}
-                        disabled={!isEditable}
-                        onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
-                        placeholder="Click Generate Secret or enter your custom secret"
-                        className="bg-slate-950/60 border-slate-800 font-mono text-xs text-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                      />
-                      {razorpayWebhookSecret && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          if (razorpayWebhookSecret) {
                             navigator.clipboard.writeText(razorpayWebhookSecret);
                             toast.success("Webhook Secret copied to clipboard!");
-                          }}
-                          className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold shrink-0 h-9"
-                        >
-                          <Copy className="h-3.5 w-3.5 mr-1" /> Copy Secret
-                        </Button>
-                      )}
+                          }
+                        }}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold shrink-0 h-9"
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Copy Secret
+                      </Button>
                     </div>
                   </div>
 
@@ -472,9 +470,8 @@ export default function AdminPaymentSettingsPage() {
                     </p>
                     <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
                       <li>Paste the <strong>Webhook URL</strong> into the <code className="text-emerald-400">Webhook URL</code> field in Razorpay.</li>
-                      <li>Click <strong>Generate Secret</strong> above, click <strong>Copy Secret</strong>, and paste it into the <code className="text-emerald-400">Secret</code> field in Razorpay.</li>
+                      <li>Click the <strong>Eye icon</strong> to view or <strong>Copy Secret</strong>, and paste it into the <code className="text-emerald-400">Secret</code> field in Razorpay.</li>
                       <li>Under <strong>Active Events</strong>, tick <code className="text-emerald-400">payment.captured</code> and <code className="text-emerald-400">order.paid</code>, then click <strong>Create Webhook</strong>.</li>
-                      <li>Finally, click <strong>Save Settings</strong> on this page to store the secret.</li>
                     </ol>
                   </div>
                 </CardContent>
@@ -555,25 +552,27 @@ export default function AdminPaymentSettingsPage() {
 
         {/* Integration Test Dialog */}
         <Dialog open={testDialogOpen} onOpenChange={(o) => !o && handleCancelTest()}>
-          <DialogContent className="max-w-sm sm:max-w-md bg-slate-900 text-foreground border border-slate-800 p-6 flex flex-col items-center">
+          <DialogContent className="max-w-sm sm:max-w-md bg-slate-950 text-slate-100 border border-slate-800 shadow-2xl p-6 flex flex-col items-center rounded-2xl">
             <DialogHeader className="w-full text-center">
-              <DialogTitle className="text-base font-bold flex items-center justify-center gap-2">
-                <QrCode className="h-5 w-5 text-amber-500" /> ₹1 Integration Test Payment
+              <DialogTitle className="text-base font-bold flex items-center justify-center gap-2 text-slate-100">
+                <QrCode className="h-5 w-5 text-amber-400" /> ₹1 Integration Test Payment
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-1">
-                Scan the QR code with any UPI app to transfer ₹1. The screen will instantly confirm once payment is captured.
+              <DialogDescription className="text-xs text-slate-400 mt-1">
+                Scan the QR code or click the checkout button to test live payout receipt.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="my-6 p-4 bg-white rounded-xl shadow-lg flex justify-center items-center relative">
+            <div className="my-5 p-3 bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl flex justify-center items-center relative">
               {testStatus === "initiating" && (
-                <div className="h-[200px] w-[200px] flex flex-col justify-center items-center text-slate-800 text-xs gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-                  <span>Generating QR code...</span>
+                <div className="h-[180px] w-[180px] flex flex-col justify-center items-center text-slate-400 text-xs gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+                  <span>Generating test order...</span>
                 </div>
               )}
               {testQrUrl && (
-                <img src={testQrUrl} alt="₹1 UPI Test QR" className="w-[200px] h-[200px]" />
+                <div className="p-2 bg-white rounded-xl shadow-inner">
+                  <img src={testQrUrl} alt="₹1 UPI Test QR" className="w-[180px] h-[180px] rounded-lg" />
+                </div>
               )}
             </div>
 
