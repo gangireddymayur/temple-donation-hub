@@ -44,16 +44,47 @@ function callRazorpay(method, path, body, keyId, keySecret) {
   });
 }
 
+let schemaEnsured = false;
+async function ensureDonationsSchema() {
+  if (schemaEnsured) return;
+  try {
+    const columns = [
+      { name: 'donor_address', type: 'TEXT NULL' },
+      { name: 'donor_city', type: 'VARCHAR(128) NULL' },
+      { name: 'donor_state', type: 'VARCHAR(128) NULL' },
+      { name: 'donor_pincode', type: 'VARCHAR(32) NULL' },
+      { name: 'donor_gotra', type: 'VARCHAR(128) NULL' },
+      { name: 'donor_nakshatra', type: 'VARCHAR(128) NULL' },
+      { name: 'special_prayer', type: 'TEXT NULL' },
+      { name: 'razorpay_order_id', type: 'VARCHAR(128) NULL' },
+      { name: 'razorpay_payment_id', type: 'VARCHAR(128) NULL' },
+      { name: 'razorpay_signature', type: 'VARCHAR(256) NULL' }
+    ];
+
+    for (const col of columns) {
+      try {
+        const [exists] = await db.query(`SHOW COLUMNS FROM donations LIKE '${col.name}'`);
+        if (exists.length === 0) {
+          await db.query(`ALTER TABLE donations ADD COLUMN ${col.name} ${col.type}`);
+        }
+      } catch (colErr) {
+        console.warn(`[donations.js] Migration notice for column ${col.name}:`, colErr.message);
+      }
+    }
+    schemaEnsured = true;
+  } catch (err) {
+    console.warn('[donations.js] ensureDonationsSchema error:', err.message);
+  }
+}
+
 // ---------------- PUBLIC API ENDPOINTS ----------------
 
 // Initiate a donation and generate payment string/order
 router.post('/public/initiate', async (req, res) => {
   try {
+    await ensureDonationsSchema();
     const {
-      deviceId,
-      companyId,
       amount,
-      purpose,
       donorName,
       donorPhone,
       donorEmail,
@@ -64,27 +95,34 @@ router.post('/public/initiate', async (req, res) => {
       donorGotra,
       donorNakshatra,
       specialPrayer,
+      purpose,
+      deviceId,
       kioskName
-    } = req.body;
-    
-    let resolvedCompanyId = companyId;
+    } = req.body || {};
+
+    let resolvedCompanyId = null;
     let resolvedKioskName = kioskName;
-    const db = require('../lib/db');
 
     if (deviceId) {
       const [devices] = await db.query(
-        'SELECT name, company_id FROM devices WHERE id = :id LIMIT 1',
+        'SELECT id, name, company_id FROM devices WHERE id = :id LIMIT 1',
         { id: deviceId }
       );
-      const device = devices[0];
-      if (device) {
-        if (!resolvedCompanyId) resolvedCompanyId = device.company_id;
-        if (!resolvedKioskName) resolvedKioskName = device.name;
+      if (devices && devices.length > 0) {
+        resolvedCompanyId = devices[0].company_id;
+        resolvedKioskName = devices[0].name || kioskName;
       }
     }
 
     if (!resolvedCompanyId) {
-      return res.status(400).json({ error: 'Company ID or Device ID is required' });
+      const [firstCompany] = await db.query('SELECT id FROM companies LIMIT 1');
+      if (firstCompany && firstCompany.length > 0) {
+        resolvedCompanyId = firstCompany[0].id;
+      }
+    }
+
+    if (!resolvedCompanyId) {
+      return res.status(400).json({ error: 'Temple or company not found' });
     }
 
     const [companies] = await db.query(
@@ -92,8 +130,9 @@ router.post('/public/initiate', async (req, res) => {
       { id: resolvedCompanyId }
     );
     const company = companies[0];
+
     if (!company) {
-      return res.status(404).json({ error: 'Temple company not found' });
+      return res.status(404).json({ error: 'Temple profile not found' });
     }
 
     const donationId = uuid();
@@ -103,35 +142,59 @@ router.post('/public/initiate', async (req, res) => {
       return res.status(400).json({ error: 'Invalid donation amount' });
     }
 
-    await db.query(
-      `INSERT INTO donations (
-        id, company_id, device_id, donor_name, donor_phone, donor_email,
-        donor_address, donor_city, donor_state, donor_pincode, donor_gotra, donor_nakshatra,
-        special_prayer, kiosk_name, amount, purpose, payment_status
-      ) VALUES (
-        :id, :company_id, :device_id, :donor_name, :donor_phone, :donor_email,
-        :donor_address, :donor_city, :donor_state, :donor_pincode, :donor_gotra, :donor_nakshatra,
-        :special_prayer, :kiosk_name, :amount, :purpose, 'pending'
-      )`,
-      {
-        id: donationId,
-        company_id: resolvedCompanyId,
-        device_id: deviceId || null,
-        donor_name: donorName || 'Devotee',
-        donor_phone: donorPhone || null,
-        donor_email: donorEmail || null,
-        donor_address: donorAddress || null,
-        donor_city: donorCity || null,
-        donor_state: donorState || null,
-        donor_pincode: donorPincode || null,
-        donor_gotra: donorGotra || null,
-        donor_nakshatra: donorNakshatra || null,
-        special_prayer: specialPrayer || null,
-        kiosk_name: resolvedKioskName || 'Kiosk Player',
-        amount: finalAmount,
-        purpose: purpose || 'General Daan'
-      }
-    );
+    try {
+      await db.query(
+        `INSERT INTO donations (
+          id, company_id, device_id, donor_name, donor_phone, donor_email,
+          donor_address, donor_city, donor_state, donor_pincode, donor_gotra, donor_nakshatra,
+          special_prayer, kiosk_name, amount, purpose, payment_status
+        ) VALUES (
+          :id, :company_id, :device_id, :donor_name, :donor_phone, :donor_email,
+          :donor_address, :donor_city, :donor_state, :donor_pincode, :donor_gotra, :donor_nakshatra,
+          :special_prayer, :kiosk_name, :amount, :purpose, 'pending'
+        )`,
+        {
+          id: donationId,
+          company_id: resolvedCompanyId,
+          device_id: deviceId || null,
+          donor_name: donorName || 'Devotee',
+          donor_phone: donorPhone || null,
+          donor_email: donorEmail || null,
+          donor_address: donorAddress || null,
+          donor_city: donorCity || null,
+          donor_state: donorState || null,
+          donor_pincode: donorPincode || null,
+          donor_gotra: donorGotra || null,
+          donor_nakshatra: donorNakshatra || null,
+          special_prayer: specialPrayer || null,
+          kiosk_name: resolvedKioskName || 'Kiosk Player',
+          amount: finalAmount,
+          purpose: purpose || 'General Daan'
+        }
+      );
+    } catch (insertErr) {
+      console.warn('[donations.js] Full insert failed, attempting standard columns fallback:', insertErr.message);
+      await db.query(
+        `INSERT INTO donations (
+          id, company_id, device_id, donor_name, donor_phone, donor_email,
+          kiosk_name, amount, purpose, payment_status
+        ) VALUES (
+          :id, :company_id, :device_id, :donor_name, :donor_phone, :donor_email,
+          :kiosk_name, :amount, :purpose, 'pending'
+        )`,
+        {
+          id: donationId,
+          company_id: resolvedCompanyId,
+          device_id: deviceId || null,
+          donor_name: donorName || 'Devotee',
+          donor_phone: donorPhone || null,
+          donor_email: donorEmail || null,
+          kiosk_name: resolvedKioskName || 'Kiosk Player',
+          amount: finalAmount,
+          purpose: purpose || 'General Daan'
+        }
+      );
+    }
 
     // 1. Check if Razorpay is selected as preferred gateway and keys are configured
     if (company.preferred_gateway === 'razorpay' && company.razorpay_key_id && company.razorpay_key_secret) {

@@ -598,7 +598,7 @@ export function SquareOfferingCard({
 
       {/* Devotee Payment Dialog Overlay (Mounted to document.body via Portal to escape all ancestor transforms) */}
       {activeDonation && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm animate-fade-in p-4 sm:p-6 overflow-y-auto">
           <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left text-white font-sans my-auto">
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
