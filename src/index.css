@@ -170,3 +170,12 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Razorpay Checkout Frame Modal Backdrop: translucent dark blurred background instead of solid white */
+iframe.razorpay-checkout-frame,
+iframe[name="razorpay-checkout-frame"] {
+  background: rgba(15, 23, 42, 0.75) !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}

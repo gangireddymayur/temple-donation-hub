@@ -166,6 +166,37 @@ export default function DonationsContentPage() {
     }
   };
 
+  // Helper to determine real user-facing payment status
+  const getDisplayStatus = (status: string, createdAt: string) => {
+    if (status === 'success') {
+      return {
+        key: 'success',
+        label: 'Success',
+        badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      };
+    }
+    if (status === 'failed') {
+      return {
+        key: 'failed',
+        label: 'Failed',
+        badgeClass: 'bg-red-500/10 text-red-400 border-red-500/20'
+      };
+    }
+    const ageMs = Date.now() - new Date(createdAt).getTime();
+    if (ageMs > 15 * 60 * 1000) {
+      return {
+        key: 'unsuccessful',
+        label: 'Unsuccessful',
+        badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+      };
+    }
+    return {
+      key: 'pending',
+      label: 'In Progress',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+    };
+  };
+
   // Filters and searches (Default latest first)
   const filtered = donations.filter(d => {
     const matchesSearch = 
@@ -176,7 +207,11 @@ export default function DonationsContentPage() {
       (d.kiosk_name || "").toLowerCase().includes(search.toLowerCase()) ||
       (d.razorpay_payment_id || "").toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || d.payment_status === statusFilter;
+    const displayStatus = getDisplayStatus(d.payment_status, d.created_at);
+    const matchesStatus = 
+      statusFilter === "all" || 
+      d.payment_status === statusFilter || 
+      displayStatus.key === statusFilter;
 
     let matchesDate = true;
     if (fromDate) {
@@ -236,6 +271,7 @@ export default function DonationsContentPage() {
         const dObj = new Date(d.created_at);
         const dateStr = dObj.toLocaleDateString("en-IN", { year: 'numeric', month: 'short', day: 'numeric' });
         const timeStr = dObj.toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const statusMeta = getDisplayStatus(d.payment_status, d.created_at);
 
         return [
           dateStr,
@@ -255,7 +291,7 @@ export default function DonationsContentPage() {
           d.kiosk_name || "",
           d.razorpay_order_id || "",
           d.razorpay_payment_id || "",
-          d.payment_status.toUpperCase()
+          statusMeta.label.toUpperCase()
         ];
       });
 
@@ -396,13 +432,14 @@ export default function DonationsContentPage() {
                     </div>
 
                     <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}>
-                      <SelectTrigger className="h-8 w-32 bg-slate-950/40 border-border/60 text-xs">
+                      <SelectTrigger className="h-8 w-36 bg-slate-950/40 border-border/60 text-xs">
                         <SelectValue placeholder="All Status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Status</SelectItem>
                         <SelectItem value="success">Success</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="unsuccessful">Unsuccessful</SelectItem>
+                        <SelectItem value="pending">In Progress</SelectItem>
                         <SelectItem value="failed">Failed</SelectItem>
                       </SelectContent>
                     </Select>
@@ -543,21 +580,14 @@ export default function DonationsContentPage() {
                             {d.razorpay_payment_id || d.razorpay_order_id || "—"}
                           </TableCell>
                           <TableCell className="text-center">
-                            {d.payment_status === 'success' && (
-                              <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
-                                Success
-                              </span>
-                            )}
-                            {d.payment_status === 'pending' && (
-                              <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
-                                Pending
-                              </span>
-                            )}
-                            {d.payment_status === 'failed' && (
-                              <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
-                                Failed
-                              </span>
-                            )}
+                            {(() => {
+                              const s = getDisplayStatus(d.payment_status, d.created_at);
+                              return (
+                                <span className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase", s.badgeClass)}>
+                                  {s.label}
+                                </span>
+                              );
+                            })()}
                           </TableCell>
                         </TableRow>
                       ))}

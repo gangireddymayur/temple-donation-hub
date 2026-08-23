@@ -381,7 +381,14 @@ export function SquareOfferingCard({
           contact: donorPhone || "9999999999"
         },
         theme: {
-          color: "#f59e0b"
+          color: "#f59e0b",
+          backdrop_color: "transparent"
+        },
+        modal: {
+          backdropclose: true,
+          escape: true,
+          handleback: true,
+          animation: true
         }
       });
       rzp.open();
