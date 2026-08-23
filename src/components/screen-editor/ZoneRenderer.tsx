@@ -1549,43 +1549,37 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           {purpose && <span className="text-[9px] text-stone-500 uppercase tracking-widest font-bold">{purpose}</span>}
         </div>
 
-        {/* Scrollable Container with Grid */}
-        <div 
-          className="relative z-10 flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center p-4 sm:p-6"
-          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
-        >
-          <div className="w-full flex justify-center pb-8 pt-2 shrink-0">
-            <div className={gridClass}>
-              {visibleButtons.map((btn) => {
-                const minConfig: DonationButtonConfig = {
-                  ...btn,
-                  backgroundColor: btn.backgroundColor || widget.cardDefaultBgColor || 'transparent',
-                  borderColor: btn.borderColor || widget.cardDefaultBorderColor || 'rgba(255,255,255,0.1)',
-                  textColor: btn.textColor || widget.cardDefaultTextColor || '#fafaf9',
-                  cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : (widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 8),
-                  hoverEffect: btn.hoverEffect || 'scale',
-                  clickAnimation: btn.clickAnimation || 'pop',
-                  shadow: 'none',
-                };
-                return (
-                  <SquareOfferingCard 
-                    key={btn.id} 
-                    config={minConfig} 
-                    interactive={interactive}
-                    isSelected={btn.id === selectedBtnId}
-                    onSelect={() => handleSelectBtn(btn.id)}
-                    customerInfoConfig={customerInfoConfig}
-                    themeStyle="minimal"
-                  />
-                );
-              })}
-              {visibleButtons.length === 0 && (
-                <div className="text-xs text-stone-500 py-8">
-                  No seva options configured
-                </div>
-              )}
+        {/* Horizontal Columns Container */}
+        <div className="relative z-10 flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900">
+          {visibleButtons.map((btn) => {
+            const minConfig: DonationButtonConfig = {
+              ...btn,
+              backgroundColor: btn.backgroundColor || widget.cardDefaultBgColor || 'transparent',
+              borderColor: btn.borderColor || widget.cardDefaultBorderColor || 'transparent', // borders handled by divide-x parent
+              textColor: btn.textColor || widget.cardDefaultTextColor || '#fafaf9',
+              cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : (widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 0), // stretched column shape
+              hoverEffect: btn.hoverEffect || 'scale',
+              clickAnimation: btn.clickAnimation || 'pop',
+              shadow: 'none',
+            };
+            return (
+              <div key={btn.id} className="flex-1 h-full min-w-0">
+                <SquareOfferingCard 
+                  config={minConfig} 
+                  interactive={interactive}
+                  isSelected={btn.id === selectedBtnId}
+                  onSelect={() => handleSelectBtn(btn.id)}
+                  customerInfoConfig={customerInfoConfig}
+                  themeStyle="minimal"
+                />
+              </div>
+            );
+          })}
+          {visibleButtons.length === 0 && (
+            <div className="w-full h-full flex items-center justify-center text-xs text-stone-500 py-8">
+              No seva options configured
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
