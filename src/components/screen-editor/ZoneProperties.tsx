@@ -600,47 +600,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Font Family</Label>
-                  <select
-                    value={widget.donationTitleFontFamily || ''}
-                    onChange={(e) => update({ 
-                      donationTitleFontFamily: e.target.value || undefined,
-                      fontFamily: e.target.value || undefined
-                    })}
-                    className="w-full h-8 text-xs rounded-md border border-input bg-background px-3 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-                  >
-                    <option value="">Default Template Font</option>
-                    <optgroup label="Indian & Temple Scripts" className="bg-zinc-900 text-amber-300 font-bold">
-                      {SUPPORTED_FONTS.filter(f => f.category === 'Indian & Temple').map(f => (
-                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
-                          {f.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Modern Sans" className="bg-zinc-900 text-sky-300 font-bold">
-                      {SUPPORTED_FONTS.filter(f => f.category === 'Modern Sans').map(f => (
-                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
-                          {f.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Classic Serif" className="bg-zinc-900 text-emerald-300 font-bold">
-                      {SUPPORTED_FONTS.filter(f => f.category === 'Classic Serif').map(f => (
-                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
-                          {f.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Display" className="bg-zinc-900 text-purple-300 font-bold">
-                      {SUPPORTED_FONTS.filter(f => f.category === 'Display').map(f => (
-                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
-                          {f.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
+
 
                 <div className="space-y-1.5">
                   <Label className="text-xs">Title Font Size ({widget.donationTitleFontSize || 24}px)</Label>
@@ -676,32 +636,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Max Cards Per Row</Label>
-                    <span className="text-[10px] text-amber-400 font-mono font-bold">{(widget.cardsPerRow || 2)} in a row</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950/40 p-1 rounded-lg border border-border/40 text-xs">
-                    {[2, 3, 4].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => update({ cardsPerRow: num })}
-                        className={cn(
-                          "py-1.5 rounded text-[11px] font-bold transition-all text-center",
-                          (widget.cardsPerRow || 2) === num
-                            ? "bg-amber-500 text-slate-950 shadow-xs font-black"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                        )}
-                      >
-                        {num} Cards
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[9px] text-muted-foreground">
-                    Sets max cards in 1 row (2, 3, or 4). Remaining cards scroll vertically.
-                  </p>
-                </div>
+
 
                 <Separator className="my-2 opacity-50" />
 
@@ -819,7 +754,35 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
               </div>
             ) : (
               <div className="space-y-3.5">
-                {/* All Cards Default Styling (Placed at the top of Offering Cards) */}
+                {/* Max Cards Per Row (Placed at the very top of Offering Cards) */}
+                <div className="space-y-1.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Max Cards Per Row</Label>
+                    <span className="text-[10px] text-amber-400 font-mono font-bold">{(widget.cardsPerRow || 2)} in a row</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-border/40 text-xs">
+                    {[2, 3, 4].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => update({ cardsPerRow: num })}
+                        className={cn(
+                          "py-1.5 rounded text-[11px] font-bold transition-all text-center",
+                          (widget.cardsPerRow || 2) === num
+                            ? "bg-amber-500 text-slate-950 shadow-xs font-black"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                      >
+                        {num} Cards
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">
+                    Sets max cards in 1 row (2, 3, or 4). Remaining cards scroll vertically.
+                  </p>
+                </div>
+
+                {/* All Cards Default Styling */}
                 <div className="space-y-2.5 bg-slate-950/40 p-3 rounded-xl border border-border/50">
                   <div className="flex items-center justify-between">
                     <div>

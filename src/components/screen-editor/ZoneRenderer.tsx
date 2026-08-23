@@ -554,7 +554,7 @@ export function SquareOfferingCard({
           {/* Photo / Icon */}
           {themeStyle === 'minimal' ? (
             config.photoUrl ? (
-              <img src={config.photoUrl} alt="" className="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-full border-2 border-orange-500 p-0.5 bg-stone-900/60 shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-105" />
+              <img src={config.photoUrl} alt="" className="h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-full border-2 border-orange-500 p-0.5 bg-stone-900/60 shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-105" />
             ) : (
               <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full border-2 border-orange-500/80 flex items-center justify-center bg-orange-500/10 shrink-0 transition-transform duration-300 group-hover:scale-105">
                 <Coins className="h-4 w-4 text-orange-400" />
@@ -562,7 +562,7 @@ export function SquareOfferingCard({
             )
           ) : (
             config.photoUrl ? (
-              <img src={config.photoUrl} alt="" className="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
+              <img src={config.photoUrl} alt="" className="h-9 w-9 sm:h-10 sm:w-10 object-cover rounded-full shadow bg-black/10 border border-white/10 p-0.5 shrink-0" />
             ) : (
               <Coins className="h-5 w-5 text-amber-400 shrink-0" />
             )
@@ -1211,7 +1211,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         >
           <div className="flex flex-col items-center gap-2 sm:gap-2.5 mb-5 sm:mb-7 text-center max-w-xl shrink-0 pt-1">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-11 sm:h-12 w-11 sm:w-12 object-contain rounded-full shadow bg-black/20 border border-white/10 p-0.5 backdrop-blur-xs" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-11 sm:h-12 w-11 sm:w-12 object-cover rounded-full shadow bg-black/20 border border-white/10 p-0.5 backdrop-blur-xs" />
             ) : (
               <LayoutGrid className="h-8 sm:h-9 w-8 sm:w-9 text-amber-400 drop-shadow" />
             )}
@@ -1296,7 +1296,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         >
           <div className="flex flex-col items-center gap-2 sm:gap-2.5 mb-5 sm:mb-7 text-center max-w-xl shrink-0 pt-1">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-cover rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
             ) : (
               <div className="h-12 w-12 rounded-full border-2 border-amber-600 flex items-center justify-center bg-amber-500/10">
                 <span className="text-xl font-bold text-amber-700">ॐ</span>
@@ -1376,7 +1376,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         >
           <div className="flex flex-col items-center gap-2.5 sm:gap-3 mb-5 sm:mb-7 text-center max-w-xl shrink-0 pt-1">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-cover rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
             ) : (
               <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
                 <Sparkles className="h-6 w-6 text-sky-400" />
@@ -1456,7 +1456,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         >
           <div className="flex flex-col items-center gap-2 sm:gap-2.5 mb-5 sm:mb-7 text-center max-w-xl shrink-0 pt-1">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-cover rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
             ) : (
               <div className="h-12 w-12 rounded-full border border-amber-500 bg-amber-500/10 flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-amber-400" />
@@ -1538,7 +1538,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         <div className={cn("w-full bg-[#0a0a0a]/90 backdrop-blur border-b border-stone-900 py-3.5 px-6 flex items-center justify-between shrink-0 z-10", !interactive ? "pr-28" : "")}>
           <div className="flex items-center gap-2.5">
             {widget.templeLogoUrl ? (
-              <img src={widget.templeLogoUrl} alt="Logo" className="h-8 w-8 object-contain rounded" />
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-8 w-8 object-cover rounded" />
             ) : (
               <div className="h-7 w-7 rounded bg-stone-900 border border-stone-850 flex items-center justify-center">
                 <LayoutGrid className="h-3.5 w-3.5 text-orange-500" />
@@ -1608,7 +1608,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       >
         <div className="flex flex-col items-center gap-2.5 sm:gap-3 mb-5 sm:mb-7 text-center max-w-xl shrink-0 pt-1">
           {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-cover rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
           ) : (
             <LayoutGrid className="h-10 w-10 text-amber-400" />
           )}
