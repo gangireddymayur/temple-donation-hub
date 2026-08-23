@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, type DragEvent } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import {
   ScreenZone,
@@ -594,10 +595,10 @@ export function SquareOfferingCard({
         </div>
       </button>
 
-      {/* Devotee Payment Dialog Overlay */}
-      {activeDonation && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-6">
-          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left text-white font-sans">
+      {/* Devotee Payment Dialog Overlay (Mounted to document.body via Portal to escape all ancestor transforms) */}
+      {activeDonation && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 backdrop-blur-lg animate-fade-in p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left text-white font-sans my-auto">
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -626,7 +627,10 @@ export function SquareOfferingCard({
                 <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
                   <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Selected offering</div>
                   <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <div className="text-xs text-slate-400 mt-1">{activeDonation.label}</div>
+                  <div className="text-sm font-semibold text-slate-200 mt-1">{activeDonation.label}</div>
+                  {description && (
+                    <div className="text-xs text-slate-400 mt-1.5 leading-relaxed">{description}</div>
+                  )}
                 </div>
 
                 <div className="space-y-3.5 pt-2 max-h-[300px] overflow-y-auto px-1 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800">
@@ -862,7 +866,8 @@ export function SquareOfferingCard({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
