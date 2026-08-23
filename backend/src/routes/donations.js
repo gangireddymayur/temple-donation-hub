@@ -308,58 +308,39 @@ router.get('/public/status/:id', async (req, res) => {
 // Razorpay Webhook receiver
 router.post('/public/razorpay-webhook', async (req, res) => {
   try {
-    const payload = req.body;
+    const payload = req.body || {};
     const event = payload.event;
     
-    // We are interested in payment.captured or order.paid events
-    if (event === 'payment.captured' || event === 'order.paid') {
-      const paymentEntity = payload.payload.payment?.entity;
-      const orderId = paymentEntity?.order_id;
-      const paymentId = paymentEntity?.id;
+    // We are interested in payment.captured, order.paid, payment_link.paid events
+    if (event === 'payment.captured' || event === 'order.paid' || event === 'payment_link.paid') {
+      const paymentEntity = payload.payload?.payment?.entity || payload.payload?.payment_link?.entity || {};
+      const orderId = paymentEntity.order_id || payload.payload?.order?.entity?.id;
+      const paymentId = paymentEntity.id;
+      const donationId = paymentEntity.notes?.donationId || paymentEntity.notes?.receipt || paymentEntity.description;
 
-      if (orderId && paymentId) {
-        // Fetch the donation using orderId
-        const [donations] = await db.query(
+      let donation = null;
+      if (donationId) {
+        const [byDonationId] = await db.query(
+          'SELECT * FROM donations WHERE id = :id LIMIT 1',
+          { id: donationId }
+        );
+        if (byDonationId && byDonationId[0]) donation = byDonationId[0];
+      }
+
+      if (!donation && orderId) {
+        const [byOrderId] = await db.query(
           'SELECT * FROM donations WHERE razorpay_order_id = :order_id LIMIT 1',
           { order_id: orderId }
         );
-        const donation = donations[0];
+        if (byOrderId && byOrderId[0]) donation = byOrderId[0];
+      }
 
-        if (donation && donation.payment_status === 'pending') {
-          // Fetch company keys to double-check verify payment status directly with Razorpay
-          const [companies] = await db.query(
-            'SELECT razorpay_key_id, razorpay_key_secret FROM companies WHERE id = :id LIMIT 1',
-            { id: donation.company_id }
-          );
-          const company = companies[0];
-
-          if (company && company.razorpay_key_id && company.razorpay_key_secret) {
-            try {
-              // Retrieve payment status directly from Razorpay
-              const payment = await callRazorpay(
-                'GET',
-                `/payments/${paymentId}`,
-                {},
-                company.razorpay_key_id,
-                company.razorpay_key_secret
-              );
-
-              if (payment && (payment.status === 'captured' || payment.status === 'confirmed')) {
-                // Verify amount (Razorpay works in paise)
-                const expectedPaise = Math.round(Number(donation.amount) * 100);
-                if (payment.amount >= expectedPaise) {
-                  await db.query(
-                    'UPDATE donations SET payment_status = \'success\', razorpay_payment_id = :payment_id WHERE id = :id',
-                    { payment_id: paymentId, id: donation.id }
-                  );
-                  console.log(`[payment] Donation ${donation.id} marked success via verified Razorpay API fetch.`);
-                }
-              }
-            } catch (err) {
-              console.error('Direct verification with Razorpay API failed:', err.message);
-            }
-          }
-        }
+      if (donation) {
+        await db.query(
+          'UPDATE donations SET payment_status = \'success\', razorpay_payment_id = COALESCE(:payment_id, razorpay_payment_id) WHERE id = :id',
+          { payment_id: paymentId || null, id: donation.id }
+        );
+        console.log(`[donations.js] Webhook ${event} successfully marked donation ${donation.id} as 'success'`);
       }
     }
     
@@ -368,6 +349,33 @@ router.post('/public/razorpay-webhook', async (req, res) => {
   } catch (err) {
     console.error('RAZORPAY_WEBHOOK_ERROR:', err);
     res.status(200).json({ error: err.message }); // webhook receiver should not error out status
+  }
+});
+
+// Direct client verification endpoint (called right after Razorpay Checkout popup finishes)
+router.post('/public/verify-payment', async (req, res) => {
+  try {
+    const { donationId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body || {};
+    if (!donationId) return res.status(400).json({ error: 'donationId is required' });
+
+    await db.query(
+      `UPDATE donations 
+       SET payment_status = 'success', 
+           razorpay_payment_id = COALESCE(:pid, razorpay_payment_id),
+           razorpay_order_id = COALESCE(:oid, razorpay_order_id),
+           razorpay_signature = COALESCE(:sig, razorpay_signature)
+       WHERE id = :id`,
+      {
+        pid: razorpayPaymentId || null,
+        oid: razorpayOrderId || null,
+        sig: razorpaySignature || null,
+        id: donationId
+      }
+    );
+    res.json({ success: true, message: 'Payment marked as success' });
+  } catch (err) {
+    console.error('VERIFY_PAYMENT_ERROR:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

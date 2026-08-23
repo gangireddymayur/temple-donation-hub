@@ -87,6 +87,60 @@ export default function AdminPaymentSettingsPage() {
   };
 
   const [testPaymentLink, setTestPaymentLink] = useState<string | null>(null);
+  const [testPayload, setTestPayload] = useState<any>(null);
+
+  // Load and launch official Razorpay Checkout popup
+  const openRazorpayCheckout = async (payload: any) => {
+    if (!payload?.orderId || !payload?.razorpayKeyId) return;
+
+    if (typeof window !== 'undefined' && !(window as any).Razorpay) {
+      await new Promise<void>((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve();
+        document.body.appendChild(script);
+      });
+    }
+
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      const rzp = new (window as any).Razorpay({
+        key: payload.razorpayKeyId,
+        amount: 100, // ₹1 = 100 paise
+        currency: "INR",
+        name: "Temple Donation Hub",
+        description: "₹1 Payment Integration Test",
+        order_id: payload.orderId,
+        handler: async function (response: any) {
+          try {
+            await fetch(`${API}/donations/public/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                donationId: payload.donationId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+            setTestStatus("success");
+            setPollingActive(false);
+            toast.success("✓ Payment Verified & Captured Successfully!");
+          } catch (e) {
+            console.error("Payment verification error:", e);
+          }
+        },
+        prefill: {
+          name: user?.email ? user.email.split('@')[0] : "Devotee",
+          email: user?.email || "devotee@temple.org",
+          contact: "9999999999"
+        },
+        theme: {
+          color: "#10b981"
+        }
+      });
+      rzp.open();
+    }
+  };
 
   // Connection Test Flow
   const handleStartTest = async () => {
@@ -101,6 +155,7 @@ export default function AdminPaymentSettingsPage() {
     setTestQrUrl(null);
     setTestDonationId(null);
     setTestPaymentLink(null);
+    setTestPayload(null);
 
     try {
       const res = await fetch(`${API}/donations/public/test-connection`, {
@@ -121,6 +176,7 @@ export default function AdminPaymentSettingsPage() {
 
       const payload = await res.json();
       setTestDonationId(payload.donationId);
+      setTestPayload(payload);
 
       // Generate the test QR using live Razorpay Payment Link or direct merchant UPI
       if (payload.paymentLink) {
@@ -129,6 +185,11 @@ export default function AdminPaymentSettingsPage() {
       } else if (payload.upiString) {
         setTestPaymentLink(payload.upiString.startsWith("http") ? payload.upiString : null);
         setTestQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(payload.upiString)}`);
+      }
+
+      // Auto-launch Razorpay Checkout popup directly on screen if order was created!
+      if (payload.useRazorpay && payload.orderId) {
+        openRazorpayCheckout(payload);
       }
 
       setTestStatus("polling");
@@ -537,15 +598,27 @@ export default function AdminPaymentSettingsPage() {
                       <span>Waiting for Razorpay webhook confirmation...</span>
                     </div>
 
+                    {testPayload?.orderId && (
+                      <Button
+                        type="button"
+                        onClick={() => openRazorpayCheckout(testPayload)}
+                        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs h-9 shadow-md shadow-amber-500/20 gap-1.5"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Launch Razorpay Checkout Popup</span>
+                      </Button>
+                    )}
+
                     {testPaymentLink && (
                       <Button
                         asChild
                         size="sm"
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-9 shadow-md shadow-emerald-500/20 gap-1.5"
+                        variant="outline"
+                        className="w-full text-slate-200 border-slate-700 hover:bg-slate-800 font-medium text-xs h-8 gap-1.5"
                       >
                         <a href={testPaymentLink} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span>Open Live Razorpay Checkout in Browser</span>
+                          <ExternalLink className="h-3 w-3" />
+                          <span>Open Hosted Razorpay Page</span>
                         </a>
                       </Button>
                     )}
