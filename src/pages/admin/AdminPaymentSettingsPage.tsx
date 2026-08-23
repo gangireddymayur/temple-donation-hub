@@ -261,12 +261,12 @@ export default function AdminPaymentSettingsPage() {
                           value={razorpayKeyId}
                           disabled={!isEditable}
                           onChange={(e) => setRazorpayKeyId(e.target.value)}
-                          placeholder="rzp_test_..."
+                          placeholder="rzp_test_... or rzp_live_..."
                           className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Razorpay Key Secret</Label>
+                        <Label className="text-xs">Razorpay Key Secret (API Secret)</Label>
                         <Input
                           type="password"
                           value={razorpayKeySecret}
@@ -277,55 +277,11 @@ export default function AdminPaymentSettingsPage() {
                         />
                       </div>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs">Razorpay Webhook Secret (Signature Validation)</Label>
-                        {isEditable && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const randomSecret = 'whsec_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                                .map(b => b.toString(16).padStart(2, '0')).join('');
-                              setRazorpayWebhookSecret(randomSecret);
-                              navigator.clipboard.writeText(randomSecret);
-                              toast.success("Generated and copied new Webhook Secret!");
-                            }}
-                            className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
-                          >
-                            <Wand2 className="h-3 w-3" />
-                            <span>Generate Secret</span>
-                          </button>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          value={razorpayWebhookSecret}
-                          disabled={!isEditable}
-                          onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
-                          placeholder="e.g. whsec_temple_donation_secret_2026"
-                          className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed pr-20"
-                        />
-                        {razorpayWebhookSecret && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(razorpayWebhookSecret);
-                              toast.success("Webhook Secret copied to clipboard!");
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded font-medium border border-slate-700 transition-colors"
-                          >
-                            Copy
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Dedicated Razorpay Webhook Setup Card */}
+              {/* Dedicated Razorpay Webhook Setup Card matching Razorpay Modal */}
               <Card className="border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.04] to-transparent shadow-md">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -348,7 +304,7 @@ export default function AdminPaymentSettingsPage() {
                 <CardContent className="space-y-4">
                   {/* Webhook URL Input with 1-Click Copy */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-300">1. Webhook URL (Paste in Razorpay Dashboard)</Label>
+                    <Label className="text-xs font-semibold text-slate-300">1. Webhook URL (Copy & Paste in Razorpay Modal)</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         readOnly
@@ -370,15 +326,61 @@ export default function AdminPaymentSettingsPage() {
                     </div>
                   </div>
 
+                  {/* Webhook Secret Input with Generate & Copy Buttons */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-slate-300">2. Secret (Copy & Paste in Razorpay Modal)</Label>
+                      {isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const randomSecret = 'whsec_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
+                              .map(b => b.toString(16).padStart(2, '0')).join('');
+                            setRazorpayWebhookSecret(randomSecret);
+                            navigator.clipboard.writeText(randomSecret);
+                            toast.success("Generated and copied new Webhook Secret!");
+                          }}
+                          className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <Wand2 className="h-3 w-3" />
+                          <span>Generate Secret</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={razorpayWebhookSecret}
+                        disabled={!isEditable}
+                        onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
+                        placeholder="Click Generate Secret or enter your custom secret"
+                        className="bg-slate-950/60 border-slate-800 font-mono text-xs text-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                      />
+                      {razorpayWebhookSecret && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(razorpayWebhookSecret);
+                            toast.success("Webhook Secret copied to clipboard!");
+                          }}
+                          className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold shrink-0 h-9"
+                        >
+                          <Copy className="h-3.5 w-3.5 mr-1" /> Copy Secret
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Active Events Checklist */}
                   <div className="space-y-2 pt-1">
-                    <Label className="text-xs font-semibold text-slate-300">2. Active Events to Select in Razorpay Dashboard</Label>
+                    <Label className="text-xs font-semibold text-slate-300">3. Active Events to Check in Razorpay Modal</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-950/40 border border-slate-800/80 rounded-xl p-3 text-xs">
                       <div className="flex items-start gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-mono font-bold text-slate-200">payment.captured</p>
-                          <p className="text-[11px] text-slate-400">Triggered when donation money is received</p>
+                          <p className="text-[11px] text-slate-400">Triggered when devotee's money is received</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
@@ -402,12 +404,13 @@ export default function AdminPaymentSettingsPage() {
                   <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 space-y-1.5">
                     <p className="font-bold text-slate-200 flex items-center gap-1.5">
                       <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
-                      How to add in Razorpay:
+                      How to fill the Razorpay Webhooks Modal:
                     </p>
                     <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
-                      <li>Log in to Razorpay Dashboard $\rightarrow$ <strong>Settings</strong> $\rightarrow$ <strong>Webhooks</strong> $\rightarrow$ Click <strong>Add New Webhook</strong>.</li>
-                      <li>Paste the <strong>Webhook URL</strong> above into the Webhook URL field.</li>
+                      <li>Paste the <strong>Webhook URL</strong> into the <code className="text-emerald-400">Webhook URL</code> field in Razorpay.</li>
+                      <li>Click <strong>Generate Secret</strong> above, click <strong>Copy Secret</strong>, and paste it into the <code className="text-emerald-400">Secret</code> field in Razorpay.</li>
                       <li>Under <strong>Active Events</strong>, tick <code className="text-emerald-400">payment.captured</code> and <code className="text-emerald-400">order.paid</code>, then click <strong>Create Webhook</strong>.</li>
+                      <li>Finally, click <strong>Save Settings</strong> on this page to store the secret.</li>
                     </ol>
                   </div>
                 </CardContent>
