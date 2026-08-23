@@ -26,6 +26,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const superAdminNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },

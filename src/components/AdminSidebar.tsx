@@ -31,6 +31,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const adminNav = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
