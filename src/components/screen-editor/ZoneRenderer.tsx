@@ -1556,7 +1556,12 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
         </div>
 
         {/* Horizontal Columns Container */}
-        <div className="relative z-10 flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900">
+        <div 
+          className={cn(
+            "relative z-10 flex-1 w-full flex flex-row items-stretch divide-x divide-stone-900 overflow-y-hidden",
+            N > cardsPerRow ? "overflow-x-auto" : "overflow-hidden"
+          )}
+        >
           {visibleButtons.map((btn) => {
             const minConfig: DonationButtonConfig = {
               ...btn,
@@ -1568,8 +1573,18 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
               clickAnimation: btn.clickAnimation || 'pop',
               shadow: 'none',
             };
+            const colWidth = `${100 / cardsPerRow}%`;
             return (
-              <div key={btn.id} className="flex-1 h-full min-w-0">
+              <div 
+                key={btn.id} 
+                className="h-full shrink-0 flex-1 min-w-0 transition-all duration-300"
+                style={{
+                  width: colWidth,
+                  minWidth: N > cardsPerRow ? colWidth : undefined,
+                  maxWidth: colWidth,
+                  flexBasis: colWidth,
+                }}
+              >
                 <SquareOfferingCard 
                   config={minConfig} 
                   interactive={interactive}
