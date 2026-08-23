@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Image } from "lucide-react";
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Image, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { PlaylistEditor } from "./PlaylistEditor";
@@ -902,30 +902,45 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                       <div 
                         key={btn.id} 
                         className={cn(
-                          "rounded-lg border border-border p-2.5 space-y-2 transition-all",
-                          isEditing ? "bg-muted/50 border-primary" : "bg-muted/15 hover:bg-muted/25"
+                          "rounded-xl border p-2.5 space-y-2.5 transition-all duration-200 shadow-xs",
+                          isEditing 
+                            ? "bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30" 
+                            : "bg-muted/20 border-border/60 hover:bg-muted/35 hover:border-border"
                         )}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <button
                             type="button"
                             onClick={() => setEditingButtonId(isEditing ? null : btn.id)}
-                            className="flex items-center gap-1.5 hover:text-foreground text-left transition-colors truncate max-w-[140px]"
+                            className="flex-1 flex items-center gap-2 text-left group min-w-0 cursor-pointer"
+                            title={isEditing ? "Click to collapse" : "Click to edit card"}
                           >
-                            <span className="text-[11px] font-bold text-slate-300 truncate">
-                              {btn.label || `Card ${i + 1}`}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground font-mono shrink-0">
-                              (₹{btn.amount})
-                            </span>
+                            <div className={cn(
+                              "h-6 px-2 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 transition-all",
+                              isEditing 
+                                ? "bg-amber-500 text-slate-950 font-black shadow-xs" 
+                                : "bg-white/10 text-muted-foreground group-hover:bg-amber-500/20 group-hover:text-amber-300"
+                            )}>
+                              <Pencil className="h-2.5 w-2.5 mr-1" />
+                              {isEditing ? "Editing" : "Edit"}
+                            </div>
+                            <div className="truncate flex items-baseline gap-1.5 min-w-0">
+                              <span className="text-[11px] font-bold text-foreground group-hover:text-amber-400 transition-colors truncate">
+                                {btn.label || `Card ${i + 1}`}
+                              </span>
+                              <span className="text-[10px] text-amber-400/90 font-mono font-bold shrink-0">
+                                (₹{btn.amount})
+                              </span>
+                            </div>
                           </button>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
                             <button
                               type="button"
                               disabled={i === 0}
                               onClick={() => moveButton(i, i - 1)}
-                              className="h-5 w-5 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-30"
+                              className="h-6 w-6 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-20 text-muted-foreground hover:text-foreground cursor-pointer"
+                              title="Move Up"
                             >
                               <ChevronUp className="h-3.5 w-3.5" />
                             </button>
@@ -933,7 +948,8 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                               type="button"
                               disabled={i === buttons.length - 1}
                               onClick={() => moveButton(i, i + 1)}
-                              className="h-5 w-5 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-30"
+                              className="h-6 w-6 rounded hover:bg-muted/80 flex items-center justify-center disabled:opacity-20 text-muted-foreground hover:text-foreground cursor-pointer"
+                              title="Move Down"
                             >
                               <ChevronDown className="h-3.5 w-3.5" />
                             </button>
@@ -941,12 +957,14 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                               checked={btn.visible !== false}
                               onCheckedChange={(v) => updateButton(i, { visible: v })}
                               className="scale-75 origin-right"
+                              title={btn.visible !== false ? "Card is visible" : "Card is hidden"}
                             />
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-5 w-5 text-muted-foreground hover:text-destructive" 
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer" 
                               onClick={() => removeButton(i)}
+                              title="Delete Card"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
