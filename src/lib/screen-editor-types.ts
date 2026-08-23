@@ -140,6 +140,7 @@ export interface ContentWidget {
   donationContainerGradient?: string;
   donationContainerRadius?: number;
   donationButtons?: DonationButtonConfig[];
+  cardsPerRow?: number; // 2, 3, or 4 buttons per row (default: 2)
 
   // Background Media & Dim for Template/Screen
   backgroundType?: 'none' | 'image' | 'video';
@@ -355,6 +356,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           donationTitleFontFamily: 'Playfair Display, Georgia, serif',
           donationSpacing: 4,
           donationContainerRadius: 8,
+          cardsPerRow: 2,
           donationButtons: defaultButtons
         };
       }
@@ -371,6 +373,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           donationSubtitleColor: '#94a3b8',
           donationSpacing: 5,
           donationContainerRadius: 24,
+          cardsPerRow: 2,
           donationButtons: defaultButtons
         };
       }
@@ -388,6 +391,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           donationTitleFontFamily: 'Cinzel, Georgia, serif',
           donationSpacing: 6,
           donationContainerRadius: 16,
+          cardsPerRow: 2,
           donationButtons: defaultButtons
         };
       }
@@ -404,6 +408,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
           donationSubtitleColor: '#a1a1aa',
           donationSpacing: 4,
           donationContainerRadius: 0,
+          cardsPerRow: 2,
           donationButtons: defaultButtons
         };
       }
@@ -420,6 +425,7 @@ export function createWidget(type: ContentWidgetType, style?: string): ContentWi
         donationSubtitleColor: '#e2e8f0',
         donationSpacing: 4,
         donationContainerRadius: 16,
+        cardsPerRow: 2,
         donationButtons: defaultButtons
       };
     }

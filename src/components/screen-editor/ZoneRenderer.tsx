@@ -1097,15 +1097,30 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
   const visibleButtons = buttons.filter(b => b.visible !== false);
   const N = visibleButtons.length;
 
-  // Dynamic columns arrangement - Auto-adapts to 16:9 screens so all cards fit without scrolling
+  // Dynamic columns arrangement based on cardsPerRow setting (2, 3, or 4) and total cards
+  const cardsPerRow = widget.cardsPerRow || 2;
   let gridClass = "grid gap-3 sm:gap-4 w-full justify-center justify-items-center mt-1 sm:mt-2 transition-all duration-300";
-  if (N === 1) gridClass += " grid-cols-1 max-w-sm";
-  else if (N === 2) gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
-  else if (N === 3) gridClass += " grid-cols-1 sm:grid-cols-3 max-w-4xl";
-  else if (N === 4) gridClass += " grid-cols-2 lg:grid-cols-4 max-w-5xl";
-  else if (N === 5 || N === 6) gridClass += " grid-cols-2 md:grid-cols-3 max-w-5xl";
-  else if (N === 7 || N === 8) gridClass += " grid-cols-3 lg:grid-cols-4 max-w-6xl";
-  else gridClass += " grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-w-7xl";
+  if (N === 1) {
+    gridClass += " grid-cols-1 max-w-sm";
+  } else if (cardsPerRow === 2) {
+    gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl sm:max-w-3xl";
+  } else if (cardsPerRow === 3) {
+    if (N === 2) {
+      gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
+    } else {
+      gridClass += " grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-5xl";
+    }
+  } else if (cardsPerRow === 4) {
+    if (N === 2) {
+      gridClass += " grid-cols-1 sm:grid-cols-2 max-w-2xl";
+    } else if (N === 3) {
+      gridClass += " grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-4xl";
+    } else {
+      gridClass += " grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl xl:max-w-7xl";
+    }
+  } else {
+    gridClass += " grid-cols-1 sm:grid-cols-2 max-w-3xl";
+  }
 
   const fitMode = widget.backgroundFit || 'cover';
 
@@ -1123,7 +1138,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     backgroundAttachment: 'local',
   };
 
-  // Dynamic Background Video or Image for Template Canvas
+  // Dynamic Background Video or Image for Template Canvas (Stays fixed while content scrolls)
   const renderBackgroundMedia = () => {
     if (widget.backgroundVideoUrl) {
       return (
@@ -1215,7 +1230,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
             <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-0.5" />
           </div>
 
-          <div className="flex-1 w-full flex items-center justify-center min-h-0">
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
             <div className={gridClass}>
               {visibleButtons.map((btn) => (
                 <SquareOfferingCard 
@@ -1243,75 +1258,81 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-amber-950 font-serif flex flex-col justify-start items-center p-8 border-4 border-double border-amber-600/75 overflow-hidden",
+          "relative select-none text-amber-950 font-serif w-full h-full min-h-full border-4 border-double border-amber-600/75 overflow-hidden",
           !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#fffdf6]" : "",
           widget.donationContainerShadow || "shadow-md"
         )}
       >
         {renderBackgroundMedia()}
         {/* Traditional hanging bell symbols */}
-        <div className="absolute top-2 left-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10">
+        <div className="absolute top-2 left-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10 pointer-events-none">
           <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
         </div>
-        <div className="absolute top-2 right-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10">
+        <div className="absolute top-2 right-4 h-12 w-6 border-l border-amber-600/30 flex flex-col items-center justify-end z-10 pointer-events-none">
           <div className="h-4 w-4 bg-amber-500 rounded-full border border-amber-600 shadow animate-bounce" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
-          {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
-          ) : (
-            <div className="h-12 w-12 rounded-full border-2 border-amber-600 flex items-center justify-center bg-amber-500/10">
-              <span className="text-xl font-bold text-amber-700">ॐ</span>
-            </div>
-          )}
-          <h2 
-            className="text-lg sm:text-xl md:text-2xl font-black tracking-wide max-w-full text-center break-words px-2 leading-tight" 
-            style={{ 
-              color: widget.donationTitleColor || '#b91c1c', 
-              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-              fontFamily: widget.donationTitleFontFamily || 'Georgia, serif'
-            }}
-          >
-            {title}
-          </h2>
-          {purpose && (
-            <p 
-              className="text-xs tracking-wider uppercase font-bold" 
-              style={{ color: widget.donationSubtitleColor || '#c2410c' }}
-            >
-              {purpose}
-            </p>
-          )}
-          <div className="w-16 h-0.5 bg-amber-600/40 mt-1" />
-        </div>
-
-        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
-          <div className={gridClass}>
-            {visibleButtons.map((btn) => {
-              const tradConfig: DonationButtonConfig = {
-                ...btn,
-                backgroundColor: btn.backgroundColor || '#fffdf6',
-                borderColor: btn.borderColor || '#d97706',
-                textColor: btn.textColor || '#78350f',
-                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 6,
-                hoverEffect: btn.hoverEffect || 'scale',
-                shadow: btn.shadow || 'shadow-md shadow-amber-900/10',
-              };
-              return (
-                <SquareOfferingCard 
-                  key={btn.id} 
-                  config={tradConfig} 
-                  interactive={interactive}
-                  isSelected={btn.id === selectedBtnId}
-                  onSelect={() => handleSelectBtn(btn.id)}
-                  customerInfoConfig={customerInfoConfig}
-                />
-              );
-            })}
-            {visibleButtons.length === 0 && (
-              <div className="text-xs text-amber-900/40 col-span-full py-8">No offerings configured</div>
+        {/* Scrollable Content Container */}
+        <div 
+          className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden flex flex-col justify-start items-center p-6 sm:p-8"
+          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+        >
+          <div className="flex flex-col items-center gap-2 mb-4 sm:mb-6 text-center max-w-xl shrink-0">
+            {widget.templeLogoUrl ? (
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-[#fffdf6] border border-amber-600/50 p-0.5" />
+            ) : (
+              <div className="h-12 w-12 rounded-full border-2 border-amber-600 flex items-center justify-center bg-amber-500/10">
+                <span className="text-xl font-bold text-amber-700">ॐ</span>
+              </div>
             )}
+            <h2 
+              className="text-lg sm:text-xl md:text-2xl font-black tracking-wide max-w-full text-center break-words px-2 leading-tight" 
+              style={{ 
+                color: widget.donationTitleColor || '#b91c1c', 
+                fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+                fontFamily: widget.donationTitleFontFamily || 'Georgia, serif'
+              }}
+            >
+              {title}
+            </h2>
+            {purpose && (
+              <p 
+                className="text-xs tracking-wider uppercase font-bold" 
+                style={{ color: widget.donationSubtitleColor || '#c2410c' }}
+              >
+                {purpose}
+              </p>
+            )}
+            <div className="w-16 h-0.5 bg-amber-600/40 mt-1" />
+          </div>
+
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
+            <div className={gridClass}>
+              {visibleButtons.map((btn) => {
+                const tradConfig: DonationButtonConfig = {
+                  ...btn,
+                  backgroundColor: btn.backgroundColor || '#fffdf6',
+                  borderColor: btn.borderColor || '#d97706',
+                  textColor: btn.textColor || '#78350f',
+                  cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 6,
+                  hoverEffect: btn.hoverEffect || 'scale',
+                  shadow: btn.shadow || 'shadow-md shadow-amber-900/10',
+                };
+                return (
+                  <SquareOfferingCard 
+                    key={btn.id} 
+                    config={tradConfig} 
+                    interactive={interactive}
+                    isSelected={btn.id === selectedBtnId}
+                    onSelect={() => handleSelectBtn(btn.id)}
+                    customerInfoConfig={customerInfoConfig}
+                  />
+                );
+              })}
+              {visibleButtons.length === 0 && (
+                <div className="text-xs text-amber-900/40 col-span-full py-8">No offerings configured</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1324,66 +1345,72 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-slate-100 flex flex-col justify-start items-center p-8 backdrop-blur-xl border border-white/10 overflow-hidden",
+          "relative select-none text-slate-100 w-full h-full min-h-full backdrop-blur-xl border border-white/10 overflow-hidden",
           !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-slate-950/40" : "",
           widget.donationContainerShadow || "shadow-2xl"
         )}
       >
         {renderBackgroundMedia()}
-        <div className="relative z-10 flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
-          {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
-          ) : (
-            <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
-              <Sparkles className="h-6 w-6 text-sky-400" />
-            </div>
-          )}
-          <h2 
-            className="text-lg sm:text-xl md:text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent max-w-full text-center break-words px-2 leading-tight" 
-            style={{ 
-              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-              fontFamily: widget.donationTitleFontFamily || undefined
-            }}
-          >
-            {title}
-          </h2>
-          {purpose && (
-            <p 
-              className="text-xs tracking-widest uppercase font-semibold text-slate-400" 
-              style={{ color: widget.donationSubtitleColor || undefined }}
-            >
-              {purpose}
-            </p>
-          )}
-          <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
-        </div>
-
-        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
-          <div className={gridClass}>
-            {visibleButtons.map((btn) => {
-              const glassConfig: DonationButtonConfig = {
-                ...btn,
-                backgroundColor: btn.backgroundColor || 'rgba(255, 255, 255, 0.06)',
-                borderColor: btn.borderColor || 'rgba(255, 255, 255, 0.15)',
-                textColor: btn.textColor || '#f8fafc',
-                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 20,
-                hoverEffect: btn.hoverEffect || 'glow',
-                shadow: btn.shadow || 'shadow-lg shadow-black/10',
-              };
-              return (
-                <SquareOfferingCard 
-                  key={btn.id} 
-                  config={glassConfig} 
-                  interactive={interactive}
-                  isSelected={btn.id === selectedBtnId}
-                  onSelect={() => handleSelectBtn(btn.id)}
-                  customerInfoConfig={customerInfoConfig}
-                />
-              );
-            })}
-            {visibleButtons.length === 0 && (
-              <div className="text-xs text-white/30 col-span-full py-8">No donation buttons configured</div>
+        {/* Scrollable Content Container */}
+        <div 
+          className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden flex flex-col justify-start items-center p-6 sm:p-8"
+          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+        >
+          <div className="flex flex-col items-center gap-3 mb-4 sm:mb-6 text-center max-w-xl shrink-0">
+            {widget.templeLogoUrl ? (
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-white/5 border border-white/20 p-0.5" />
+            ) : (
+              <div className="h-12 w-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur">
+                <Sparkles className="h-6 w-6 text-sky-400" />
+              </div>
             )}
+            <h2 
+              className="text-lg sm:text-xl md:text-2xl font-black tracking-widest uppercase bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent max-w-full text-center break-words px-2 leading-tight" 
+              style={{ 
+                fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+                fontFamily: widget.donationTitleFontFamily || undefined
+              }}
+            >
+              {title}
+            </h2>
+            {purpose && (
+              <p 
+                className="text-xs tracking-widest uppercase font-semibold text-slate-400" 
+                style={{ color: widget.donationSubtitleColor || undefined }}
+              >
+                {purpose}
+              </p>
+            )}
+            <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-sky-400 to-transparent mt-1" />
+          </div>
+
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
+            <div className={gridClass}>
+              {visibleButtons.map((btn) => {
+                const glassConfig: DonationButtonConfig = {
+                  ...btn,
+                  backgroundColor: btn.backgroundColor || 'rgba(255, 255, 255, 0.06)',
+                  borderColor: btn.borderColor || 'rgba(255, 255, 255, 0.15)',
+                  textColor: btn.textColor || '#f8fafc',
+                  cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 20,
+                  hoverEffect: btn.hoverEffect || 'glow',
+                  shadow: btn.shadow || 'shadow-lg shadow-black/10',
+                };
+                return (
+                  <SquareOfferingCard 
+                    key={btn.id} 
+                    config={glassConfig} 
+                    interactive={interactive}
+                    isSelected={btn.id === selectedBtnId}
+                    onSelect={() => handleSelectBtn(btn.id)}
+                    customerInfoConfig={customerInfoConfig}
+                  />
+                );
+              })}
+              {visibleButtons.length === 0 && (
+                <div className="text-xs text-white/30 col-span-full py-8">No donation buttons configured</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1396,67 +1423,73 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={containerStyle} 
         className={cn(
-          "relative select-none text-amber-100 font-serif flex flex-col justify-start items-center p-8 border-4 border-amber-500 overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]",
+          "relative select-none text-amber-100 font-serif w-full h-full min-h-full border-4 border-amber-500 overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]",
           !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#2e0207]" : "",
           widget.donationContainerShadow || "shadow-2xl"
         )}
       >
         {renderBackgroundMedia()}
         <div className="absolute inset-2 border border-amber-500/30 pointer-events-none rounded z-10" />
-        <div className="relative z-10 flex flex-col items-center gap-2 mb-6 text-center max-w-xl shrink-0">
-          {widget.templeLogoUrl ? (
-            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
-          ) : (
-            <div className="h-12 w-12 rounded-full border border-amber-500 bg-amber-500/10 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-amber-400" />
-            </div>
-          )}
-          <h2 
-            className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-widest uppercase text-amber-400 drop-shadow-md max-w-full text-center break-words px-2 leading-tight" 
-            style={{ 
-              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-              fontFamily: widget.donationTitleFontFamily || 'Cinzel, Georgia, serif'
-            }}
-          >
-            {title}
-          </h2>
-          {purpose && (
-            <p 
-              className="text-xs tracking-wider uppercase font-bold text-amber-200" 
-              style={{ color: widget.donationSubtitleColor || undefined }}
-            >
-              {purpose}
-            </p>
-          )}
-          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent mt-1" />
-        </div>
-
-        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
-          <div className={gridClass}>
-            {visibleButtons.map((btn) => {
-              const divConfig: DonationButtonConfig = {
-                ...btn,
-                backgroundColor: btn.backgroundColor || 'rgba(251, 191, 36, 0.08)',
-                borderColor: btn.borderColor || '#fbbf24',
-                textColor: btn.textColor || '#fef08a',
-                cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 8,
-                hoverEffect: btn.hoverEffect || 'scale',
-                shadow: btn.shadow || 'shadow-[0_0_10px_rgba(251,191,36,0.2)]',
-              };
-              return (
-                <SquareOfferingCard 
-                  key={btn.id} 
-                  config={divConfig} 
-                  interactive={interactive}
-                  isSelected={btn.id === selectedBtnId}
-                  onSelect={() => handleSelectBtn(btn.id)}
-                  customerInfoConfig={customerInfoConfig}
-                />
-              );
-            })}
-            {visibleButtons.length === 0 && (
-              <div className="text-xs text-amber-200/40 col-span-full py-8">No offerings configured</div>
+        {/* Scrollable Content Container */}
+        <div 
+          className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden flex flex-col justify-start items-center p-6 sm:p-8"
+          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+        >
+          <div className="flex flex-col items-center gap-2 mb-4 sm:mb-6 text-center max-w-xl shrink-0">
+            {widget.templeLogoUrl ? (
+              <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/30 border border-amber-500/50 p-0.5" />
+            ) : (
+              <div className="h-12 w-12 rounded-full border border-amber-500 bg-amber-500/10 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-amber-400" />
+              </div>
             )}
+            <h2 
+              className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-widest uppercase text-amber-400 drop-shadow-md max-w-full text-center break-words px-2 leading-tight" 
+              style={{ 
+                fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+                fontFamily: widget.donationTitleFontFamily || 'Cinzel, Georgia, serif'
+              }}
+            >
+              {title}
+            </h2>
+            {purpose && (
+              <p 
+                className="text-xs tracking-wider uppercase font-bold text-amber-200" 
+                style={{ color: widget.donationSubtitleColor || undefined }}
+              >
+                {purpose}
+              </p>
+            )}
+            <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent mt-1" />
+          </div>
+
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
+            <div className={gridClass}>
+              {visibleButtons.map((btn) => {
+                const divConfig: DonationButtonConfig = {
+                  ...btn,
+                  backgroundColor: btn.backgroundColor || 'rgba(251, 191, 36, 0.08)',
+                  borderColor: btn.borderColor || '#fbbf24',
+                  textColor: btn.textColor || '#fef08a',
+                  cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 8,
+                  hoverEffect: btn.hoverEffect || 'scale',
+                  shadow: btn.shadow || 'shadow-[0_0_10px_rgba(251,191,36,0.2)]',
+                };
+                return (
+                  <SquareOfferingCard 
+                    key={btn.id} 
+                    config={divConfig} 
+                    interactive={interactive}
+                    isSelected={btn.id === selectedBtnId}
+                    onSelect={() => handleSelectBtn(btn.id)}
+                    customerInfoConfig={customerInfoConfig}
+                  />
+                );
+              })}
+              {visibleButtons.length === 0 && (
+                <div className="text-xs text-amber-200/40 col-span-full py-8">No offerings configured</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1475,7 +1508,7 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
       <div 
         style={minimalContainerStyle} 
         className={cn(
-          "relative select-none text-stone-100 font-sans flex flex-col justify-start w-full h-full overflow-hidden",
+          "relative select-none text-stone-100 font-sans flex flex-col justify-start w-full h-full min-h-full overflow-hidden",
           !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#050505]" : "",
           widget.donationContainerShadow || "shadow-none"
         )}
@@ -1496,36 +1529,42 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
           {purpose && <span className="text-[9px] text-stone-500 uppercase tracking-widest font-bold">{purpose}</span>}
         </div>
 
-        {/* Horizontal Columns Container */}
-        <div className="relative z-10 flex-1 w-full flex flex-row items-stretch overflow-hidden divide-x divide-stone-900">
-          {visibleButtons.map((btn) => {
-            const minConfig: DonationButtonConfig = {
-              ...btn,
-              backgroundColor: btn.backgroundColor || 'transparent',
-              borderColor: 'transparent', // borders handled by divide-x parent
-              textColor: btn.textColor || '#fafaf9',
-              cornerRadius: 0, // stretched column shape
-              hoverEffect: btn.hoverEffect || 'scale',
-              shadow: 'none',
-            };
-            return (
-              <div key={btn.id} className="flex-1 h-full min-w-0">
-                <SquareOfferingCard 
-                  config={minConfig} 
-                  interactive={interactive}
-                  isSelected={btn.id === selectedBtnId}
-                  onSelect={() => handleSelectBtn(btn.id)}
-                  customerInfoConfig={customerInfoConfig}
-                  themeStyle="minimal"
-                />
-              </div>
-            );
-          })}
-          {visibleButtons.length === 0 && (
-            <div className="w-full h-full flex items-center justify-center text-xs text-stone-500 py-8">
-              No seva options configured
+        {/* Scrollable Container with Grid */}
+        <div 
+          className="relative z-10 flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center p-4 sm:p-6"
+          style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+        >
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
+            <div className={gridClass}>
+              {visibleButtons.map((btn) => {
+                const minConfig: DonationButtonConfig = {
+                  ...btn,
+                  backgroundColor: btn.backgroundColor || 'transparent',
+                  borderColor: btn.borderColor || 'rgba(255,255,255,0.1)',
+                  textColor: btn.textColor || '#fafaf9',
+                  cornerRadius: btn.cornerRadius !== undefined ? btn.cornerRadius : 8,
+                  hoverEffect: btn.hoverEffect || 'scale',
+                  shadow: 'none',
+                };
+                return (
+                  <SquareOfferingCard 
+                    key={btn.id} 
+                    config={minConfig} 
+                    interactive={interactive}
+                    isSelected={btn.id === selectedBtnId}
+                    onSelect={() => handleSelectBtn(btn.id)}
+                    customerInfoConfig={customerInfoConfig}
+                    themeStyle="minimal"
+                  />
+                );
+              })}
+              {visibleButtons.length === 0 && (
+                <div className="w-full h-full flex items-center justify-center text-xs text-stone-500 py-8">
+                  No seva options configured
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -1536,53 +1575,59 @@ function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: C
     <div 
       style={containerStyle} 
       className={cn(
-        "relative select-none text-white font-sans flex flex-col justify-start items-center p-8",
-        !widget.backgroundColor ? "bg-[#111029]" : "",
+        "relative select-none text-white font-sans w-full h-full min-h-full overflow-hidden",
+        !widget.backgroundColor && !widget.backgroundImageUrl && !widget.backgroundVideoUrl ? "bg-[#111029]" : "",
         widget.donationContainerShadow || "shadow-xl border border-white/5"
       )}
     >
-      <div className="flex flex-col items-center gap-3 mb-6 text-center max-w-xl shrink-0">
-        {widget.templeLogoUrl ? (
-          <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
-        ) : (
-          <LayoutGrid className="h-10 w-10 text-amber-400" />
-        )}
-        <h2 
-          className="text-2xl font-extrabold tracking-wide uppercase" 
-          style={{ 
-            color: widget.donationTitleColor || '#fbbf24', 
-            fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
-            fontFamily: widget.donationTitleFontFamily || undefined
-          }}
-        >
-          {title}
-        </h2>
-        {purpose && (
-          <p 
-            className="text-xs tracking-widest uppercase font-medium" 
-            style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
-          >
-            {purpose}
-          </p>
-        )}
-        <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
-      </div>
-
-      <div className="flex-1 w-full flex items-center justify-center">
-        <div className={gridClass}>
-          {visibleButtons.map((btn) => (
-            <SquareOfferingCard 
-              key={btn.id} 
-              config={btn} 
-              interactive={interactive}
-              isSelected={btn.id === selectedBtnId}
-              onSelect={() => handleSelectBtn(btn.id)}
-              customerInfoConfig={customerInfoConfig}
-            />
-          ))}
-          {visibleButtons.length === 0 && (
-            <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
+      {renderBackgroundMedia()}
+      <div 
+        className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden flex flex-col justify-start items-center p-6 sm:p-8"
+        style={{ padding: widget.padding !== undefined ? widget.padding : undefined }}
+      >
+        <div className="flex flex-col items-center gap-3 mb-4 sm:mb-6 text-center max-w-xl shrink-0">
+          {widget.templeLogoUrl ? (
+            <img src={widget.templeLogoUrl} alt="Logo" className="h-14 w-14 object-contain rounded-full shadow bg-black/10 border border-white/10 p-0.5" />
+          ) : (
+            <LayoutGrid className="h-10 w-10 text-amber-400" />
           )}
+          <h2 
+            className="text-2xl font-extrabold tracking-wide uppercase" 
+            style={{ 
+              color: widget.donationTitleColor || '#fbbf24', 
+              fontSize: widget.donationTitleFontSize ? `${widget.donationTitleFontSize}px` : undefined,
+              fontFamily: widget.donationTitleFontFamily || undefined
+            }}
+          >
+            {title}
+          </h2>
+          {purpose && (
+            <p 
+              className="text-xs tracking-widest uppercase font-medium" 
+              style={{ color: widget.donationSubtitleColor || '#e2e8f0' }}
+            >
+              {purpose}
+            </p>
+          )}
+          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
+        </div>
+
+        <div className="flex-1 w-full flex items-center justify-center min-h-0 py-2">
+          <div className={gridClass}>
+            {visibleButtons.map((btn) => (
+              <SquareOfferingCard 
+                key={btn.id} 
+                config={btn} 
+                interactive={interactive}
+                isSelected={btn.id === selectedBtnId}
+                onSelect={() => handleSelectBtn(btn.id)}
+                customerInfoConfig={customerInfoConfig}
+              />
+            ))}
+            {visibleButtons.length === 0 && (
+              <div className="text-xs text-white/40 col-span-full py-8">No donation buttons configured</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

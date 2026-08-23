@@ -200,6 +200,7 @@ export default function AdminLayoutsPage() {
         donationSubtitleColor: "#e2e8f0",
         donationSpacing: 4,
         donationContainerRadius: 16,
+        cardsPerRow: 2,
         donationButtons: relMeta.presetCauses.slice(0, 4).map((c, idx) => ({
           id: `btn-${Date.now()}-${idx + 1}`,
           amount: c.amount,

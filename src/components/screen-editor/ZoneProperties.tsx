@@ -642,6 +642,33 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Max Cards Per Row</Label>
+                    <span className="text-[10px] text-amber-400 font-mono font-bold">{(widget.cardsPerRow || 2)} in a row</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950/40 p-1 rounded-lg border border-border/40 text-xs">
+                    {[2, 3, 4].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => update({ cardsPerRow: num })}
+                        className={cn(
+                          "py-1.5 rounded text-[11px] font-bold transition-all text-center",
+                          (widget.cardsPerRow || 2) === num
+                            ? "bg-amber-500 text-slate-950 shadow-xs font-black"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                      >
+                        {num} Cards
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">
+                    Sets max cards in 1 row (2, 3, or 4). Remaining cards scroll vertically.
+                  </p>
+                </div>
+
                 <Separator className="my-2 opacity-50" />
 
                 {/* Canvas Background Media (Image or Video) */}
@@ -776,7 +803,32 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3.5">
+                {/* Quick Cards Per Row Setting */}
+                <div className="flex items-center justify-between bg-muted/20 border border-border/40 p-2 rounded-lg">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold text-foreground block">Cards Per Row</span>
+                    <span className="text-[9px] text-muted-foreground block">Max buttons in 1 row (default: 2)</span>
+                  </div>
+                  <div className="flex gap-1 bg-slate-950/60 p-0.5 rounded border border-border/50">
+                    {[2, 3, 4].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => update({ cardsPerRow: num })}
+                        className={cn(
+                          "px-2.5 py-1 rounded text-[10px] font-bold transition-all",
+                          (widget.cardsPerRow || 2) === num
+                            ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">Offerings List</span>
                   <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addButton}>
