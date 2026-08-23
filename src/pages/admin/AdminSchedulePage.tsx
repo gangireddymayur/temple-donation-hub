@@ -842,7 +842,7 @@ export default function AdminSchedulePage() {
     <AdminLayout>
       <PageHeader
         title="Schedule Planner"
-        description="Schedule layouts to show up at specific days and hours on your signage terminals. Support drag-and-drop, resize, and custom repeat rules."
+        description="Schedule layouts to show up at specific days and hours on your kiosk terminals. Support drag-and-drop, resize, and custom repeat rules."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_260px] gap-6 items-start">

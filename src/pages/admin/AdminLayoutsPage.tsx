@@ -374,7 +374,7 @@ export default function AdminLayoutsPage() {
                     1-Click {relMeta.shortName} Screen Templates
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Instantly spin up pre-configured donation & signage screens tailored for {relMeta.name}
+                    Instantly spin up pre-configured donation screens tailored for {relMeta.name}
                   </CardDescription>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function AdminLayoutsPage() {
               <LayoutGrid className="h-4 w-4 text-primary" /> Active Screen Layouts
             </CardTitle>
             <CardDescription>
-              All configured screens for your temple donation kiosks and signage devices
+              All configured screens for your temple donation kiosks and display devices
             </CardDescription>
           </CardHeader>
           <CardContent>

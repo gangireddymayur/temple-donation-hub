@@ -32,6 +32,7 @@ import {
   CheckCircle,
   Loader2,
   LayoutGrid,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -384,9 +385,11 @@ export function SquareOfferingCard({
     setDonationId(null);
     setUpiString(null);
     setQrCodeUrl("");
+    setErrorMessage(null);
   };
 
   const handleInitiate = async (amt: number, purposeText: string, bypassVal = false) => {
+    setErrorMessage(null);
     if (!bypassVal) {
       // Validate required inputs
       const errors: string[] = [];
@@ -402,7 +405,7 @@ export function SquareOfferingCard({
       if (fields.prayer.enabled && fields.prayer.required && !specialPrayer.trim()) errors.push("Prayer request text is required");
 
       if (errors.length > 0) {
-        alert(errors.join("\n"));
+        setErrorMessage(errors.join(" • "));
         return;
       }
     }
@@ -434,7 +437,7 @@ export function SquareOfferingCard({
       
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error || 'Failed to initiate payment');
+        throw new Error(err.error || 'Payment mode is not configured for this temple');
       }
       
       const data = await response.json();
@@ -445,7 +448,7 @@ export function SquareOfferingCard({
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
       setStep('payment');
     } catch (e: any) {
-      alert(e.message || "Could not connect to payment server");
+      setErrorMessage(e.message || "Payment mode is not configured or server unreachable. Please check Admin > Payment Settings.");
     } finally {
       setLoading(false);
     }
@@ -607,6 +610,16 @@ export function SquareOfferingCard({
                 Cancel
               </button>
             </div>
+
+            {errorMessage && (
+              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs p-3 rounded-xl flex items-start gap-2.5 animate-slide-down">
+                <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-amber-200">Notice</p>
+                  <p className="text-[11px] text-amber-300/90 mt-0.5">{errorMessage}</p>
+                </div>
+              </div>
+            )}
 
             {step === 'form' && (
               <div className="space-y-4">

@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
           ? `[local-auth] User ${normalizedEmail} has not been bootstrapped. Attempting cloud authentication...`
           : `[local-auth] Local password mismatch for ${normalizedEmail}. Attempting one cloud verification...`
       );
-      const cloudUrl = process.env.CLOUD_URL || 'https://agitated-satoshi.103-69-196-157.plesk.page';
+      const cloudUrl = process.env.CLOUD_URL || 'https://happy-shamir.103-69-196-157.plesk.page';
       try {
         const loginRes = await fetch(`${cloudUrl}/api/auth/login`, {
           method: 'POST',
@@ -246,6 +246,11 @@ async function ensureSchema() {
     const [cTrial] = await db.query("SHOW COLUMNS FROM companies LIKE 'trial_ends_at'");
     if (cTrial.length === 0) {
       await db.query("ALTER TABLE companies ADD COLUMN trial_ends_at DATETIME NULL");
+    }
+
+    const [cCust] = await db.query("SHOW COLUMNS FROM companies LIKE 'customer_info_config'");
+    if (cCust.length === 0) {
+      await db.query("ALTER TABLE companies ADD COLUMN customer_info_config TEXT NULL");
     }
   } catch (err) {
     console.warn('[auth.js] ensureSchema notice:', err.message);

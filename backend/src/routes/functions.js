@@ -293,7 +293,7 @@ async function syncCloudToLocal(req, res) {
   }
 
   const cloudUrl = String(
-    process.env.CLOUD_URL || 'https://agitated-satoshi.103-69-196-157.plesk.page'
+    process.env.CLOUD_URL || 'https://happy-shamir.103-69-196-157.plesk.page'
   ).replace(/\/+$/, '');
 
   let loginRes;

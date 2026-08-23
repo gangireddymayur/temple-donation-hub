@@ -471,7 +471,7 @@ export default function AdminSettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-sm font-semibold text-foreground">Show Brand Header on Devices</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">Display logo, organization name, and local clock on signage screens.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Display logo, organization name, and local clock on kiosk screens.</p>
               </div>
               <div className="flex items-center gap-2">
                 {showBrandHeader === 1 && (

@@ -64,11 +64,23 @@ router.get('/:deviceId', async (req, res) => {
 
     const isPaused = !!device.is_paused;
 
-    const [companies] = await db.query(
-      'SELECT name, logo_url, show_brand_header, brand_header_placement, customer_info_config, religion FROM companies WHERE id = :id LIMIT 1',
-      { id: device.company_id }
-    );
-    const company = companies[0] || null;
+    let company = null;
+    try {
+      const [companies] = await db.query(
+        'SELECT * FROM companies WHERE id = :id LIMIT 1',
+        { id: device.company_id }
+      );
+      company = companies[0] || null;
+    } catch (e) {
+      console.warn('[player.js] company query fallback:', e.message);
+      try {
+        const [fallback] = await db.query(
+          'SELECT id, name, logo_url FROM companies WHERE id = :id LIMIT 1',
+          { id: device.company_id }
+        );
+        company = fallback[0] || null;
+      } catch (err2) {}
+    }
 
     res.json({
       device: {
@@ -86,7 +98,7 @@ router.get('/:deviceId', async (req, res) => {
         religion: company.religion || 'hinduism',
         show_brand_header: !!company.show_brand_header,
         brand_header_placement: company.brand_header_placement || 'top',
-        customer_info_config: parseJson(company.customer_info_config, null)
+        customer_info_config: company.customer_info_config ? parseJson(company.customer_info_config, null) : null
       } : null,
       source,
       layout: isPaused ? null : layout,

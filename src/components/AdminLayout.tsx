@@ -130,7 +130,7 @@ export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNod
                       </div>
                       <h2 className="text-xl font-black text-rose-200">Access Period Ended</h2>
                       <p className="text-xs text-rose-300/80 leading-relaxed max-w-sm mx-auto">
-                        Your free trial has ended. To continue managing donation kiosks, digital signage playlists, and TV screens, please contact your administrator or engineering support to renew your subscription.
+                        Your free trial has ended. To continue managing temple donation kiosks, playlists, and TV screens, please contact your administrator or engineering support to renew your subscription.
                       </p>
                     </div>
 

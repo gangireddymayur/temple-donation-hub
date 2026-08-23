@@ -122,10 +122,10 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent tracking-tight">
-              Temple & Signage Donation Hub
+              Temple Donation Hub
             </CardTitle>
             <CardDescription className="text-xs font-semibold text-slate-400">
-              Universal Devotional & Digital Signage Cloud
+              Universal Devotional & Temple Donation Kiosk Cloud
             </CardDescription>
           </div>
 
@@ -245,7 +245,7 @@ export default function LoginPage() {
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-bold text-amber-300">7-Day Free Trial Included</p>
-                  <p className="text-[10px] text-slate-400">Instantly creates your sanctuary account with full multi-faith and digital signage capabilities.</p>
+                  <p className="text-[10px] text-slate-400">Instantly creates your sanctuary account with full multi-faith and temple donation kiosk capabilities.</p>
                 </div>
               </div>
 
