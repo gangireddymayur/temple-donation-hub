@@ -312,9 +312,8 @@ export function SquareOfferingCard({
   const [donorNakshatra, setDonorNakshatra] = useState("");
   const [specialPrayer, setSpecialPrayer] = useState("");
 
-  const [step, setStep] = useState<'form' | 'payment' | 'success' | 'failed'>('form');
+  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [loading, setLoading] = useState(false);
-  const [autoCloseCountdown, setAutoCloseCountdown] = useState(10);
   
   // Payment states
   const [donationId, setDonationId] = useState<string | null>(null);
@@ -334,28 +333,6 @@ export function SquareOfferingCard({
   const badgeTitle = `Direct ${relMeta.terminology.institutionType.split('/')[0].trim()} Offering`;
   const badgeDescription = relMeta.tagline;
   const prayerLabel = relMeta.terminology.prayerLabel;
-
-  // 10-second auto-close countdown for success and failed modal views
-  useEffect(() => {
-    if (step !== 'success' && step !== 'failed') {
-      setAutoCloseCountdown(10);
-      return;
-    }
-
-    setAutoCloseCountdown(10);
-    const interval = setInterval(() => {
-      setAutoCloseCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleClose();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [step]);
 
   const defaultFields = {
     name: { enabled: true, required: true },
@@ -387,9 +364,9 @@ export function SquareOfferingCard({
           const data = await res.json();
           if (data.payment_status === 'success') {
             setStep('success');
-            return;
-          } else if (data.payment_status === 'failed') {
-            setStep('failed');
+            setTimeout(() => {
+              handleClose();
+            }, 5000);
             return;
           }
         }
@@ -400,8 +377,6 @@ export function SquareOfferingCard({
       count++;
       if (count < 60) {
         pollTimer = setTimeout(checkStatus, 3000);
-      } else {
-        setStep('failed');
       }
     };
     
@@ -888,43 +863,13 @@ export function SquareOfferingCard({
                       </div>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500">Scan using any UPI App</p>
-                </div>
-              </div>
-            )}
 
-            {step === 'failed' && (
-              <div className="flex flex-col items-center text-center py-6 space-y-4">
-                <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20 text-rose-400 shadow-inner">
-                  <AlertTriangle className="h-8 w-8 text-rose-400" />
-                </div>
-
-                <div className="space-y-2 select-none">
-                  <h3 className="text-xl font-bold text-slate-100 flex items-center justify-center gap-1.5 text-rose-400">
-                    Payment Unsuccessful
-                  </h3>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                    The payment was not completed or was cancelled. No amount was deducted.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
                   <button
-                    onClick={() => setStep('form')}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold rounded-xl shadow-md transition-colors"
+                    onClick={simulateSuccess}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 mt-1 bg-slate-900 border border-slate-800/50 px-3 py-1 rounded-lg transition-colors"
                   >
-                    Try Again
+                    [Developer: Simulate Payment Success]
                   </button>
-                  <button
-                    onClick={handleClose}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="text-[11px] text-slate-500 pt-2 font-medium">
-                  Returning to layout in {autoCloseCountdown}s...
                 </div>
               </div>
             )}
@@ -946,9 +891,7 @@ export function SquareOfferingCard({
                   </p>
                 </div>
 
-                <div className="text-[11px] text-slate-400 pt-2 font-medium">
-                  Returning to layout in {autoCloseCountdown}s...
-                </div>
+                <div className="text-[10px] text-slate-500 pt-4">Returning to layout in 5 seconds...</div>
               </div>
             )}
           </div>
