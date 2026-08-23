@@ -494,8 +494,8 @@ export default function AdminLayoutEditorPage() {
           </div>
 
           {/* Right Properties Panel */}
-          <div className="w-80 lg:w-96 shrink-0 bg-card/60 border border-border/50 rounded-2xl p-3.5 shadow-sm flex flex-col h-full overflow-hidden backdrop-blur-md">
-            <ScrollArea className="h-full pr-2">
+          <div className="w-[360px] lg:w-[410px] xl:w-[440px] shrink-0 bg-card/60 border border-border/50 rounded-2xl p-3.5 shadow-sm flex flex-col h-full overflow-hidden backdrop-blur-md">
+            <ScrollArea className="h-full pr-3">
               <div>
                 {selectedWidget ? (
                   <ZoneProperties widget={selectedWidget} onUpdate={handleWidgetUpdate} contentItems={contentItems} />

@@ -793,7 +793,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                       type="button" 
                       variant="outline" 
                       size="sm" 
-                      className="h-6 text-[10px] px-2 bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                      className="h-6 text-[10px] px-2.5 bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 whitespace-nowrap shrink-0 font-medium"
                       onClick={() => {
                         const updated = buttons.map(b => ({
                           ...b,
@@ -888,10 +888,10 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
 
                 <Separator className="my-1.5 opacity-40" />
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Offerings List</span>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addButton}>
-                    <Plus className="h-3 w-3 mr-1" /> Add Card
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground">Offerings List</span>
+                  <Button variant="outline" size="sm" className="h-7 text-xs px-2.5 whitespace-nowrap shrink-0" onClick={addButton}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Card
                   </Button>
                 </div>
 
