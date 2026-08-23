@@ -756,7 +756,7 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
               <div className="space-y-3.5">
                 {/* Max Cards Per Row (Placed at the very top of Offering Cards) */}
                 {(() => {
-                  const isMinimal = widget.donationStyle === 'minimal';
+                  const isMinimal = widget.templateStyle === 'minimal';
                   const options = isMinimal ? [4, 5, 6, 7] : [2, 3, 4];
                   const currentCardsPerRow = widget.cardsPerRow || (isMinimal ? 4 : 2);
                   return (
