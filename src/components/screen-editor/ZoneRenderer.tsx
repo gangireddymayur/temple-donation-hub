@@ -334,6 +334,67 @@ export function SquareOfferingCard({
   const badgeDescription = relMeta.tagline;
   const prayerLabel = relMeta.terminology.prayerLabel;
 
+  // Open native in-page Razorpay Checkout Popup on tablets and kiosks
+  const openRazorpayModal = async (orderData: any) => {
+    if (!orderData?.orderId || !orderData?.razorpayKeyId) return;
+
+    if (typeof window !== 'undefined' && !(window as any).Razorpay) {
+      await new Promise<void>((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve();
+        document.body.appendChild(script);
+      });
+    }
+
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      const rzp = new (window as any).Razorpay({
+        key: orderData.razorpayKeyId,
+        amount: Math.round(Number(orderData.amount || amount) * 100),
+        currency: "INR",
+        name: relMeta.name || "Temple Offering",
+        description: orderData.purpose || "Sacred Offering",
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            await fetch(`${API}/donations/public/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                donationId: orderData.donationId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+            setStep('success');
+            setTimeout(() => {
+              handleClose();
+            }, 5000);
+          } catch (e) {
+            console.error("Payment verification error:", e);
+          }
+        },
+        prefill: {
+          name: donorName || "Devotee",
+          email: donorEmail || "devotee@temple.org",
+          contact: donorPhone || "9999999999"
+        },
+        theme: {
+          color: "#f59e0b",
+          backdrop_color: "transparent"
+        },
+        modal: {
+          backdropclose: true,
+          escape: true,
+          handleback: true,
+          animation: true
+        }
+      });
+      rzp.open();
+    }
+  };
+
   const defaultFields = {
     name: { enabled: true, required: true },
     phone: { enabled: true, required: true },
@@ -464,6 +525,11 @@ export function SquareOfferingCard({
       setUpiString(qrData);
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
       setStep('payment');
+
+      // Auto-launch official Razorpay Checkout popup if Razorpay is configured!
+      if (data.useRazorpay && data.orderId) {
+        openRazorpayModal({ ...data, amount: amt, purpose: purposeText });
+      }
     } catch (e: any) {
       setErrorMessage(e.message || "Payment mode is not configured or server unreachable. Please check Admin > Payment Settings.");
     } finally {
@@ -863,6 +929,16 @@ export function SquareOfferingCard({
                       </div>
                     )}
                   </div>
+
+                  {razorpayOrderData?.orderId && (
+                    <button
+                      onClick={() => openRazorpayModal({ ...razorpayOrderData, amount: activeDonation.amount, purpose: activeDonation.label })}
+                      className="w-full max-w-[220px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs h-9 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-transform active:scale-95"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Pay Directly on Screen</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={simulateSuccess}
