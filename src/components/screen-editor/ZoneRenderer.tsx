@@ -315,6 +315,7 @@ export function SquareOfferingCard({
   const [donationId, setDonationId] = useState<string | null>(null);
   const [upiString, setUpiString] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const amount = config.amount || 100;
   const label = config.label || "Offering";
