@@ -646,8 +646,8 @@ export function SquareOfferingCard({
                 </div>
 
                 {/* Right Column: Devotee Form Fields in 2-Column Grid */}
-                <div className="md:col-span-7 flex flex-col justify-between space-y-3.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] md:max-h-[340px] overflow-y-auto px-1 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800">
+                <div className="md:col-span-7 flex flex-col justify-between space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[60vh] md:max-h-[440px] overflow-y-auto px-1 pr-2 pb-4 scrollbar-thin scrollbar-thumb-slate-700">
                     {fields.name.enabled && (
                       <div className="space-y-1 sm:col-span-1">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
@@ -658,7 +658,7 @@ export function SquareOfferingCard({
                           value={donorName}
                           onChange={(e) => setDonorName(e.target.value)}
                           placeholder="Enter full name"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -673,13 +673,13 @@ export function SquareOfferingCard({
                           value={donorPhone}
                           onChange={(e) => setDonorPhone(e.target.value)}
                           placeholder="10-digit mobile"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
 
                     {fields.email.enabled && (
-                      <div className="space-y-1 sm:col-span-2">
+                      <div className="space-y-1 sm:col-span-1">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
                           Email Address {fields.email.required && <span className="text-red-500">*</span>}
                         </label>
@@ -688,7 +688,7 @@ export function SquareOfferingCard({
                           value={donorEmail}
                           onChange={(e) => setDonorEmail(e.target.value)}
                           placeholder="email@example.com"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -703,7 +703,7 @@ export function SquareOfferingCard({
                           value={donorGotra}
                           onChange={(e) => setDonorGotra(e.target.value)}
                           placeholder="Gotra / गोत्र"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -718,7 +718,7 @@ export function SquareOfferingCard({
                           value={donorNakshatra}
                           onChange={(e) => setDonorNakshatra(e.target.value)}
                           placeholder="Nakshatra / नक्षत्र"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -733,7 +733,7 @@ export function SquareOfferingCard({
                           value={donorAddress}
                           onChange={(e) => setDonorAddress(e.target.value)}
                           placeholder="Street address"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -748,7 +748,7 @@ export function SquareOfferingCard({
                           value={donorCity}
                           onChange={(e) => setDonorCity(e.target.value)}
                           placeholder="City"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -763,7 +763,7 @@ export function SquareOfferingCard({
                           value={donorState}
                           onChange={(e) => setDonorState(e.target.value)}
                           placeholder="State"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -778,7 +778,7 @@ export function SquareOfferingCard({
                           value={donorPincode}
                           onChange={(e) => setDonorPincode(e.target.value)}
                           placeholder="Pincode"
-                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-9 bg-slate-900/60 border border-slate-800 rounded-xl px-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -792,7 +792,7 @@ export function SquareOfferingCard({
                           value={specialPrayer}
                           onChange={(e) => setSpecialPrayer(e.target.value)}
                           placeholder="Family details, special prayer requests..."
-                          className="w-full min-h-[55px] bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full min-h-[50px] bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
@@ -801,7 +801,7 @@ export function SquareOfferingCard({
                   <button
                     disabled={loading}
                     onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
-                    className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2"
+                    className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shrink-0"
                   >
                     {loading ? (
                       <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
