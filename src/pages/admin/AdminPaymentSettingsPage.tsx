@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2 } from "lucide-react";
+import { KeyRound, ShieldAlert, Loader2, Sparkles, QrCode, CheckCircle2, Copy, Wand2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -279,16 +279,136 @@ export default function AdminPaymentSettingsPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Razorpay Webhook Secret (Webhook Status Validation)</Label>
-                      <Input
-                        type="password"
-                        value={razorpayWebhookSecret}
-                        disabled={!isEditable}
-                        onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
-                        placeholder="Configure webhook secret"
-                        className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed"
-                      />
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Razorpay Webhook Secret (Signature Validation)</Label>
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const randomSecret = 'whsec_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                                .map(b => b.toString(16).padStart(2, '0')).join('');
+                              setRazorpayWebhookSecret(randomSecret);
+                              navigator.clipboard.writeText(randomSecret);
+                              toast.success("Generated and copied new Webhook Secret!");
+                            }}
+                            className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <Wand2 className="h-3 w-3" />
+                            <span>Generate Secret</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          value={razorpayWebhookSecret}
+                          disabled={!isEditable}
+                          onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
+                          placeholder="e.g. whsec_temple_donation_secret_2026"
+                          className="bg-slate-950/40 border-border/60 font-mono text-xs disabled:opacity-60 disabled:cursor-not-allowed pr-20"
+                        />
+                        {razorpayWebhookSecret && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(razorpayWebhookSecret);
+                              toast.success("Webhook Secret copied to clipboard!");
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded font-medium border border-slate-700 transition-colors"
+                          >
+                            Copy
+                          </button>
+                        )}
+                      </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dedicated Razorpay Webhook Setup Card */}
+              <Card className="border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.04] to-transparent shadow-md">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                        <QrCode className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-bold text-foreground">Razorpay Webhooks Setup</CardTitle>
+                        <CardDescription className="text-xs">
+                          Instantly receives devotee payment confirmations from Razorpay to your TV screen.
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">
+                      Live Real-Time Sync
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Webhook URL Input with 1-Click Copy */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-300">1. Webhook URL (Paste in Razorpay Dashboard)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={typeof window !== 'undefined' ? `${window.location.origin}/api/donations/public/razorpay-webhook` : "https://happy-shamir.103-69-196-157.plesk.page/api/donations/public/razorpay-webhook"}
+                        className="bg-slate-950/60 border-slate-800 font-mono text-xs text-emerald-300 selection:bg-emerald-500/30"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const url = typeof window !== 'undefined' ? `${window.location.origin}/api/donations/public/razorpay-webhook` : "https://happy-shamir.103-69-196-157.plesk.page/api/donations/public/razorpay-webhook";
+                          navigator.clipboard.writeText(url);
+                          toast.success("Webhook URL copied to clipboard!");
+                        }}
+                        className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 font-bold shrink-0 h-9"
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Copy URL
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Active Events Checklist */}
+                  <div className="space-y-2 pt-1">
+                    <Label className="text-xs font-semibold text-slate-300">2. Active Events to Select in Razorpay Dashboard</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-950/40 border border-slate-800/80 rounded-xl p-3 text-xs">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-mono font-bold text-slate-200">payment.captured</p>
+                          <p className="text-[11px] text-slate-400">Triggered when donation money is received</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-mono font-bold text-slate-200">order.paid</p>
+                          <p className="text-[11px] text-slate-400">Triggered when donation order completes</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 sm:col-span-2 pt-1 border-t border-slate-800/60">
+                        <CheckCircle2 className="h-4 w-4 text-slate-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-mono font-bold text-slate-400">payment.failed <span className="text-[10px] text-slate-500 font-normal">(Optional)</span></p>
+                          <p className="text-[11px] text-slate-500">Notifies if devotee's payment failed</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick 3-Step Setup Guide */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 space-y-1.5">
+                    <p className="font-bold text-slate-200 flex items-center gap-1.5">
+                      <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
+                      How to add in Razorpay:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+                      <li>Log in to Razorpay Dashboard $\rightarrow$ <strong>Settings</strong> $\rightarrow$ <strong>Webhooks</strong> $\rightarrow$ Click <strong>Add New Webhook</strong>.</li>
+                      <li>Paste the <strong>Webhook URL</strong> above into the Webhook URL field.</li>
+                      <li>Under <strong>Active Events</strong>, tick <code className="text-emerald-400">payment.captured</code> and <code className="text-emerald-400">order.paid</code>, then click <strong>Create Webhook</strong>.</li>
+                    </ol>
                   </div>
                 </CardContent>
               </Card>

@@ -197,49 +197,88 @@ export default function DonationsContentPage() {
     currentPage * itemsPerPage
   );
 
-  // Export CSV
-  const handleExportCSV = () => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Export CSV with full devotee metadata and religion-adapted headers
+  const handleExportCSV = async () => {
     if (filtered.length === 0) {
       toast.error("No transactions to export");
       return;
     }
 
-    const headers = [
-      "Date/Time", "Devotee Name", "Phone", "Email", "Address", "City", "State", "Pincode",
-      "Gotra", "Nakshatra", "Purpose", "Amount", "Kiosk Name", "Order ID", "Payment ID", "Status"
-    ];
+    setIsExporting(true);
+    try {
+      const relConfig = getReligionConfig(religion);
+      const isHinduOrJain = !religion || religion === 'hinduism' || religion === 'jainism';
 
-    const rows = filtered.map(d => [
-      new Date(d.created_at).toLocaleString("en-IN"),
-      d.donor_name || "Anonymous",
-      d.donor_phone || "",
-      d.donor_email || "",
-      d.donor_address || "",
-      d.donor_city || "",
-      d.donor_state || "",
-      d.donor_pincode || "",
-      d.donor_gotra || "",
-      d.donor_nakshatra || "",
-      d.purpose,
-      d.amount,
-      d.kiosk_name || "",
-      d.razorpay_order_id || "",
-      d.razorpay_payment_id || "",
-      d.payment_status
-    ]);
+      const headers = [
+        "Date",
+        "Time",
+        relConfig.terminology.devoteeName || "Devotee / Donor Name",
+        "Phone Number",
+        "Email Address",
+        "Street Address",
+        "City",
+        "State",
+        "Pincode",
+        isHinduOrJain ? "Gotra (गोत्र)" : "Family / Clan / Gotra",
+        isHinduOrJain ? "Nakshatra (नक्षत्र)" : "Birth Star / Nakshatra",
+        `${relConfig.terminology.donationName} Purpose`,
+        relConfig.terminology.prayerLabel || "Special Prayer / Dedication",
+        "Amount (INR)",
+        "Kiosk / Screen Name",
+        "Order ID",
+        "Payment ID / Transaction Ref",
+        "Payment Status"
+      ];
 
-    const csvContent = "\uFEFF" // UTF-8 BOM for Excel formatting support
-      + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+      const rows = filtered.map(d => {
+        const dObj = new Date(d.created_at);
+        const dateStr = dObj.toLocaleDateString("en-IN", { year: 'numeric', month: 'short', day: 'numeric' });
+        const timeStr = dObj.toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `temple_donations_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("CSV export downloaded successfully!");
+        return [
+          dateStr,
+          timeStr,
+          d.donor_name || "Anonymous",
+          d.donor_phone || "",
+          d.donor_email || "",
+          d.donor_address || "",
+          d.donor_city || "",
+          d.donor_state || "",
+          d.donor_pincode || "",
+          d.donor_gotra || "",
+          d.donor_nakshatra || "",
+          d.purpose || "",
+          d.special_prayer || "",
+          d.amount,
+          d.kiosk_name || "",
+          d.razorpay_order_id || "",
+          d.razorpay_payment_id || "",
+          d.payment_status.toUpperCase()
+        ];
+      });
+
+      const csvContent = "\uFEFF" // UTF-8 BOM for full multilingual/Excel support
+        + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+
+      const filePrefix = `${relConfig.id}_donations`;
+      link.setAttribute("download", `${filePrefix}_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Exported ${filtered.length} records for ${relConfig.name}!`);
+    } catch (e: any) {
+      toast.error("Export failed: " + (e.message || "Unknown error"));
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -259,8 +298,23 @@ export default function DonationsContentPage() {
             <Button variant="outline" size="sm" onClick={() => companyId && fetchLogs(companyId)} className="h-9">
               Refresh Logs
             </Button>
-            <Button size="sm" onClick={handleExportCSV} className="h-9 gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold">
-              <Download className="h-4 w-4" /> Export CSV
+            <Button
+              size="sm"
+              disabled={isExporting}
+              onClick={handleExportCSV}
+              className="h-9 gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition-all shadow-sm"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Export CSV</span>
+                </>
+              )}
             </Button>
           </div>
         </div>

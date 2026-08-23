@@ -581,10 +581,16 @@ export default function AdminLayoutsPage() {
                 <div className="divide-y divide-border/40 max-h-[300px] overflow-y-auto">
                   {(Object.keys(formConfig?.fields || defaultCustomerInfoConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
                     const config = (formConfig?.fields && formConfig.fields[field]) || defaultCustomerInfoConfig.fields[field];
-                    const label = field === 'gotra' ? 'Gotra (गोत्र)' : field === 'nakshatra' ? 'Nakshatra (नक्षत्र)' : field === 'prayer' ? 'Special Prayer Message' : field.charAt(0).toUpperCase() + field.slice(1);
+                    const label = (() => {
+                      if (field === 'gotra') return relMeta.id === 'hinduism' ? 'Gotra (गोत्र)' : 'Gotra / Clan';
+                      if (field === 'nakshatra') return relMeta.id === 'hinduism' ? 'Nakshatra (नक्षत्र)' : 'Birth Star / Nakshatra';
+                      if (field === 'purpose') return `${relMeta.terminology.donationName} Purpose`;
+                      if (field === 'prayer') return relMeta.terminology.prayerLabel;
+                      return field.charAt(0).toUpperCase() + field.slice(1);
+                    })();
                     return (
                       <div key={field} className="grid grid-cols-3 gap-2 p-2.5 items-center text-xs">
-                        <span className="font-semibold text-foreground capitalize">{label}</span>
+                        <span className="font-semibold text-foreground">{label}</span>
                         <div className="flex justify-center">
                           <Switch
                             checked={config.enabled}

@@ -36,6 +36,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getReligionConfig } from "@/lib/religion-config";
 
 const API = (import.meta as any).env?.VITE_API_URL || "/api";
 
@@ -324,45 +325,13 @@ export function SquareOfferingCard({
   const label = config.label || "Offering";
   const description = config.description || "";
 
-  const isHindu = !religion || religion === 'hinduism' || religion === 'jainism';
-  const modalTitle = (() => {
-    switch (religion) {
-      case 'islam': return 'Sadaqah & Zakat Offerings';
-      case 'christianity': return 'Tithes & Offerings';
-      case 'sikhism': return 'Dasvandh & Seva Offerings';
-      case 'buddhism': return 'Dana & Dharma Offerings';
-      default: return 'Daan Offerings';
-    }
-  })();
+  const relMeta = getReligionConfig(religion);
+  const isHinduOrJain = !religion || religion === 'hinduism' || religion === 'jainism';
 
-  const badgeTitle = (() => {
-    switch (religion) {
-      case 'islam': return 'Direct Mosque Sadaqah';
-      case 'christianity': return 'Church Tithes & Offerings';
-      case 'sikhism': return 'Gurudwara Seva & Dasvandh';
-      case 'buddhism': return 'Monastery Dana Offering';
-      default: return 'Direct Temple Offering';
-    }
-  })();
-
-  const badgeDescription = (() => {
-    switch (religion) {
-      case 'islam': return 'Your contribution directly supports masjid facilities and community welfare.';
-      case 'christianity': return 'Your giving supports church ministry, missions, and community care.';
-      case 'sikhism': return 'Your seva supports Guru ka Langar and noble community initiatives.';
-      case 'buddhism': return 'Your dana supports the monastic sangha and spiritual activities.';
-      default: return 'Your seva details will be recorded for sacred archana and blessings.';
-    }
-  })();
-
-  const prayerLabel = (() => {
-    switch (religion) {
-      case 'islam': return 'Dua Request / Notes';
-      case 'christianity': return 'Prayer Request / Intentions';
-      case 'sikhism': return 'Ardas Request';
-      default: return 'Special Prayer Message / Sankalpam';
-    }
-  })();
+  const modalTitle = `${relMeta.terminology.donationName} Offerings`;
+  const badgeTitle = `Direct ${relMeta.terminology.institutionType.split('/')[0].trim()} Offering`;
+  const badgeDescription = relMeta.tagline;
+  const prayerLabel = relMeta.terminology.prayerLabel;
 
   const defaultFields = {
     name: { enabled: true, required: true },
@@ -372,8 +341,8 @@ export function SquareOfferingCard({
     city: { enabled: false, required: false },
     state: { enabled: false, required: false },
     pincode: { enabled: false, required: false },
-    gotra: { enabled: isHindu, required: false },
-    nakshatra: { enabled: isHindu, required: false },
+    gotra: { enabled: isHinduOrJain, required: false },
+    nakshatra: { enabled: isHinduOrJain, required: false },
     purpose: { enabled: true, required: false },
     prayer: { enabled: false, required: false },
   };
