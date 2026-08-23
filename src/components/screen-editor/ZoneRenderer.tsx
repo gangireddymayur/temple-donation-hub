@@ -599,11 +599,11 @@ export function SquareOfferingCard({
       {/* Devotee Payment Dialog Overlay (Mounted to document.body via Portal to escape all ancestor transforms) */}
       {activeDonation && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm animate-fade-in p-4 sm:p-6 overflow-y-auto">
-          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden text-left text-white font-sans my-auto">
+          <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-6 sm:p-7 max-w-lg md:max-w-3xl w-full shadow-2xl space-y-5 relative overflow-hidden text-left text-white font-sans my-auto">
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3.5">
               <div className="flex items-center gap-2.5">
                 <Coins className="h-5 w-5 text-emerald-400" />
                 <span className="font-bold text-lg text-slate-100">Daan Offerings</span>
@@ -624,127 +624,77 @@ export function SquareOfferingCard({
             )}
 
             {step === 'form' && (
-              <div className="space-y-4">
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
-                  <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Selected offering</div>
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <div className="text-sm font-semibold text-slate-200 mt-1">{activeDonation.label}</div>
-                  {description && (
-                    <div className="text-xs text-slate-400 mt-1.5 leading-relaxed">{description}</div>
-                  )}
-                </div>
-
-                <div className="space-y-3.5 pt-2 max-h-[300px] overflow-y-auto px-1 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800">
-                  {fields.name.enabled && (
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                        Full Name {fields.name.required && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="text"
-                        value={donorName}
-                        onChange={(e) => setDonorName(e.target.value)}
-                        placeholder="Enter full name"
-                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  {fields.phone.enabled && (
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                        Phone Number {fields.phone.required && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="tel"
-                        value={donorPhone}
-                        onChange={(e) => setDonorPhone(e.target.value)}
-                        placeholder="10-digit mobile number"
-                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  {fields.email.enabled && (
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                        Email Address {fields.email.required && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="email"
-                        value={donorEmail}
-                        onChange={(e) => setDonorEmail(e.target.value)}
-                        placeholder="email@example.com"
-                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  {fields.address.enabled && (
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                        Address {fields.address.required && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="text"
-                        value={donorAddress}
-                        onChange={(e) => setDonorAddress(e.target.value)}
-                        placeholder="Street address"
-                        className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {fields.city.enabled && (
-                      <div className="space-y-1">
-                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                          City {fields.city.required && <span className="text-red-500">*</span>}
-                        </label>
-                        <input
-                          type="text"
-                          value={donorCity}
-                          onChange={(e) => setDonorCity(e.target.value)}
-                          placeholder="City"
-                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                        />
-                      </div>
-                    )}
-
-                    {fields.state.enabled && (
-                      <div className="space-y-1">
-                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                          State {fields.state.required && <span className="text-red-500">*</span>}
-                        </label>
-                        <input
-                          type="text"
-                          value={donorState}
-                          onChange={(e) => setDonorState(e.target.value)}
-                          placeholder="State"
-                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
-                        />
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                {/* Left Column: Selected Offering Summary */}
+                <div className="md:col-span-5 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 text-center flex flex-col justify-between h-full space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Selected Offering</div>
+                    <div className="text-3xl font-black text-slate-100">₹{activeDonation.amount}</div>
+                    <div className="text-base font-bold text-slate-200">{activeDonation.label}</div>
+                    {description && (
+                      <div className="text-xs text-slate-400 leading-relaxed pt-1">{description}</div>
                     )}
                   </div>
+                  
+                  <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-[11px] text-slate-400 text-left space-y-1">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Direct Temple Offering</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-tight">Your seva details will be recorded for sacred archana and blessings.</p>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {fields.pincode.enabled && (
-                      <div className="space-y-1">
+                {/* Right Column: Devotee Form Fields in 2-Column Grid */}
+                <div className="md:col-span-7 flex flex-col justify-between space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] md:max-h-[340px] overflow-y-auto px-1 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800">
+                    {fields.name.enabled && (
+                      <div className="space-y-1 sm:col-span-1">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                          Pincode {fields.pincode.required && <span className="text-red-500">*</span>}
+                          Full Name {fields.name.required && <span className="text-red-500">*</span>}
                         </label>
                         <input
                           type="text"
-                          value={donorPincode}
-                          onChange={(e) => setDonorPincode(e.target.value)}
-                          placeholder="Pincode"
-                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          value={donorName}
+                          onChange={(e) => setDonorName(e.target.value)}
+                          placeholder="Enter full name"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.phone.enabled && (
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Phone Number {fields.phone.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="tel"
+                          value={donorPhone}
+                          onChange={(e) => setDonorPhone(e.target.value)}
+                          placeholder="10-digit mobile"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.email.enabled && (
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Email Address {fields.email.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="email"
+                          value={donorEmail}
+                          onChange={(e) => setDonorEmail(e.target.value)}
+                          placeholder="email@example.com"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
 
                     {fields.gotra.enabled && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 sm:col-span-1">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
                           Gotra {fields.gotra.required && <span className="text-red-500">*</span>}
                         </label>
@@ -753,15 +703,13 @@ export function SquareOfferingCard({
                           value={donorGotra}
                           onChange={(e) => setDonorGotra(e.target.value)}
                           placeholder="Gotra / गोत्र"
-                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
-                  </div>
 
-                  <div className="grid grid-cols-1 gap-2">
                     {fields.nakshatra.enabled && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 sm:col-span-1">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
                           Nakshatra {fields.nakshatra.required && <span className="text-red-500">*</span>}
                         </label>
@@ -770,13 +718,73 @@ export function SquareOfferingCard({
                           value={donorNakshatra}
                           onChange={(e) => setDonorNakshatra(e.target.value)}
                           placeholder="Nakshatra / नक्षत्र"
-                          className="w-full h-11 bg-slate-900/60 border border-slate-800 rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.address.enabled && (
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Address {fields.address.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorAddress}
+                          onChange={(e) => setDonorAddress(e.target.value)}
+                          placeholder="Street address"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.city.enabled && (
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          City {fields.city.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorCity}
+                          onChange={(e) => setDonorCity(e.target.value)}
+                          placeholder="City"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.state.enabled && (
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          State {fields.state.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorState}
+                          onChange={(e) => setDonorState(e.target.value)}
+                          placeholder="State"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {fields.pincode.enabled && (
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                          Pincode {fields.pincode.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          value={donorPincode}
+                          onChange={(e) => setDonorPincode(e.target.value)}
+                          placeholder="Pincode"
+                          className="w-full h-10 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
 
                     {fields.prayer.enabled && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 sm:col-span-2">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
                           Special Prayer Message {fields.prayer.required && <span className="text-red-500">*</span>}
                         </label>
@@ -784,65 +792,70 @@ export function SquareOfferingCard({
                           value={specialPrayer}
                           onChange={(e) => setSpecialPrayer(e.target.value)}
                           placeholder="Family details, special prayer requests..."
-                          className="w-full min-h-[70px] bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
+                          className="w-full min-h-[55px] bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
                     )}
                   </div>
-                </div>
 
-                <button
-                  disabled={loading}
-                  onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
-                  className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-4"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
-                  ) : (
-                    <>
-                      <QrCode className="h-4 w-4 text-[#070b18]" />
-                      <span>Generate Payment QR</span>
-                    </>
-                  )}
-                </button>
+                  <button
+                    disabled={loading}
+                    onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
+                    className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
+                    ) : (
+                      <>
+                        <QrCode className="h-4 w-4 text-[#070b18]" />
+                        <span>Generate Payment QR</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
 
             {step === 'payment' && (
-              <div className="flex flex-col items-center text-center space-y-5">
-                <div className="space-y-1">
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <div className="text-xs text-slate-400">{activeDonation.label}</div>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 space-y-4 text-center md:text-left">
+                  <div className="space-y-1 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                    <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Offering Amount</div>
+                    <div className="text-3xl font-black text-slate-100">₹{activeDonation.amount}</div>
+                    <div className="text-sm font-semibold text-slate-200">{activeDonation.label}</div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-bold text-slate-200">Scan QR Code to Pay</div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Open BHIM, GPay, PhonePe, Paytm, or any UPI app on your phone and scan the QR code to complete donation.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-3.5 py-2 rounded-full font-medium animate-pulse justify-center md:justify-start">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Waiting for payment confirmation...</span>
+                  </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-800/10">
-                  {qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="UPI Payment QR Code" className="w-[180px] h-[180px]" />
-                  ) : (
-                    <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-slate-500">
-                      Loading QR...
-                    </div>
-                  )}
-                </div>
+                <div className="md:col-span-7 flex flex-col items-center justify-center space-y-3">
+                  <div className="bg-white p-3.5 rounded-2xl shadow-2xl border border-slate-800/10">
+                    {qrCodeUrl ? (
+                      <img src={qrCodeUrl} alt="UPI Payment QR Code" className="w-[190px] h-[190px]" />
+                    ) : (
+                      <div className="w-[190px] h-[190px] flex items-center justify-center text-xs text-slate-500">
+                        Loading QR...
+                      </div>
+                    )}
+                  </div>
 
-                <div className="space-y-1 px-4">
-                  <div className="text-sm font-semibold text-slate-200">Scan QR Code to Pay</div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Open BHIM, GPay, PhonePe, Paytm, or any UPI app on your phone and scan the QR code to complete donation.
-                  </p>
+                  <button
+                    onClick={simulateSuccess}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 mt-1 bg-slate-900 border border-slate-800/50 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    [Developer: Simulate Payment Success]
+                  </button>
                 </div>
-
-                <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-4 py-2 rounded-full font-medium animate-pulse">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Waiting for payment confirmation...</span>
-                </div>
-
-                <button
-                  onClick={simulateSuccess}
-                  className="text-[9px] text-slate-600 hover:text-slate-400 mt-2 bg-slate-900 border border-slate-800/50 px-2.5 py-1 rounded"
-                >
-                  [Developer: Simulate Payment Success]
-                </button>
               </div>
             )}
 

@@ -21,8 +21,13 @@ function normalizePayload(table, input = {}) {
     if (typeof payload.is_paused === 'boolean') payload.is_paused = payload.is_paused ? 1 : 0;
   }
 
-  if (table === 'companies' && typeof payload.max_screens === 'string') {
-    payload.max_screens = Number(payload.max_screens);
+  if (table === 'companies') {
+    if (typeof payload.max_screens === 'string') {
+      payload.max_screens = Number(payload.max_screens);
+    }
+    if (payload.customer_info_config && typeof payload.customer_info_config === 'object') {
+      payload.customer_info_config = JSON.stringify(payload.customer_info_config);
+    }
   }
 
   return payload;
@@ -116,6 +121,17 @@ function crud(table, { tenantScoped = true, superAdminOnly = false } = {}) {
         }
       }
 
+      if (table === 'companies' && payload.customer_info_config !== undefined) {
+        try {
+          const [exists] = await db.query("SHOW COLUMNS FROM companies LIKE 'customer_info_config'");
+          if (exists.length === 0) {
+            await db.query("ALTER TABLE companies ADD COLUMN customer_info_config TEXT NULL");
+          }
+        } catch (e) {
+          console.warn('customer_info_config migration warning:', e.message);
+        }
+      }
+
       if (tenantScoped && req.user.role !== 'super_admin') payload.company_id = req.user.company_id;
       const cols = Object.keys(payload);
       const placeholders = cols.map((c) => `:${c}`).join(',');
@@ -145,6 +161,17 @@ function crud(table, { tenantScoped = true, superAdminOnly = false } = {}) {
         if (payload.local_mode === 'single') {
           payload.max_screens = 1;
           payload.max_devices = 1;
+        }
+      }
+
+      if (table === 'companies' && payload.customer_info_config !== undefined) {
+        try {
+          const [exists] = await db.query("SHOW COLUMNS FROM companies LIKE 'customer_info_config'");
+          if (exists.length === 0) {
+            await db.query("ALTER TABLE companies ADD COLUMN customer_info_config TEXT NULL");
+          }
+        } catch (e) {
+          console.warn('customer_info_config migration warning:', e.message);
         }
       }
 
