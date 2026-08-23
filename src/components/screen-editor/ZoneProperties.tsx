@@ -11,6 +11,8 @@ import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Image } from "lucid
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { PlaylistEditor } from "./PlaylistEditor";
+import { SUPPORTED_FONTS } from "@/lib/fonts";
+import { toast } from "sonner";
 
 export interface MediaContentItem {
   id: string;
@@ -599,13 +601,45 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Title Font Family</Label>
-                  <Input
+                  <Label className="text-xs">Font Family</Label>
+                  <select
                     value={widget.donationTitleFontFamily || ''}
-                    onChange={(e) => update({ donationTitleFontFamily: e.target.value })}
-                    placeholder="e.g. Outfit, Georgia, serif"
-                    className="h-8 text-xs"
-                  />
+                    onChange={(e) => update({ 
+                      donationTitleFontFamily: e.target.value || undefined,
+                      fontFamily: e.target.value || undefined
+                    })}
+                    className="w-full h-8 text-xs rounded-md border border-input bg-background px-3 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                  >
+                    <option value="">Default Template Font</option>
+                    <optgroup label="Indian & Temple Scripts" className="bg-zinc-900 text-amber-300 font-bold">
+                      {SUPPORTED_FONTS.filter(f => f.category === 'Indian & Temple').map(f => (
+                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                          {f.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Modern Sans" className="bg-zinc-900 text-sky-300 font-bold">
+                      {SUPPORTED_FONTS.filter(f => f.category === 'Modern Sans').map(f => (
+                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                          {f.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Classic Serif" className="bg-zinc-900 text-emerald-300 font-bold">
+                      {SUPPORTED_FONTS.filter(f => f.category === 'Classic Serif').map(f => (
+                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                          {f.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Display" className="bg-zinc-900 text-purple-300 font-bold">
+                      {SUPPORTED_FONTS.filter(f => f.category === 'Display').map(f => (
+                        <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                          {f.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -667,6 +701,112 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                   <p className="text-[9px] text-muted-foreground">
                     Sets max cards in 1 row (2, 3, or 4). Remaining cards scroll vertically.
                   </p>
+                </div>
+
+                <Separator className="my-2.5 opacity-50" />
+
+                {/* All Cards Default Styling */}
+                <div className="space-y-2.5 bg-slate-950/30 p-2.5 rounded-xl border border-border/40">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block">All Cards Styling</Label>
+                      <span className="text-[9px] text-muted-foreground block">Default color for all offering cards</span>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => {
+                        const updated = buttons.map(b => ({
+                          ...b,
+                          backgroundColor: widget.cardDefaultBgColor || b.backgroundColor,
+                          borderColor: widget.cardDefaultBorderColor || b.borderColor,
+                          textColor: widget.cardDefaultTextColor || b.textColor,
+                          cornerRadius: widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : b.cornerRadius
+                        }));
+                        update({ donationButtons: updated });
+                        toast.success("Applied style to all cards!");
+                      }}
+                    >
+                      Apply To All
+                    </Button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">All Cards Background Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultBgColor || '#1e1b4b'} 
+                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
+                        className="h-8 w-8 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultBgColor || ''} 
+                        onChange={(e) => update({ cardDefaultBgColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultBgColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBgColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">All Cards Border Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultBorderColor || '#fbbf24'} 
+                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
+                        className="h-8 w-8 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultBorderColor || ''} 
+                        onChange={(e) => update({ cardDefaultBorderColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultBorderColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultBorderColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">All Cards Text Color</Label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="color" 
+                        value={widget.cardDefaultTextColor || '#ffffff'} 
+                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
+                        className="h-8 w-8 rounded cursor-pointer border-none" 
+                      />
+                      <Input 
+                        value={widget.cardDefaultTextColor || ''} 
+                        onChange={(e) => update({ cardDefaultTextColor: e.target.value })} 
+                        placeholder="Template Default" 
+                        className="h-8 text-xs font-mono flex-1 bg-slate-950/40" 
+                      />
+                      {widget.cardDefaultTextColor && (
+                        <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ cardDefaultTextColor: undefined })}>Reset</Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">All Cards Corner Radius ({widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12}px)</Label>
+                    <Slider 
+                      value={[widget.cardDefaultRadius !== undefined ? widget.cardDefaultRadius : 12]} 
+                      onValueChange={([v]) => update({ cardDefaultRadius: v })} 
+                      min={0} 
+                      max={40} 
+                      step={1} 
+                      className="py-1"
+                    />
+                  </div>
                 </div>
 
                 <Separator className="my-2 opacity-50" />
@@ -1058,12 +1198,20 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                             <div className="grid grid-cols-2 gap-2 pt-1">
                               <div className="space-y-1">
                                 <Label className="text-[9px]">Text Color Override</Label>
-                                <Input 
-                                  value={btn.textColor || ''} 
-                                  onChange={(e) => updateButton(i, { textColor: e.target.value })} 
-                                  placeholder="Default"
-                                  className="h-6 text-[10px] bg-slate-950/40" 
-                                />
+                                <div className="flex gap-1">
+                                  <input 
+                                    type="color" 
+                                    value={btn.textColor || '#ffffff'} 
+                                    onChange={(e) => updateButton(i, { textColor: e.target.value })} 
+                                    className="h-6 w-6 rounded cursor-pointer border-none" 
+                                  />
+                                  <Input 
+                                    value={btn.textColor || ''} 
+                                    onChange={(e) => updateButton(i, { textColor: e.target.value })} 
+                                    placeholder="Default"
+                                    className="h-6 text-[10px] px-1 font-mono flex-1 bg-slate-950/40" 
+                                  />
+                                </div>
                               </div>
                               <div className="space-y-1">
                                 <Label className="text-[9px]">Corner Radius Override</Label>
@@ -1071,41 +1219,9 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
                                   type="number"
                                   value={btn.cornerRadius !== undefined ? btn.cornerRadius : ''} 
                                   onChange={(e) => updateButton(i, { cornerRadius: e.target.value !== '' ? Number(e.target.value) : undefined })} 
-                                  placeholder="12"
+                                  placeholder="Default"
                                   className="h-6 text-[10px] bg-slate-950/40" 
                                 />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 pt-1">
-                              <div className="space-y-1">
-                                <Label className="text-[9px]">Hover Effect</Label>
-                                <Select
-                                  value={btn.hoverEffect || 'scale'}
-                                  onValueChange={(v) => updateButton(i, { hoverEffect: v as any })}
-                                >
-                                  <SelectTrigger className="h-6 text-[10px] bg-slate-950/40"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="scale">Scale Up</SelectItem>
-                                    <SelectItem value="glow">Gold Glow</SelectItem>
-                                    <SelectItem value="bounce">Bounce Hover</SelectItem>
-                                    <SelectItem value="none">None</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-[9px]">Click Effect</Label>
-                                <Select
-                                  value={btn.clickAnimation || 'pop'}
-                                  onValueChange={(v) => updateButton(i, { clickAnimation: v as any })}
-                                >
-                                  <SelectTrigger className="h-6 text-[10px] bg-slate-950/40"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pop">Pop Shrink</SelectItem>
-                                    <SelectItem value="sink">Sink Down</SelectItem>
-                                    <SelectItem value="none">None</SelectItem>
-                                  </SelectContent>
-                                </Select>
                               </div>
                             </div>
                           </div>
@@ -1408,7 +1524,23 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
 
           <div className="space-y-1.5">
             <Label className="text-xs">Card Text Color</Label>
-            <Input value={widget.buttonTextColor || ''} onChange={(e) => update({ buttonTextColor: e.target.value })} placeholder="Default" className="h-8 text-xs" />
+            <div className="flex gap-2">
+              <input 
+                type="color" 
+                value={widget.buttonTextColor || '#ffffff'} 
+                onChange={(e) => update({ buttonTextColor: e.target.value })} 
+                className="h-8 w-8 rounded cursor-pointer border-none" 
+              />
+              <Input 
+                value={widget.buttonTextColor || ''} 
+                onChange={(e) => update({ buttonTextColor: e.target.value })} 
+                placeholder="Default" 
+                className="h-8 text-xs font-mono flex-1" 
+              />
+              {widget.buttonTextColor && (
+                <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => update({ buttonTextColor: undefined })}>Reset</Button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -1419,32 +1551,6 @@ export function ZoneProperties({ widget, onUpdate, contentItems = [] }: ZoneProp
           <div className="space-y-1.5">
             <Label className="text-xs">Background Gradient</Label>
             <Input value={widget.buttonGradient || ''} onChange={(e) => update({ buttonGradient: e.target.value })} placeholder="e.g. from-amber-500 to-orange-600" className="h-8 text-xs" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Hover Effect</Label>
-              <Select value={widget.buttonHoverEffect || 'scale'} onValueChange={(v) => update({ buttonHoverEffect: v as any })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="scale">Scale Up</SelectItem>
-                  <SelectItem value="glow">Gold Glow</SelectItem>
-                  <SelectItem value="bounce">Translate Up</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Click Effect</Label>
-              <Select value={widget.buttonClickAnimation || 'pop'} onValueChange={(v) => update({ buttonClickAnimation: v as any })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pop">Pop Shrink</SelectItem>
-                  <SelectItem value="sink">Sink Down</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </>
       )}

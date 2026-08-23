@@ -141,6 +141,10 @@ export interface ContentWidget {
   donationContainerRadius?: number;
   donationButtons?: DonationButtonConfig[];
   cardsPerRow?: number; // 2, 3, or 4 buttons per row (default: 2)
+  cardDefaultBgColor?: string; // Default background color for all offering cards
+  cardDefaultBorderColor?: string; // Default border color for all offering cards
+  cardDefaultTextColor?: string; // Default text color for all offering cards
+  cardDefaultRadius?: number; // Default corner radius for all offering cards
 
   // Background Media & Dim for Template/Screen
   backgroundType?: 'none' | 'image' | 'video';

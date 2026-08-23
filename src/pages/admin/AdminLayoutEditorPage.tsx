@@ -26,13 +26,15 @@ import {
   Globe,
   Languages,
   Sparkles,
-  Loader2
+  Loader2,
+  Type
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { SUPPORTED_LANGUAGES, translateZoneContent } from "@/lib/language-translator";
+import { SUPPORTED_FONTS } from "@/lib/fonts";
 
 function findZone(zone: ScreenZone, id: string): ScreenZone | null {
   if (zone.id === id) return zone;
@@ -339,6 +341,69 @@ export default function AdminLayoutEditorPage() {
                 ))}
               </select>
               {translating && <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />}
+            </div>
+
+            {/* Global Font Family Selector Dropdown */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-card border border-primary/20 shadow-sm">
+              <Type className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <select
+                value={rootZone.content?.donationTitleFontFamily || rootZone.content?.fontFamily || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const applyFontToZone = (z: ScreenZone): ScreenZone => {
+                    const updatedWidget: ContentWidget | undefined = z.content ? {
+                      ...z.content,
+                      fontFamily: val || undefined,
+                      donationTitleFontFamily: val || undefined,
+                      buttonFontFamily: val || undefined,
+                      donationButtons: z.content.donationButtons?.map(b => ({
+                        ...b,
+                        fontFamily: val || undefined,
+                      }))
+                    } : undefined;
+                    return {
+                      ...z,
+                      content: updatedWidget,
+                      children: z.children ? [applyFontToZone(z.children[0]), applyFontToZone(z.children[1])] : undefined
+                    };
+                  };
+                  const newRoot = applyFontToZone(rootZone);
+                  commitSnapshot(prev => ({ ...prev, rootZone: newRoot }));
+                  toast.success("Font updated across layout!");
+                }}
+                className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1 max-w-[130px] truncate"
+                title="Select font for entire template/screen"
+              >
+                <option value="" className="bg-zinc-900 text-white">Default Font</option>
+                <optgroup label="Indian & Temple Scripts" className="bg-zinc-900 text-amber-300 font-bold">
+                  {SUPPORTED_FONTS.filter(f => f.category === 'Indian & Temple').map(f => (
+                    <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                      {f.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Modern Sans" className="bg-zinc-900 text-sky-300 font-bold">
+                  {SUPPORTED_FONTS.filter(f => f.category === 'Modern Sans').map(f => (
+                    <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                      {f.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Classic Serif" className="bg-zinc-900 text-emerald-300 font-bold">
+                  {SUPPORTED_FONTS.filter(f => f.category === 'Classic Serif').map(f => (
+                    <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                      {f.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Display" className="bg-zinc-900 text-purple-300 font-bold">
+                  {SUPPORTED_FONTS.filter(f => f.category === 'Display').map(f => (
+                    <option key={f.name} value={f.family} className="bg-zinc-900 text-white font-normal">
+                      {f.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
             </div>
 
             <Button variant="outline" size="sm" onClick={handleUndo} disabled={history.past.length === 0}>

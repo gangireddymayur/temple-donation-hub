@@ -134,7 +134,7 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-2">
+      <SidebarFooter className={collapsed ? "p-2 space-y-2 flex flex-col items-center" : "p-4 space-y-2"}>
         {!collapsed && (
           <div className="rounded-lg bg-sidebar-accent p-3">
             <p className="text-xs font-medium text-sidebar-accent-foreground">Company Admin</p>
@@ -144,10 +144,14 @@ export function AdminSidebar() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          className={cn(
+            "text-destructive hover:text-destructive hover:bg-destructive/10 transition-all",
+            collapsed ? "w-8 h-8 p-0 flex items-center justify-center mx-auto" : "w-full justify-start"
+          )}
           onClick={() => signOut()}
+          title="Logout"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className={cn("h-4 w-4 shrink-0", !collapsed && "mr-2")} />
           {!collapsed && <span>Logout</span>}
         </Button>
       </SidebarFooter>
