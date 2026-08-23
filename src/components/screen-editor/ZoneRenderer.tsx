@@ -133,6 +133,7 @@ interface ZoneRendererProps {
   depth?: number;
   previewMode?: boolean;
   customerInfoConfig?: CustomerInfoConfig;
+  religion?: string;
 }
 
 /* ── Transition CSS for slideshow ── */
@@ -285,7 +286,8 @@ export function SquareOfferingCard({
   isSelected = false,
   onSelect,
   customerInfoConfig,
-  themeStyle
+  themeStyle,
+  religion = 'hinduism'
 }: {
   config: DonationButtonConfig;
   interactive: boolean;
@@ -293,6 +295,7 @@ export function SquareOfferingCard({
   onSelect?: () => void;
   customerInfoConfig?: CustomerInfoConfig;
   themeStyle?: string;
+  religion?: string;
 }) {
   const [activeDonation, setActiveDonation] = useState<any>(null);
   
@@ -321,6 +324,46 @@ export function SquareOfferingCard({
   const label = config.label || "Offering";
   const description = config.description || "";
 
+  const isHindu = !religion || religion === 'hinduism' || religion === 'jainism';
+  const modalTitle = (() => {
+    switch (religion) {
+      case 'islam': return 'Sadaqah & Zakat Offerings';
+      case 'christianity': return 'Tithes & Offerings';
+      case 'sikhism': return 'Dasvandh & Seva Offerings';
+      case 'buddhism': return 'Dana & Dharma Offerings';
+      default: return 'Daan Offerings';
+    }
+  })();
+
+  const badgeTitle = (() => {
+    switch (religion) {
+      case 'islam': return 'Direct Mosque Sadaqah';
+      case 'christianity': return 'Church Tithes & Offerings';
+      case 'sikhism': return 'Gurudwara Seva & Dasvandh';
+      case 'buddhism': return 'Monastery Dana Offering';
+      default: return 'Direct Temple Offering';
+    }
+  })();
+
+  const badgeDescription = (() => {
+    switch (religion) {
+      case 'islam': return 'Your contribution directly supports masjid facilities and community welfare.';
+      case 'christianity': return 'Your giving supports church ministry, missions, and community care.';
+      case 'sikhism': return 'Your seva supports Guru ka Langar and noble community initiatives.';
+      case 'buddhism': return 'Your dana supports the monastic sangha and spiritual activities.';
+      default: return 'Your seva details will be recorded for sacred archana and blessings.';
+    }
+  })();
+
+  const prayerLabel = (() => {
+    switch (religion) {
+      case 'islam': return 'Dua Request / Notes';
+      case 'christianity': return 'Prayer Request / Intentions';
+      case 'sikhism': return 'Ardas Request';
+      default: return 'Special Prayer Message / Sankalpam';
+    }
+  })();
+
   const defaultFields = {
     name: { enabled: true, required: true },
     phone: { enabled: true, required: true },
@@ -329,8 +372,8 @@ export function SquareOfferingCard({
     city: { enabled: false, required: false },
     state: { enabled: false, required: false },
     pincode: { enabled: false, required: false },
-    gotra: { enabled: false, required: false },
-    nakshatra: { enabled: false, required: false },
+    gotra: { enabled: isHindu, required: false },
+    nakshatra: { enabled: isHindu, required: false },
     purpose: { enabled: true, required: false },
     prayer: { enabled: false, required: false },
   };
@@ -606,7 +649,7 @@ export function SquareOfferingCard({
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-3.5">
               <div className="flex items-center gap-2.5">
                 <Coins className="h-5 w-5 text-emerald-400" />
-                <span className="font-bold text-lg text-slate-100">Daan Offerings</span>
+                <span className="font-bold text-lg text-slate-100">{modalTitle}</span>
               </div>
               <button onClick={handleClose} className="text-slate-400 hover:text-white text-sm bg-slate-800/50 hover:bg-slate-800 px-3 py-1 rounded-full border border-slate-700/50 transition-colors">
                 Cancel
@@ -639,9 +682,9 @@ export function SquareOfferingCard({
                   <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-[11px] text-slate-400 text-left space-y-1">
                     <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                       <Sparkles className="h-3.5 w-3.5" />
-                      <span>Direct Temple Offering</span>
+                      <span>{badgeTitle}</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 leading-tight">Your seva details will be recorded for sacred archana and blessings.</p>
+                    <p className="text-[10px] text-slate-400 leading-tight">{badgeDescription}</p>
                   </div>
                 </div>
 
@@ -786,12 +829,12 @@ export function SquareOfferingCard({
                     {fields.prayer.enabled && (
                       <div className="space-y-1 sm:col-span-2">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
-                          Special Prayer Message {fields.prayer.required && <span className="text-red-500">*</span>}
+                          {prayerLabel} {fields.prayer.required && <span className="text-red-500">*</span>}
                         </label>
                         <textarea
                           value={specialPrayer}
                           onChange={(e) => setSpecialPrayer(e.target.value)}
-                          placeholder="Family details, special prayer requests..."
+                          placeholder="Special prayer requests, family notes..."
                           className="w-full min-h-[50px] bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50 placeholder-slate-600 transition-colors"
                         />
                       </div>
@@ -888,7 +931,7 @@ export function SquareOfferingCard({
 }
 
 /* ── Standard Widget Preview ── */
-function WidgetPreview({ widget, previewMode = false, customerInfoConfig }: { widget: ContentWidget; previewMode?: boolean; customerInfoConfig?: CustomerInfoConfig }) {
+function WidgetPreview({ widget, previewMode = false, customerInfoConfig, religion }: { widget: ContentWidget; previewMode?: boolean; customerInfoConfig?: CustomerInfoConfig; religion?: string }) {
   if (widget.type === 'donation_button' || widget.type === 'circle_button' || widget.type === 'rectangular_button' || widget.type === 'square_button') {
     const config: DonationButtonConfig = {
       id: widget.id,
@@ -914,7 +957,7 @@ function WidgetPreview({ widget, previewMode = false, customerInfoConfig }: { wi
     };
     return (
       <div className="w-full h-full flex items-center justify-center p-2 bg-transparent">
-        <SquareOfferingCard config={config} interactive={previewMode} customerInfoConfig={customerInfoConfig} />
+        <SquareOfferingCard config={config} interactive={previewMode} customerInfoConfig={customerInfoConfig} religion={religion} />
       </div>
     );
   }
@@ -922,7 +965,7 @@ function WidgetPreview({ widget, previewMode = false, customerInfoConfig }: { wi
     return <LinksWidget widget={widget} interactive={previewMode} />;
   }
   if (widget.type === 'donation') {
-    return <DonationWidget widget={widget} interactive={previewMode} customerInfoConfig={customerInfoConfig} />;
+    return <DonationWidget widget={widget} interactive={previewMode} customerInfoConfig={customerInfoConfig} religion={religion} />;
   }
   if (widget.type === 'slideshow') {
     return <SlideshowPreview widget={widget} />;
@@ -1099,7 +1142,7 @@ function ClockWidget({ fontSize, color, fontWeight }: { fontSize?: number; color
   );
 }
 
-function DonationWidget({ widget, interactive, customerInfoConfig }: { widget: ContentWidget; interactive: boolean; customerInfoConfig?: CustomerInfoConfig }) {
+function DonationWidget({ widget, interactive, customerInfoConfig, religion }: { widget: ContentWidget; interactive: boolean; customerInfoConfig?: CustomerInfoConfig; religion?: string }) {
   const buttons = widget.donationButtons || [];
   const [selectedBtnId, setSelectedBtnId] = useState<string | null>(null);
   
@@ -1816,7 +1859,7 @@ function PlaylistPlayer({
 
 
 /* ── Zone Renderer ── */
-export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, depth = 0, previewMode = false, customerInfoConfig }: ZoneRendererProps) {
+export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, depth = 0, previewMode = false, customerInfoConfig, religion }: ZoneRendererProps) {
   const isSelected = zone.id === selectedZoneId;
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -1863,6 +1906,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
             depth={depth + 1}
             previewMode={previewMode}
             customerInfoConfig={customerInfoConfig}
+            religion={religion}
           />
         </div>
         {!previewMode && (
@@ -1904,6 +1948,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
             depth={depth + 1}
             previewMode={previewMode}
             customerInfoConfig={customerInfoConfig}
+            religion={religion}
           />
         </div>
       </div>
@@ -1913,7 +1958,7 @@ export function ZoneRenderer({ zone, onUpdate, onSelectZone, selectedZoneId, dep
   if (previewMode) {
     return (
       <div className="relative w-full h-full">
-        {zone.content ? <WidgetPreview widget={zone.content} previewMode customerInfoConfig={customerInfoConfig} /> : null}
+        {zone.content ? <WidgetPreview widget={zone.content} previewMode customerInfoConfig={customerInfoConfig} religion={religion} /> : null}
       </div>
     );
   }

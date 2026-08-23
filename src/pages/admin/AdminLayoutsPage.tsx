@@ -121,7 +121,22 @@ export default function AdminLayoutsPage() {
       .eq("id", cId)
       .single();
     if (data?.customer_info_config) {
-      setFormConfig(data.customer_info_config as unknown as CustomerInfoConfig);
+      try {
+        const parsed = typeof data.customer_info_config === 'string'
+          ? JSON.parse(data.customer_info_config)
+          : data.customer_info_config;
+        if (parsed && typeof parsed === 'object') {
+          setFormConfig({
+            popupEnabled: parsed.popupEnabled !== false,
+            fields: {
+              ...defaultCustomerInfoConfig.fields,
+              ...(parsed.fields || {})
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to parse company customer_info_config:", e);
+      }
     }
   };
 
@@ -564,9 +579,9 @@ export default function AdminLayoutsPage() {
                 </div>
 
                 <div className="divide-y divide-border/40 max-h-[300px] overflow-y-auto">
-                  {(Object.keys(formConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
-                    const config = formConfig.fields[field];
-                    const label = field.charAt(0).toUpperCase() + field.slice(1);
+                  {(Object.keys(formConfig?.fields || defaultCustomerInfoConfig.fields) as Array<keyof CustomerInfoConfig["fields"]>).map((field) => {
+                    const config = (formConfig?.fields && formConfig.fields[field]) || defaultCustomerInfoConfig.fields[field];
+                    const label = field === 'gotra' ? 'Gotra (गोत्र)' : field === 'nakshatra' ? 'Nakshatra (नक्षत्र)' : field === 'prayer' ? 'Special Prayer Message' : field.charAt(0).toUpperCase() + field.slice(1);
                     return (
                       <div key={field} className="grid grid-cols-3 gap-2 p-2.5 items-center text-xs">
                         <span className="font-semibold text-foreground capitalize">{label}</span>
