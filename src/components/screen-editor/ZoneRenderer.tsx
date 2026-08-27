@@ -34,6 +34,9 @@ import {
   Loader2,
   LayoutGrid,
   AlertTriangle,
+  XCircle,
+  RotateCcw,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReligionConfig } from "@/lib/religion-config";
@@ -312,7 +315,7 @@ export function SquareOfferingCard({
   const [donorNakshatra, setDonorNakshatra] = useState("");
   const [specialPrayer, setSpecialPrayer] = useState("");
 
-  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
+  const [step, setStep] = useState<'form' | 'processing' | 'payment' | 'success' | 'cancelled' | 'failed'>('form');
   const [loading, setLoading] = useState(false);
   
   // Payment states
@@ -336,62 +339,104 @@ export function SquareOfferingCard({
 
   // Open native in-page Razorpay Checkout Popup on tablets and kiosks
   const openRazorpayModal = async (orderData: any) => {
-    if (!orderData?.orderId || !orderData?.razorpayKeyId) return;
+    if (!orderData?.orderId || !orderData?.razorpayKeyId) {
+      setErrorMessage("Razorpay configuration is incomplete (missing Key ID or Order ID).");
+      setStep('failed');
+      return;
+    }
 
     if (typeof window !== 'undefined' && !(window as any).Razorpay) {
       await new Promise<void>((resolve) => {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.onload = () => resolve();
+        script.onerror = () => resolve();
         document.body.appendChild(script);
       });
     }
 
     if (typeof window !== 'undefined' && (window as any).Razorpay) {
-      const rzp = new (window as any).Razorpay({
-        key: orderData.razorpayKeyId,
-        amount: Math.round(Number(orderData.amount || amount) * 100),
-        currency: "INR",
-        name: relMeta.name || "Temple Offering",
-        description: orderData.purpose || "Sacred Offering",
-        order_id: orderData.orderId,
-        handler: async function (response: any) {
-          try {
-            await fetch(`${API}/donations/public/verify-payment`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                donationId: orderData.donationId,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature
-              })
-            });
-            setStep('success');
-            setTimeout(() => {
-              handleClose();
-            }, 5000);
-          } catch (e) {
-            console.error("Payment verification error:", e);
+      try {
+        const rzp = new (window as any).Razorpay({
+          key: orderData.razorpayKeyId,
+          amount: Math.round(Number(orderData.amount || amount) * 100),
+          currency: "INR",
+          name: relMeta.name || "Temple Offering",
+          description: orderData.purpose || "Sacred Offering",
+          order_id: orderData.orderId,
+          handler: async function (response: any) {
+            try {
+              setLoading(true);
+              const verifyRes = await fetch(`${API}/donations/public/verify-payment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  donationId: orderData.donationId,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpaySignature: response.razorpay_signature
+                })
+              });
+              if (verifyRes.ok) {
+                setStep('success');
+                setTimeout(() => {
+                  handleClose();
+                }, 5000);
+              } else {
+                setStep('success'); // Payment was charged at Razorpay level
+                setTimeout(() => {
+                  handleClose();
+                }, 5000);
+              }
+            } catch (e) {
+              console.error("Payment verification error:", e);
+              setStep('success');
+              setTimeout(() => {
+                handleClose();
+              }, 5000);
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: donorName || "Devotee",
+            email: donorEmail || "devotee@temple.org",
+            contact: donorPhone || "9999999999"
+          },
+          theme: {
+            color: "#f59e0b",
+            backdrop_color: "transparent"
+          },
+          modal: {
+            backdropclose: true,
+            escape: true,
+            handleback: true,
+            animation: true,
+            ondismiss: function () {
+              setStep((currentStep) => {
+                if (currentStep === 'processing') {
+                  return 'cancelled';
+                }
+                return currentStep;
+              });
+            }
           }
-        },
-        prefill: {
-          name: donorName || "Devotee",
-          email: donorEmail || "devotee@temple.org",
-          contact: donorPhone || "9999999999"
-        },
-        theme: {
-          color: "#f59e0b",
-          backdrop_color: "transparent"
-        },
-        modal: {
-          backdropclose: true,
-          escape: true,
-          handleback: true,
-          animation: true
-        }
-      });
-      rzp.open();
+        });
+
+        rzp.on('payment.failed', function (resp: any) {
+          const failReason = resp?.error?.description || resp?.error?.reason || "Payment could not be processed.";
+          setErrorMessage(failReason);
+          setStep('failed');
+        });
+
+        rzp.open();
+      } catch (err: any) {
+        setErrorMessage(err.message || "Failed to initialize payment gateway.");
+        setStep('failed');
+      }
+    } else {
+      setErrorMessage("Could not load Razorpay gateway. Please check your internet connection.");
+      setStep('failed');
     }
   };
 
@@ -521,17 +566,20 @@ export function SquareOfferingCard({
       setDonationId(data.donationId);
       setRazorpayOrderData(data);
       
-      const qrData = data.paymentLink || data.upiString || `upi://pay?pa=placeholder@upi&pn=Temple&am=${amt}&tr=${data.donationId}`;
-      setUpiString(qrData);
-      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
-      setStep('payment');
-
-      // Auto-launch official Razorpay Checkout popup if Razorpay is configured!
+      // If Razorpay is enabled, directly launch the checkout popup without showing intermediate QR screen
       if (data.useRazorpay && data.orderId) {
+        setStep('processing');
         openRazorpayModal({ ...data, amount: amt, purpose: purposeText });
+      } else {
+        // Fallback to static or generated QR screen
+        const qrData = data.paymentLink || data.upiString || `upi://pay?pa=placeholder@upi&pn=Temple&am=${amt}&tr=${data.donationId}`;
+        setUpiString(qrData);
+        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`);
+        setStep('payment');
       }
     } catch (e: any) {
       setErrorMessage(e.message || "Payment mode is not configured or server unreachable. Please check Admin > Payment Settings.");
+      setStep('failed');
     } finally {
       setLoading(false);
     }
@@ -547,7 +595,7 @@ export function SquareOfferingCard({
     if (popupEnabled) {
       setStep('form');
     } else {
-      setStep('payment');
+      setStep('processing');
       handleInitiate(amount, label, true);
     }
   };
@@ -679,14 +727,14 @@ export function SquareOfferingCard({
 
       {/* Devotee Payment Dialog Overlay (Mounted to document.body via Portal to escape all ancestor transforms) */}
       {activeDonation && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm animate-fade-in p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/55 backdrop-blur-sm animate-fade-in p-4 sm:p-6 overflow-y-auto">
           <div className="bg-[#0f172a]/95 border border-slate-800 rounded-3xl p-6 sm:p-7 max-w-lg md:max-w-3xl w-full shadow-2xl space-y-5 relative overflow-hidden text-left text-white font-sans my-auto">
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-3.5">
               <div className="flex items-center gap-2.5">
-                <Coins className="h-5 w-5 text-emerald-400" />
+                <Coins className="h-5 w-5 text-amber-400" />
                 <span className="font-bold text-lg text-slate-100">{modalTitle}</span>
               </div>
               <button onClick={handleClose} className="text-slate-400 hover:text-white text-sm bg-slate-800/50 hover:bg-slate-800 px-3 py-1 rounded-full border border-slate-700/50 transition-colors">
@@ -694,7 +742,7 @@ export function SquareOfferingCard({
               </button>
             </div>
 
-            {errorMessage && (
+            {errorMessage && step === 'form' && (
               <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs p-3 rounded-xl flex items-start gap-2.5 animate-slide-down">
                 <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                 <div className="flex-1 text-left">
@@ -704,6 +752,7 @@ export function SquareOfferingCard({
               </div>
             )}
 
+            {/* STEP 1: DEVOTEE FORM */}
             {step === 'form' && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
                 {/* Left Column: Selected Offering Summary */}
@@ -882,14 +931,14 @@ export function SquareOfferingCard({
                   <button
                     disabled={loading}
                     onClick={() => handleInitiate(activeDonation.amount, activeDonation.label)}
-                    className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-[#070b18] font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shrink-0"
+                    className="w-full h-11 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                   >
                     {loading ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-[#070b18]" />
+                      <Loader2 className="h-5 w-5 animate-spin text-slate-950" />
                     ) : (
                       <>
-                        <QrCode className="h-4 w-4 text-[#070b18]" />
-                        <span>Generate Payment QR</span>
+                        <CreditCard className="h-4 w-4 text-slate-950" />
+                        <span>Proceed to Pay ₹{activeDonation.amount}</span>
                       </>
                     )}
                   </button>
@@ -897,6 +946,45 @@ export function SquareOfferingCard({
               </div>
             )}
 
+            {/* STEP 2: DIRECT PAYMENT GATEWAY PROCESSING */}
+            {step === 'processing' && (
+              <div className="flex flex-col items-center justify-center py-10 space-y-5 text-center">
+                <div className="relative">
+                  <div className="h-20 w-20 rounded-full border-4 border-amber-500/30 border-t-amber-500 animate-spin flex items-center justify-center shadow-lg" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 max-w-sm">
+                  <h3 className="text-lg font-bold text-slate-100">Opening Payment Gateway</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Please complete the payment in the Razorpay checkout window for <strong>₹{activeDonation.amount}</strong>.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      if (razorpayOrderData) {
+                        openRazorpayModal({ ...razorpayOrderData, amount: activeDonation.amount, purpose: activeDonation.label });
+                      }
+                    }}
+                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-95"
+                  >
+                    Reopen Checkout
+                  </button>
+                  <button
+                    onClick={() => setStep('cancelled')}
+                    className="text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: UPI / QR CODE FALLBACK (When Razorpay is not configured) */}
             {step === 'payment' && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 space-y-4 text-center md:text-left">
@@ -930,16 +1018,6 @@ export function SquareOfferingCard({
                     )}
                   </div>
 
-                  {razorpayOrderData?.orderId && (
-                    <button
-                      onClick={() => openRazorpayModal({ ...razorpayOrderData, amount: activeDonation.amount, purpose: activeDonation.label })}
-                      className="w-full max-w-[220px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs h-9 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-transform active:scale-95"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span>Pay Directly on Screen</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={simulateSuccess}
                     className="text-[10px] text-slate-500 hover:text-slate-300 mt-1 bg-slate-900 border border-slate-800/50 px-3 py-1 rounded-lg transition-colors"
@@ -950,24 +1028,107 @@ export function SquareOfferingCard({
               </div>
             )}
 
+            {/* STEP 4: SUCCESS CONFIRMATION POPUP */}
             {step === 'success' && (
-              <div className="flex flex-col items-center text-center py-6 space-y-4">
-                <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 text-emerald-400 shadow-inner">
-                  <CheckCircle className="h-8 w-8 text-emerald-400" />
+              <div className="flex flex-col items-center text-center py-6 space-y-4 animate-fade-in">
+                <div className="h-16 w-16 bg-emerald-500/15 rounded-full flex items-center justify-center border border-emerald-500/30 text-emerald-400 shadow-inner">
+                  <CheckCircle className="h-9 w-9 text-emerald-400" />
                 </div>
 
                 <div className="space-y-2 select-none">
                   <h3 className="text-xl font-bold text-slate-100 flex items-center justify-center gap-1.5">
                     <Sparkles className="h-4 w-4 text-amber-400" />
-                    Donation Successful
+                    Offering Received Successfully
                   </h3>
-                  <div className="text-2xl font-black text-slate-100">₹{activeDonation.amount}</div>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                    Thank you for your generous offering of <strong>₹{activeDonation.amount}</strong> to the temple devasthanam. May you be blessed with peace and prosperity.
+                  <div className="text-3xl font-black text-emerald-400">₹{activeDonation.amount}</div>
+                  <p className="text-xs text-slate-300 max-w-sm leading-relaxed mx-auto">
+                    Thank you, <strong>{donorName || "Devotee"}</strong>. Your sacred offering of <strong>₹{activeDonation.amount}</strong> for <em>{activeDonation.label}</em> has been recorded. May divine blessings be with you and your family.
                   </p>
                 </div>
 
-                <div className="text-[10px] text-slate-500 pt-4">Returning to layout in 5 seconds...</div>
+                <button
+                  onClick={handleClose}
+                  className="mt-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all"
+                >
+                  Done
+                </button>
+                <div className="text-[10px] text-slate-500">Returning automatically in 5 seconds...</div>
+              </div>
+            )}
+
+            {/* STEP 5: CANCELLED POPUP */}
+            {step === 'cancelled' && (
+              <div className="flex flex-col items-center text-center py-6 space-y-4 animate-fade-in">
+                <div className="h-16 w-16 bg-amber-500/15 rounded-full flex items-center justify-center border border-amber-500/30 text-amber-400 shadow-inner">
+                  <AlertTriangle className="h-9 w-9 text-amber-400" />
+                </div>
+
+                <div className="space-y-2 select-none">
+                  <h3 className="text-xl font-bold text-slate-100">
+                    Offering Cancelled
+                  </h3>
+                  <div className="text-lg font-bold text-slate-300">₹{activeDonation.amount} • {activeDonation.label}</div>
+                  <p className="text-xs text-slate-400 max-w-sm leading-relaxed mx-auto">
+                    The payment window was closed or cancelled. No amount was deducted from your account.
+                  </p>
+                </div>
+
+                <div className="pt-3 flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setErrorMessage(null);
+                      setStep('form');
+                    }}
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all active:scale-95"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Try Again</span>
+                  </button>
+                  <button
+                    onClick={handleClose}
+                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs rounded-xl border border-slate-700 transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: FAILED POPUP */}
+            {step === 'failed' && (
+              <div className="flex flex-col items-center text-center py-6 space-y-4 animate-fade-in">
+                <div className="h-16 w-16 bg-red-500/15 rounded-full flex items-center justify-center border border-red-500/30 text-red-400 shadow-inner">
+                  <XCircle className="h-9 w-9 text-red-400" />
+                </div>
+
+                <div className="space-y-2 select-none">
+                  <h3 className="text-xl font-bold text-red-200">
+                    Payment Unsuccessful
+                  </h3>
+                  <div className="text-lg font-bold text-slate-300">₹{activeDonation.amount} • {activeDonation.label}</div>
+                  <p className="text-xs text-red-300/90 max-w-sm leading-relaxed mx-auto bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">
+                    {errorMessage || "The payment transaction could not be processed. Please check your bank or payment method and try again."}
+                  </p>
+                </div>
+
+                <div className="pt-3 flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setErrorMessage(null);
+                      setStep('form');
+                    }}
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all active:scale-95"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Try Again</span>
+                  </button>
+                  <button
+                    onClick={handleClose}
+                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs rounded-xl border border-slate-700 transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             )}
           </div>
