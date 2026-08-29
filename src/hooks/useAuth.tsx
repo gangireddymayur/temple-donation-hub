@@ -47,15 +47,6 @@ export function getTrialInfo(company: any) {
     return new Date(formatted);
   };
 
-  const trialEnd = company.trial_ends_at
-    ? parseDate(company.trial_ends_at)
-    : company.created_at
-      ? (() => {
-          const parsed = parseDate(company.created_at);
-          return parsed ? new Date(parsed.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
-        })()
-      : null;
-
   const formatDate = (date: Date | null) => {
     if (!date) return null;
     return date.toLocaleDateString("en-US", {
@@ -65,16 +56,61 @@ export function getTrialInfo(company: any) {
     });
   };
 
-  if (!trialEnd || isNaN(trialEnd.getTime())) {
-    if (company.subscription_status === "active") {
+  // 1. Explicitly Active
+  if (company.subscription_status === "active") {
+    const trialEnd = company.trial_ends_at ? parseDate(company.trial_ends_at) : null;
+    if (trialEnd && !isNaN(trialEnd.getTime()) && trialEnd.getTime() > Date.now()) {
+      const diff = trialEnd.getTime() - Date.now();
+      const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+      const formattedExpiry = formatDate(trialEnd);
       return {
         isExpired: false,
-        text: "Lifetime Access",
-        expiresAtFormatted: "Lifetime Access",
-        expiryDate: "Lifetime",
+        text: "Active",
+        expiresAtFormatted: `Expires: ${formattedExpiry}`,
+        expiryDate: formattedExpiry,
         variant: "default"
       };
     }
+    return {
+      isExpired: false,
+      text: "Active",
+      expiresAtFormatted: "Active",
+      expiryDate: null,
+      variant: "default"
+    };
+  }
+
+  // 2. Explicitly Expired
+  if (company.subscription_status === "expired") {
+    const trialEnd = company.trial_ends_at
+      ? parseDate(company.trial_ends_at)
+      : company.created_at
+        ? (() => {
+            const parsed = parseDate(company.created_at);
+            return parsed ? new Date(parsed.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+          })()
+        : null;
+    const formattedExpiry = formatDate(trialEnd);
+    return {
+      isExpired: true,
+      text: "Access Expired",
+      expiresAtFormatted: formattedExpiry ? `Expired on ${formattedExpiry}` : "Access Expired",
+      expiryDate: formattedExpiry,
+      variant: "destructive"
+    };
+  }
+
+  // 3. Trial Mode (or unconfigured)
+  const trialEnd = company.trial_ends_at
+    ? parseDate(company.trial_ends_at)
+    : company.created_at
+      ? (() => {
+          const parsed = parseDate(company.created_at);
+          return parsed ? new Date(parsed.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+        })()
+      : null;
+
+  if (!trialEnd || isNaN(trialEnd.getTime())) {
     return {
       isExpired: false,
       text: "Trial (7d left)",
@@ -84,28 +120,18 @@ export function getTrialInfo(company: any) {
     };
   }
 
-  const diff = trialEnd.getTime() - new Date().getTime();
+  const diff = trialEnd.getTime() - Date.now();
   const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  const isExpired = company.subscription_status === "expired" || diff <= 0;
+  const isExpired = diff <= 0;
   const formattedExpiry = formatDate(trialEnd);
 
   if (isExpired) {
     return {
       isExpired: true,
-      text: "Access Expired",
+      text: "Trial Expired",
       expiresAtFormatted: `Expired on ${formattedExpiry}`,
       expiryDate: formattedExpiry,
       variant: "destructive"
-    };
-  }
-
-  if (company.subscription_status === "active") {
-    return {
-      isExpired: false,
-      text: `${days}d left`,
-      expiresAtFormatted: `Expires: ${formattedExpiry}`,
-      expiryDate: formattedExpiry,
-      variant: "default"
     };
   }
 
@@ -192,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const trialInfo = getTrialInfo(compData);
         console.log("[fetchRoleAndCompany] trialInfo:", JSON.stringify(trialInfo));
-        setIsTrialExpired(trialInfo.isExpired);
+        setIsTrialExpired(userRole === "super_admin" ? false : trialInfo.isExpired);
       } else {
         setCompany(null);
         if (userObj.user_metadata?.religion) {

@@ -52,12 +52,12 @@ export const AdminLayout = forwardRef<HTMLDivElement, { children: React.ReactNod
               <div className="flex items-center gap-2">
                 {/* Top-Bar License Expiration Indicator */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card/70 border border-white/10 text-xs font-medium select-none shadow-sm backdrop-blur-md">
-                  {company?.subscription_status === "active" && !trialInfo.isExpired ? (
+                  {company?.subscription_status === "active" || (!trialInfo.isExpired && trialInfo.variant === "default") ? (
                     <>
                       <ShieldCheck className="size-3.5 text-emerald-400 shrink-0" />
                       <div className="flex items-center gap-1.5">
                         <span className="text-emerald-400 font-bold">Active</span>
-                        {trialInfo.expiresAtFormatted && (
+                        {trialInfo.expiresAtFormatted && trialInfo.expiresAtFormatted !== "Active" && (
                           <span className="text-muted-foreground font-mono text-[11px] border-l border-white/10 pl-1.5">
                             {trialInfo.expiresAtFormatted}
                           </span>
