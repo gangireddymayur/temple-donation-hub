@@ -328,6 +328,10 @@ export function SquareOfferingCard({
 
   const isHinduOrJain = !religion || religion === 'hinduism' || religion === 'jainism';
   const relMeta = getReligionConfig(religion as any);
+  const modalTitle = relMeta?.terminology?.donationTerm ? `Complete Your ${relMeta.terminology.donationTerm}` : "Complete Your Offering";
+  const badgeTitle = relMeta?.name ? `${relMeta.name} Grace` : "Divine Grace";
+  const badgeDescription = "100% of your sacred offering directly supports temple seva and daily rituals.";
+  const prayerLabel = relMeta?.terminology?.prayerTerm || "Special Prayer / Request";
 
   // Helper to trigger POS thermal receipt printing via Native Android bridge
   const triggerThermalPrint = (txnPid?: string) => {
