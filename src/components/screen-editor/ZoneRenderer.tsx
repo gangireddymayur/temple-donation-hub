@@ -318,92 +318,67 @@ export function SquareOfferingCard({
 
   const [step, setStep] = useState<'form' | 'processing' | 'payment' | 'success' | 'cancelled' | 'failed'>('form');
   const [loading, setLoading] = useState(false);
-  
-  // Payment states
   const [donationId, setDonationId] = useState<string | null>(null);
   const [upiString, setUpiString] = useState<string | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [razorpayOrderData, setRazorpayOrderData] = useState<any>(null);
-  const [lastPaymentId, setLastPaymentId] = useState<string>("");
+  const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
 
-  const amount = config.amount || 100;
-  const label = config.label || "Offering";
-  const description = config.description || "";
-
-  const relMeta = getReligionConfig(religion);
   const isHinduOrJain = !religion || religion === 'hinduism' || religion === 'jainism';
+  const relMeta = getReligionConfig(religion as any);
 
-  const modalTitle = `${relMeta.terminology.donationName} Offerings`;
-  const badgeTitle = `Direct ${relMeta.terminology.institutionType.split('/')[0].trim()} Offering`;
-  const badgeDescription = relMeta.tagline;
-  const prayerLabel = relMeta.terminology.prayerLabel;
-
-  // Trigger Automatic USB Thermal Printing
-  const triggerThermalPrint = (txnPaymentId?: string) => {
+  // Helper to trigger POS thermal receipt printing via Native Android bridge
+  const triggerThermalPrint = (txnPid?: string) => {
     try {
-      const pid = txnPaymentId || lastPaymentId || "TXN-" + Date.now().toString().slice(-6);
-      if (txnPaymentId) setLastPaymentId(txnPaymentId);
-
-      const receiptPayload = {
-        symbol: relMeta.symbol || "🕉️",
-        templeName: relMeta.name || "TEMPLE OFFERING HUB",
-        address: data?.templeAddress || "",
-        templePhone: data?.templePhone || "",
-        receiptNo: `RCP-${Date.now().toString().slice(-6)}`,
-        dateTime: new Date().toLocaleString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        }),
-        devoteeName: donorName?.trim() || "Devotee",
-        phone: donorPhone?.trim() || "N/A",
-        gotram: donorGotra?.trim() || "",
-        nakshatram: donorNakshatra?.trim() || "",
-        sevaName: activeDonation?.label || label || "General Temple Offering",
-        amount: Number(activeDonation?.amount || amount || 0),
-        paymentId: pid,
-        paymentMode: "UPI / Razorpay",
-        blessing: "May Lord's divine grace bring peace, health & prosperity to you and your family."
+      const receiptData = {
+        templeName: relMeta?.name ? `${relMeta.name} Offering` : "TEMPLE OFFERING HUB",
+        symbol: relMeta?.symbol || (isHinduOrJain ? "🕉️" : "✨"),
+        receiptNo: `RCP-${(donationId || txnPid || Date.now().toString()).slice(-6).toUpperCase()}`,
+        dateTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
+        devoteeName: donorName || "Devotee",
+        phone: donorPhone || "N/A",
+        gotram: donorGotra || "",
+        nakshatram: donorNakshatra || "",
+        sevaName: activeDonation?.label || "Sacred Offering",
+        amount: Number(activeDonation?.amount || 0),
+        paymentId: txnPid || donationId || lastPaymentId || "PAID",
+        blessing: isHinduOrJain 
+          ? "May the Lord's divine grace bestow peace, health & prosperity upon you and your family."
+          : "Thank you for your generous contribution and support."
       };
 
-      if (typeof window !== "undefined" && (window as any).AndroidPrinter?.printReceipt) {
-        console.log("[ThermalPrinter] Sending receipt to native USB Thermal Printer:", receiptPayload);
-        (window as any).AndroidPrinter.printReceipt(JSON.stringify(receiptPayload));
-      } else {
-        console.log("[ThermalPrinter] Native printer bridge not attached. Ready for browser print:", receiptPayload);
+      const payloadStr = JSON.stringify(receiptData);
+
+      // Direct JavascriptInterface bridge calls
+      const win = window as any;
+      if (win.AndroidPrinter && typeof win.AndroidPrinter.printReceipt === 'function') {
+        win.AndroidPrinter.printReceipt(payloadStr);
+      } else if (win.parent && win.parent.AndroidPrinter && typeof win.parent.AndroidPrinter.printReceipt === 'function') {
+        win.parent.AndroidPrinter.printReceipt(payloadStr);
+      } else if (win.top && win.top.AndroidPrinter && typeof win.top.AndroidPrinter.printReceipt === 'function') {
+        win.top.AndroidPrinter.printReceipt(payloadStr);
+      }
+
+      // Cross-frame / iframe postMessage broadcast
+      window.postMessage({ type: 'PRINT_RECEIPT', payload: receiptData }, '*');
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'PRINT_RECEIPT', payload: receiptData }, '*');
+      }
+      if (window.top && window.top !== window && window.top !== window.parent) {
+        window.top.postMessage({ type: 'PRINT_RECEIPT', payload: receiptData }, '*');
       }
     } catch (e) {
-      console.error("[ThermalPrinter] Failed to trigger print:", e);
+      console.error("Failed to trigger thermal print:", e);
     }
   };
 
-  // Open native in-page Razorpay Checkout Popup on tablets and kiosks
-  const openRazorpayModal = async (orderData: any) => {
-    if (!orderData?.orderId || !orderData?.razorpayKeyId) {
-      setErrorMessage("Razorpay configuration is incomplete (missing Key ID or Order ID).");
-      setStep('failed');
-      return;
-    }
-
-    if (typeof window !== 'undefined' && !(window as any).Razorpay) {
-      await new Promise<void>((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => resolve();
-        script.onerror = () => resolve();
-        document.body.appendChild(script);
-      });
-    }
-
-    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+  const openRazorpayModal = (orderData: any) => {
+    if ((window as any).Razorpay) {
       try {
         const rzp = new (window as any).Razorpay({
-          key: orderData.razorpayKeyId,
-          amount: Math.round(Number(orderData.amount || amount) * 100),
+          key: orderData.keyId,
+          amount: orderData.amountInPaise,
           currency: "INR",
           name: relMeta.name || "Temple Offering",
           description: orderData.purpose || "Sacred Offering",
