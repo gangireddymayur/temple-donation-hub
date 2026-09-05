@@ -302,6 +302,7 @@ export function SquareOfferingCard({
   themeStyle?: string;
   religion?: string;
 }) {
+  const { amount = 100, label = "Sacred Offering", description = "" } = config;
   const [activeDonation, setActiveDonation] = useState<any>(null);
   
   // Devotee details states
