@@ -378,8 +378,32 @@ export function SquareOfferingCard({
     }
   };
 
-  const openRazorpayModal = (orderData: any) => {
-    if ((window as any).Razorpay) {
+  const ensureRazorpayLoaded = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const existingScript = document.querySelector('script[src*="checkout.razorpay.com"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(true));
+        existingScript.addEventListener('error', () => resolve(false));
+        setTimeout(() => resolve(!!(window as any).Razorpay), 3000);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+      setTimeout(() => resolve(!!(window as any).Razorpay), 5000);
+    });
+  };
+
+  const openRazorpayModal = async (orderData: any) => {
+    const isLoaded = await ensureRazorpayLoaded();
+    if (isLoaded && (window as any).Razorpay) {
       try {
         const rzp = new (window as any).Razorpay({
           key: orderData.keyId,
