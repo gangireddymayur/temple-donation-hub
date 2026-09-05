@@ -37,6 +37,7 @@ import {
   XCircle,
   RotateCcw,
   CreditCard,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReligionConfig } from "@/lib/religion-config";
@@ -324,6 +325,7 @@ export function SquareOfferingCard({
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [razorpayOrderData, setRazorpayOrderData] = useState<any>(null);
+  const [lastPaymentId, setLastPaymentId] = useState<string>("");
 
   const amount = config.amount || 100;
   const label = config.label || "Offering";
@@ -336,6 +338,48 @@ export function SquareOfferingCard({
   const badgeTitle = `Direct ${relMeta.terminology.institutionType.split('/')[0].trim()} Offering`;
   const badgeDescription = relMeta.tagline;
   const prayerLabel = relMeta.terminology.prayerLabel;
+
+  // Trigger Automatic USB Thermal Printing
+  const triggerThermalPrint = (txnPaymentId?: string) => {
+    try {
+      const pid = txnPaymentId || lastPaymentId || "TXN-" + Date.now().toString().slice(-6);
+      if (txnPaymentId) setLastPaymentId(txnPaymentId);
+
+      const receiptPayload = {
+        symbol: relMeta.symbol || "🕉️",
+        templeName: relMeta.name || "TEMPLE OFFERING HUB",
+        address: data?.templeAddress || "",
+        templePhone: data?.templePhone || "",
+        receiptNo: `RCP-${Date.now().toString().slice(-6)}`,
+        dateTime: new Date().toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        }),
+        devoteeName: donorName?.trim() || "Devotee",
+        phone: donorPhone?.trim() || "N/A",
+        gotram: donorGotra?.trim() || "",
+        nakshatram: donorNakshatra?.trim() || "",
+        sevaName: activeDonation?.label || label || "General Temple Offering",
+        amount: Number(activeDonation?.amount || amount || 0),
+        paymentId: pid,
+        paymentMode: "UPI / Razorpay",
+        blessing: "May Lord's divine grace bring peace, health & prosperity to you and your family."
+      };
+
+      if (typeof window !== "undefined" && (window as any).AndroidPrinter?.printReceipt) {
+        console.log("[ThermalPrinter] Sending receipt to native USB Thermal Printer:", receiptPayload);
+        (window as any).AndroidPrinter.printReceipt(JSON.stringify(receiptPayload));
+      } else {
+        console.log("[ThermalPrinter] Native printer bridge not attached. Ready for browser print:", receiptPayload);
+      }
+    } catch (e) {
+      console.error("[ThermalPrinter] Failed to trigger print:", e);
+    }
+  };
 
   // Open native in-page Razorpay Checkout Popup on tablets and kiosks
   const openRazorpayModal = async (orderData: any) => {
@@ -367,6 +411,10 @@ export function SquareOfferingCard({
           handler: async function (response: any) {
             try {
               setLoading(true);
+              const txnPid = response.razorpay_payment_id || "PAY-" + Date.now().toString().slice(-6);
+              setLastPaymentId(txnPid);
+              triggerThermalPrint(txnPid);
+
               const verifyRes = await fetch(`${API}/donations/public/verify-payment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -381,19 +429,19 @@ export function SquareOfferingCard({
                 setStep('success');
                 setTimeout(() => {
                   handleClose();
-                }, 5000);
+                }, 6000);
               } else {
                 setStep('success'); // Payment was charged at Razorpay level
                 setTimeout(() => {
                   handleClose();
-                }, 5000);
+                }, 6000);
               }
             } catch (e) {
               console.error("Payment verification error:", e);
               setStep('success');
               setTimeout(() => {
                 handleClose();
-              }, 5000);
+              }, 6000);
             } finally {
               setLoading(false);
             }
@@ -469,10 +517,11 @@ export function SquareOfferingCard({
         if (res.ok) {
           const data = await res.json();
           if (data.payment_status === 'success') {
+            triggerThermalPrint(donationId);
             setStep('success');
             setTimeout(() => {
               handleClose();
-            }, 5000);
+            }, 6000);
             return;
           }
         }
@@ -912,7 +961,6 @@ export function SquareOfferingCard({
                         />
                       </div>
                     )}
-
                     {fields.prayer.enabled && (
                       <div className="space-y-1 sm:col-span-2">
                         <label className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
@@ -1046,13 +1094,30 @@ export function SquareOfferingCard({
                   </p>
                 </div>
 
-                <button
-                  onClick={handleClose}
-                  className="mt-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all"
-                >
-                  Done
-                </button>
-                <div className="text-[10px] text-slate-500">Returning automatically in 5 seconds...</div>
+                {/* Thermal Printer Auto-Print Status Banner */}
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-medium">
+                  <Printer className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
+                  <span>Printing Devotee Receipt on Thermal Printer...</span>
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    onClick={() => triggerThermalPrint()}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs rounded-xl border border-emerald-500/30 shadow-md transition-all active:scale-95 cursor-pointer"
+                    title="Print duplicate thermal receipt"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span>Print Receipt</span>
+                  </button>
+
+                  <button
+                    onClick={handleClose}
+                    className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+                <div className="text-[10px] text-slate-500">Returning automatically in 6 seconds...</div>
               </div>
             )}
 
